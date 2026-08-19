@@ -1,6 +1,6 @@
 {
-  "appId": "com.CHANGE-ME.questline",
-  "appName": "Questline",
+  "appId": "com.CHANGE-ME.onwego",
+  "appName": "OnWeGo",
   "webDir": "www",
   "ios": {
     "contentInset": "always",
