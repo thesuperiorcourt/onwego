@@ -6,7 +6,7 @@ Every part of the app that can be reviewed, assigned, tested or flagged. Not jus
 
 The **Why** column matters more than the rest. If a part can't justify its why in one sentence, it's a candidate for removal, not polish.
 
-**Keep this current.** Every update that touches a part updates its row here in the same commit — What it does, Touches, Status. This file is the map; a stale map is worse than none.
+**Keep this current.** Every update that touches a part updates its row here in the same commit — What it does, Touches, Status. Cover what/where/why/when/who/how wherever it's not obvious from the column alone (a one-line addition to Touches or Status is enough; it doesn't need new columns). This file is the map; a stale map is worse than none. See HANDOFF.md's non-negotiable #7.
 
 ---
 

@@ -82,6 +82,7 @@ Expect all of this to be iterative. Set the work up so step 4 is cheap to repeat
 4. **Nothing punishes the user.** No red, no overdue, no streak reset on a missed day. Falling behind redistributes; it never scolds.
 5. **Run the tests before saying something works.** `test/` has twelve suites, no framework.
 6. **No AI or agent language anywhere in the project.** Code comments, UI copy, docs and commit messages read as a team's work. That AI was used gets disclosed honestly elsewhere; it doesn't belong in the product's voice. Address whoever picks up a task as a colleague — a developer or designer on this team — not as a tool.
+7. **`PARTS.md` updates in the same commit as the part it describes.** Every feature or functionality change — new, altered, or removed, BRAINSTORM work included — updates that part's row before the commit lands, not after. Cover what it does, where it lives, why it exists, when it changed, who asked for it (if that's not obvious), and how it works. See the taxonomy-before-features principle above: this is how that principle stays true instead of becoming a slogan.
 
 ---
 
