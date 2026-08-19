@@ -30,7 +30,7 @@ The default screen. Should answer one question: *what am I doing right now, and 
 | T12 | Standing stats (streak, currency) | Streak count (`streak()`) and currency total, shown ambiently | Ambient progress | Streak logic, currency | ok |
 | T13 | Level bar | XP progress toward the next level (`levelFor`) | Long arc progression | XP, levels | ok |
 | T14 | Next milestone card | The nearest milestone whose unit position hasn't been reached yet | Something to aim at | Milestones, biomes | ok |
-| T15 | Strain warning | `strainCard()` — appears when a deadline-anchored track's live per-day rate exceeds the comfort pace set on the track; offers three ways out | Says out loud when the plan stopped being possible, offers three real choices | Tracks, dates, tasks | unverified in real use — see K1 |
+| T15 | Strain warning | `strainCard()` — appears when a deadline-anchored track's live per-day rate exceeds the comfort pace set on the track; offers three ways out | Says out loud when the plan stopped being possible, offers three real choices | Tracks, dates, tasks | ok, tested — now also fires on Trail (see K1). Still unconfirmed against real day-to-day use |
 | T16 | Section layout config | `homeConfigSheet`/`sectionEditor` — which categories, tags, scope and fields populate each Tonight section | User decides what this screen shows | Tasks, categories, tags | ok, buried |
 | T17 | Position fixer | The Position sheet — nudges `unitsDone` forward or back without touching XP or the grove | "The plan follows you, not the reverse" | Tracks, unit position | ok, buried |
 
@@ -59,8 +59,8 @@ Currently the weakest tab. Intended as the campaign map: *where have I been, whe
 | R1 | Finish-line card | Shows `W.launch`/`W.launchLabel` when set, with a days-out count | The date everything points at | Tracks, world launch date | ok |
 | R2 | Category groups | Tasks grouped by `category` into sections, each with a logged/total count | Structure over a long plan | Tasks | ok |
 | R3 | Day nodes | One list item per task, ordered by date: date, title, target range, and the result if logged | History and what's ahead | Tasks, logs | ok |
-| R4 | Missed-day handling | A past-dated, unlogged task renders with no status text at all — the template only branches on "logged" or "today" | Should surface a decision when the plan no longer works | Tracks, tasks, dates | **broken — see K1** |
-| R5 | Catch-up button | Opens the Pace sheet — whose displayed numbers come from dead legacy functions (`daysLeft`/`totalUnits`/`dayFor`, all reading the frozen pre-task `w.days`/`w.books` arrays) entirely disconnected from the live track engine that its own "Redistribute" action actually calls | Redistribute what's left | Tracks | **broken in effect — see K1** |
+| R4 | Missed-day handling | A past-dated, unlogged task now shows "Missed — needs a decision" (a link into Pace) or "Folded into the plan" once acknowledged, instead of rendering nothing | Should surface a decision when the plan no longer works | Tracks, tasks, dates | ok — fixed, see K1 |
+| R5 | Catch-up button | Opens the Pace sheet, now reading the live track engine (`trackStatus`, `openSlots`, `missedTasks`) instead of the dead legacy functions it used to | Redistribute what's left | Tracks | ok — fixed, see K1 |
 | R6 | The tab's purpose | — | — | unclear. Decide what Trail *is* before polishing it |
 
 ---
@@ -71,7 +71,7 @@ The data layer, exposed. Should answer: *what's in this project and let me chang
 
 | ID | Part | What it does | Why | Touches | Status |
 |---|---|---|---|---|---|
-| K1 | Track engine | `recomputeTrack()` — on every log and on Redistribute, rewrites future task `min`/`max` (smooth ripple) or future dates (consume / pace ripple) so `remaining` resolves to zero at the anchor | What moves when you log: date holds and amounts move, or amounts hold and the date moves | Tasks, Tonight, Trail, milestones | **broken in practice — see Known defects** |
+| K1 | Track engine | `recomputeTrack()` — on every log and on Redistribute, rewrites future task `min`/`max` (smooth ripple) or future dates (consume / pace ripple) so `remaining` resolves to zero at the anchor. `missedTasks()`/`resolveMissed()` give a missed task an explicit outcome (move to today, fold in, let it go) instead of leaving it un-logged forever | What moves when you log: date holds and amounts move, or amounts hold and the date moves | Tasks, Tonight, Trail, milestones | ok — fixed, see Known defects |
 | K2 | Track editor | `trackEditor()` — anchor, ripple, categories, total and comfort pace, in one sheet | Configure anchor, ripple, total, comfort | Tracks | unverified |
 | K3 | Search | Filters tasks by title substring | Find anything | Tasks | ok |
 | K4 | Filters (category, tag, streak, scope) | Chips combined with AND, read by `filterTasks()` | Narrow a long list | Tasks | ok |
@@ -110,7 +110,7 @@ The wallet and trophy case. Should answer: *what have I earned, and what can I s
 | S4 | Reduce motion | Toggles a `calm` class that the stylesheet reads to disable ambient animation | Accessibility preference | Animation | ok |
 | S5 | Theme packs | The same `themes()` sheet used by G2 and the Tonight scene cap | Look | All screens | ok |
 | S6 | Worlds list | `SHEETS.worlds()` — switch the active world, or open New World | Switch and create | Worlds | ok |
-| S7 | Pace sheet | `SHEETS.pace()` — meant to show units/days left and redistribute; currently reads dead legacy fields (`daysLeft`/`totalUnits`/`dayFor`) instead of the live track engine, so what it displays doesn't match what "Redistribute" actually does | Diagnose and redistribute | Tracks | see K1 |
+| S7 | Pace sheet | `SHEETS.pace()` — shows units/days left from the live track engine, lists every missed task with a resolution for each, and the before/after numbers a redistribute would actually produce | Diagnose and redistribute | Tracks | ok — fixed, see K1 |
 
 ---
 
@@ -132,7 +132,7 @@ These aren't screens. They break everything when they break.
 
 ## Known defects
 
-### K1 — Missing a day does nothing visible *(highest priority)*
+### K1 — Missing a day does nothing visible *(fixed)*
 
 **Observed:** a reading day was missed on 18 Aug. The chapters for 19 Aug onward stayed identical. Tapping **Catch up** returned "Plan redistributed. Nothing is overdue" — which is both unhelpful and arguably untrue.
 
@@ -148,6 +148,16 @@ These aren't screens. They break everything when they break.
 - The missed task itself needs a resolution path: absorbed into the plan, moved to today, or explicitly abandoned. Right now it lingers as permanently un-logged.
 - When redistribution can't fix it — the required pace crosses what the user called comfortable — the strain warning should fire *here*, from Trail, not only on Tonight.
 - "Catch up" should report what changed, or say plainly that nothing needed to change.
+
+**What shipped:**
+- `missedTasks(w, tr)` finds every past-dated, unlogged, not-yet-acknowledged task on a track — the exact set `openSlots()` was already silently excluding.
+- Trail shows a real status per missed day: "Missed — needs a decision" (a link into Pace) until it's resolved, then "Folded into the plan" or the same "Rested" label a normal rest day gets.
+- The Pace sheet (`SHEETS.pace()`) now reads `trackStatus()` live instead of the dead legacy fields, lists every missed task with real before/after numbers, and offers three resolutions per task via `resolveMissed()`: **move to today** (re-enters the plan as an open task), **fold in** (acknowledges it, leaves the redistribution exactly as it already silently happens), **let it go** (logs it as rested — no reward, since nothing was done, and the campaign's unit labels move past it).
+- "Redistribute what's left" (`do_replan`) reports the real before/after for today's task, or says plainly that nothing needed to change, instead of the fixed "Plan redistributed. Nothing is overdue." string.
+- `strainCard()` now renders on Trail as well as Tonight, so T15 can fire from either screen as intended.
+- Test coverage: `test/missed_day_test.cjs`, 23 assertions — detection, all three resolutions, Trail's rendered status, the honest redistribute toast, and that the resolution buttons stay individually named and distinct when more than one day is missed at once.
+
+**Left open, deliberately:** whether "let it go" should reduce the track's total (so the abandoned units stop being owed at all) or continue being silently redistributed like "fold in" does — right now the two are numerically identical and differ only in bookkeeping and labeling. That's a product decision, not a bug; revisit if it matters in practice. Also unaddressed: the Tonight header's "days left" counter (T3) still reads `daysLeft()`, the same kind of frozen-legacy-data pattern this fix removed from the Pace sheet — it hasn't drifted yet for the single-track seed world, but it's the same class of bug waiting to happen once a task's date moves independently of `w.days`.
 
 **Touches:** R4, R5, K1, T15, S7, X5.
 

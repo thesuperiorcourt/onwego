@@ -939,7 +939,7 @@ function taskRow(t) {
   return `<li><button class="row-item" data-task="${t.id}" aria-label="Edit ${esc(t.title)}${l ? ', logged' : ''}">
     <span class="g" aria-hidden="true">${l ? '✅' : t.streak ? '🔥' : '○'}</span>
     <span class="t"><b>${esc(t.title || 'Untitled')}</b>
-      <small>${bits.join(' · ') || 'No details yet'}${l ? ' · ' + PAYOUT[l.result].label : ''}</small></span>
+      <small>${bits.join(' · ') || 'No details yet'}${l ? ' · ' + (l.result === 'skip' ? 'Rested' : PAYOUT[l.result].label) : ''}</small></span>
     <span aria-hidden="true" style="color:var(--muted)">›</span></button></li>`;
 }
 
@@ -1182,6 +1182,17 @@ function openSlots(w, tr) {
     .filter(t => !w.progress.log[t.id])
     .filter(t => !t.date || t.date >= t0)
     .sort((a,b) => (a.date || '9999') < (b.date || '9999') ? -1 : 1);
+}
+
+/* Past-dated, unlogged, not yet acknowledged — openSlots() has already
+   excluded these from the future, silently. This is what makes them visible
+   again so a missed day gets a decision instead of disappearing. */
+function missedTasks(w, tr) {
+  const t0 = today();
+  return trackTasks(w, tr)
+    .filter(t => !w.progress.log[t.id] && !t.missedAck)
+    .filter(t => t.date && t.date < t0)
+    .sort((a,b) => (a.date < b.date ? -1 : 1));
 }
 
 /* Everything the Tonight screen and the Tracks list need to say out loud. */
@@ -1588,13 +1599,18 @@ function renderTrail() {
     list.forEach(task => {
       const log = W.progress.log[task.id];
       const isToday = task.date === t;
+      const isMissed = !log && !isToday && task.date && task.date < t;
       const isDone = !!(log && log.result !== 'skip');
-      out += `<li class="node ${isDone ? 'done' : ''} ${isToday ? 'today' : ''}">
+      out += `<li class="node ${isDone ? 'done' : ''} ${isToday ? 'today' : ''} ${isMissed ? 'missed' : ''}">
         <p class="d">${task.date ? fmtDay(task.date) : 'Anytime'}${(task.tags||[]).includes('starred') ? ' · <span aria-hidden="true" style="color:var(--glow-ink)">★</span><span class="sr-only">starred</span>' : ''}</p>
         <h3>${esc(task.title)}</h3>
         ${task.range ? `<p>${esc(task.range)}</p>` : ''}
         ${log ? `<p class="res">${log.result === 'skip' ? 'Rested' : PAYOUT[log.result].label} · +${log.xp || 0} ${esc(W.xpName)}</p>`
-              : isToday ? `<p class="res now">Today — not logged yet</p>` : ''}
+              : isToday ? `<p class="res now">Today — not logged yet</p>`
+              : isMissed ? (task.missedAck
+                  ? `<p class="res">Folded into the plan</p>`
+                  : `<p class="res"><button class="link" data-sheet="pace" aria-haspopup="dialog">Missed — needs a decision</button></p>`)
+              : ''}
       </li>`;
     });
     out += '</ol></section>';
@@ -1609,6 +1625,7 @@ function renderTrail() {
       <h2 style="margin:5px 0 3px">${esc(W.launchLabel || 'Launch day')}</h2>
       <p style="margin:0;color:var(--muted);font-size:14px">${fmtLong(W.launch)} · ${daysBetween(today(), W.launch)} days out</p>
     </div>` : ''}
+    ${strainCard()}
     ${out}</div>`;
 }
 
@@ -1836,6 +1853,26 @@ function openDrop(html) {
 /* ------------------------------- logging ---------------------------------- */
 const FLORA_FOR = { min:'sprout', full:'tree', boss:'bloom' };
 
+/* A missed task gets an outcome instead of lingering. None of the three
+   grant XP, currency or loot — nothing was actually done — but each one
+   stops it sitting there un-logged and invisible forever.
+     today — re-enters the plan as an open task, attempted today
+     fold  — left exactly as the plan already silently handles it: still
+             pending, still counted in what's left, just acknowledged
+     skip  — logged as rested, the same non-punitive result the escape
+             hatch uses; the campaign's unit labels move past it        */
+function resolveMissed(w, task, choice) {
+  const tr = trackFor(w, task);
+  if (choice === 'today') {
+    task.date = today();
+  } else if (choice === 'skip') {
+    w.progress.log[task.id] = { result:'skip', units:0, xp:0, coins:0, date:task.date, at:Date.now() };
+  } else {
+    task.missedAck = true;
+  }
+  if (tr) recomputeTrack(w, tr);
+}
+
 function logTask(taskId, kind, units) {
   const task = (W.tasks || []).find(x => x.id === taskId);
   if (!task) return;
@@ -1951,18 +1988,36 @@ const SHEETS = {
       <p class="sub" style="margin-top:16px">${Object.values(THEMES).map(t => `<b>${t.name}</b> — ${t.blurb}`).join('<br>')}</p>`;
   },
   pace() {
-    const t = today(), left = daysLeft(), rem = totalUnits(W) - W.progress.unitsDone;
-    const per = left ? (rem / left) : 0;
-    const planned = dayFor(W, t);
+    const tr = W.tracks && W.tracks[0];
+    if (!tr) {
+      return `<h2>Pace</h2><p class="sub">Nothing is pinned down yet — there's no plan to redistribute.</p>
+        <button class="btn line" onclick="closeSheet()">Close</button>`;
+    }
+    const st = trackStatus(W, tr);
+    const missed = missedTasks(W, tr);
+    const todaySlot = openSlots(W, tr).find(x => x.date === today());
+    const before = todaySlot ? (todaySlot.max || 0) : null;
+    const after = Math.round(st.perSlot);
     return `<h2>Pace</h2><p class="sub">Falling behind is not a failure state. It's just a number that wants redistributing.</p>
       <div class="grid2">
-        <p class="stat"><b>${rem}</b><small>${esc(W.unitPlural)} left</small></p>
-        <p class="stat"><b>${left}</b><small>days left</small></p>
+        <p class="stat"><b>${st.remaining}</b><small>${esc(W.unitPlural)} left</small></p>
+        <p class="stat"><b>${st.slots}</b><small>days left</small></p>
       </div>
-      <p class="stat" style="margin-top:10px"><b>${per.toFixed(1)}</b><small>${esc(W.unitPlural)} per day from here</small></p>
-      ${planned ? `<p class="sub" style="margin-top:14px">Today's plan asks for ${planned.goal}. Redistributing spreads everything you haven't read evenly across the days that are left, starting today.</p>` : ''}
+      <p class="stat" style="margin-top:10px"><b>${st.perSlot.toFixed(1)}</b><small>${esc(W.unitPlural)} per day from here</small></p>
+      ${missed.length ? `<div class="card" style="margin-top:14px;border-color:var(--edge-strong)">
+        <p class="eyebrow">${missed.length} missed</p>
+        ${missed.map(mt => `<div style="margin-bottom:${mt === missed[missed.length-1] ? '0' : '16px'}">
+          <p style="margin:0 0 8px"><b>${esc(mt.title)}</b> — ${fmtDay(mt.date)}${mt.max ? `, ${mt.max} ${esc(W.unitPlural)}` : ''}</p>
+          <div style="display:flex;gap:8px">
+            <button class="btn ghost" data-missed="today" data-task-id="${mt.id}" style="flex:1" aria-label="Move ${esc(mt.title)} to today">Move to today</button>
+            <button class="btn ghost" data-missed="fold" data-task-id="${mt.id}" style="flex:1" aria-label="Fold ${esc(mt.title)} into the plan">Fold in</button>
+            <button class="btn ghost" data-missed="skip" data-task-id="${mt.id}" style="flex:1" aria-label="Let ${esc(mt.title)} go">Let it go</button>
+          </div>
+        </div>`).join('')}
+      </div>` : ''}
+      ${before !== null ? `<p class="sub" style="margin-top:14px">Today's plan currently asks for ${before} ${esc(W.unitPlural)}.${before !== after ? ` Redistributing will change that to ${after}.` : ' Redistributing won’t change that — it’s already right.'}</p>` : ''}
       <button class="btn" id="do_replan">Redistribute what's left</button>
-      <button class="btn ghost" data-track="${(W.tracks && W.tracks[0] ? W.tracks[0].id : 'new')}" aria-haspopup="dialog">Change what's pinned down</button>
+      <button class="btn ghost" data-track="${tr.id}" aria-haspopup="dialog">Change what's pinned down</button>
       <button class="btn line" onclick="closeSheet()">Leave the plan alone</button>`;
   },
   position() {
@@ -2059,7 +2114,7 @@ function sprintFace(mins) {
 
 /* -------------------------------- events ---------------------------------- */
 document.addEventListener('click', e => {
-  const el = e.target.closest('[data-view],[data-sheet],[data-log],[data-theme],[data-world],[data-buy],[data-nudge],[data-sprint],[data-bait],#escapeBtn,#sprintBtn,#do_replan,#nw_go,#ar_go,#imp_go,#clearToday,#doExport,#stopSprint,#pauseSprint,#calmToggle,[data-close]');
+  const el = e.target.closest('[data-view],[data-sheet],[data-log],[data-missed],[data-theme],[data-world],[data-buy],[data-nudge],[data-sprint],[data-bait],#escapeBtn,#sprintBtn,#do_replan,#nw_go,#ar_go,#imp_go,#clearToday,#doExport,#stopSprint,#pauseSprint,#calmToggle,[data-close]');
   if (!el) return;
 
   if (el.dataset.close) { closeSheet(); return; }
@@ -2116,7 +2171,29 @@ document.addEventListener('click', e => {
     W.progress.unitsDone = Math.max(0, Math.min(totalUnits(W), W.progress.unitsDone + n));
     checkMilestones(); save(); paint(); openSheet(SHEETS.position()); return;
   }
-  if (el.id === 'do_replan') { recomputeAll(W); save(); closeSheet(); paint(); toast('Plan redistributed. Nothing is overdue.'); return; }
+  if (el.id === 'do_replan') {
+    const tr = W.tracks && W.tracks[0];
+    const before = tr ? ((openSlots(W, tr).find(x => x.date === today()) || {}).max || 0) : null;
+    recomputeAll(W);
+    const after = tr ? ((openSlots(W, tr).find(x => x.date === today()) || {}).max || 0) : null;
+    save(); closeSheet(); paint();
+    toast(before !== null && before !== after
+      ? `Redistributed — today now asks for ${after} ${W.unitPlural}`
+      : 'Already up to date. Nothing needed to change.');
+    return;
+  }
+  if (el.dataset.missed) {
+    const task = (W.tasks || []).find(x => x.id === el.dataset.taskId);
+    if (task) {
+      resolveMissed(W, task, el.dataset.missed);
+      save();
+      toast(el.dataset.missed === 'today' ? 'Moved to today'
+          : el.dataset.missed === 'skip' ? 'Let go — nothing lost'
+          : 'Folded into the plan');
+    }
+    closeSheet(); paint();
+    return;
+  }
 
   if (el.id === 'nw_go') {
     const parts = $('nw_parts').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {

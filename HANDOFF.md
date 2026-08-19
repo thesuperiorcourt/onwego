@@ -80,7 +80,7 @@ Expect all of this to be iterative. Set the work up so step 4 is cheap to repeat
 2. **Local-first.** Every action saves to device storage immediately and works offline. Sync is how other devices find out, never a prerequisite. Signed out, the whole app must still work.
 3. **WCAG 2.1 AA.** Already met and tested. Any new UI keeps it: one `h1` per screen, headings that don't skip, named controls, `aria-hidden` on decorative emoji, `role="list"` on unbulleted lists, 44px targets, colour never the only signal, dialogs with focus trap and Escape.
 4. **Nothing punishes the user.** No red, no overdue, no streak reset on a missed day. Falling behind redistributes; it never scolds.
-5. **Run the tests before saying something works.** `test/` has eleven suites, no framework.
+5. **Run the tests before saying something works.** `test/` has twelve suites, no framework.
 6. **No AI or agent language anywhere in the project.** Code comments, UI copy, docs and commit messages read as a team's work. That AI was used gets disclosed honestly elsewhere; it doesn't belong in the product's voice. Address whoever picks up a task as a colleague — a developer or designer on this team — not as a tool.
 
 ---
@@ -204,7 +204,7 @@ The full register lives in `PARTS.md` (with status per part) and `BRAINSTORM.md`
 - **Sign in with Apple** isn't offered by Neon (Google, GitHub, Vercel only). Only becomes a blocker for a public App Store release that also offers Google sign-in. TestFlight internal testing is unaffected.
 - **TestFlight** is scaffolded but never run: `npx cap add ios && npx cap sync ios && npx cap open ios`. Before the first archive, set a real bundle ID in `capacitor.config.json`, register it in App Store Connect, and set `apiBase` in `www/config.js` to the deployed site URL — the native shell serves pages locally and can't resolve a same-origin API. Google's OAuth redirect will need a custom URL scheme registered in the iOS project.
 - **Theme packs** were meant to match an app called Joie, which couldn't be found. The five shipped packs are stand-ins; the owner may want them re-coloured.
-- **Missed days don't visibly redistribute.** `PARTS.md` defect K1. The maths is right and the effect is invisible, so the user is told "nothing is overdue" when something plainly is. Highest-priority functional bug.
+- **Missed days now redistribute visibly — fixed.** `PARTS.md` defect K1. Trail acknowledges a miss and offers a real resolution (move to today, fold in, or let it go); the Pace sheet reads the live track engine instead of dead legacy fields it was disconnected from. See PARTS.md for what shipped and what's still an open product question.
 - **Launch content swap.** Before the app is public, replace the Maas seed with generic starter content and a first-run flow that helps someone build their own world from scratch. The onboarding is currently the weakest part of the product for anyone who isn't the owner: a new account inherits a stranger's reading campaign, which makes no sense. Needs: a short "what are you working toward?" setup, one or two neutral example worlds, and a genuinely good empty state.
 - **Vocabulary pass.** Some user-facing copy still leans literary ("the hook", "bait", quest titles in the seed data). The mechanics are general; check the wording is too before launch.
 
