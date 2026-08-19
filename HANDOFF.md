@@ -20,6 +20,12 @@ Decided; don't relitigate without a reason.
 
 Spend design effort where a decision is hard to reverse — the data model, the bundle identifier, whether proof-of-work photos are stored. Defer anything that's a routine change later — adding a field, swapping a provider. Think ahead; don't build ahead. The current one-way doors are listed in `PRODUCTION.md`.
 
+## Working principle: taxonomy before features
+
+This app has a lot of interconnected moving parts — task types, dates, tracks, rewards, screens — and the failure mode isn't building the wrong feature, it's letting categories accrete ad hoc: a field added here, a near-duplicate concept named differently there, until nothing has one clear name or one clear place. Before adding something that introduces a new category — a project type, a reward kind, a field, a screen — place it deliberately first: what's the full set it belongs to, what already exists that's adjacent to it, does the name hold up outside a reading context. `PARTS.md` and `BRAINSTORM.md` exist to make this possible; keep both current as the shape of things changes, not only when a chunk of work finishes.
+
+One live example: **"counting" is one project type among several, not the only one.** A plain checklist with no running total is at least as common as a countable project and needs to be first-class, not a fallback. See `BRAINSTORM.md` §3.
+
 ---
 
 ## What this is

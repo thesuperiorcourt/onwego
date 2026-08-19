@@ -58,7 +58,7 @@ Currently the new-project flow assumes you're counting your way through a book. 
 - "Biome" means nothing to a new user. Needs a real word and a real explanation of what it does.
 
 **Fields to rethink**
-- *What are you counting* — assumes counting. Counting should be a project **type**, with a hint that it suits books or a collection of things. Plenty of projects are just a list of work.
+- *What are you counting* — assumes counting. Counting is one **project type** among several, not the only shape a project can take — offered with a hint that it suits books or a collection of things, alongside other types. A plain checklist with no running total is at least as common and needs to be first-class, not a workaround wedged into the counting type. This is a taxonomy decision before it's a feature: settle the full set of types and the boundary between them deliberately, because dates, the track engine (`anchor`/`ripple`) and Trail all key off whatever type a project is. Fixing the counting type is fixing *a* type, not *the* type.
 - *Currency* — unclear what it is or does. Maybe a boolean first ("track a currency?") with an optional name second.
 - *Dates* — currently one start and one end. Real projects have no dates, or unknown dates, or phases, or repeats, or seasons. Needs a proper date model.
 - *Milestones* — nice, especially tied to unlocks. Optional.
