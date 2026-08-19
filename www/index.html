@@ -503,13 +503,6 @@ const daysBetween = (a,b) => Math.round((parseISO(b) - parseISO(a)) / 86400000);
    spread across dates. Everything else — bait, milestones, the grove — hangs
    off the unit index, so falling behind never invalidates the story.        */
 
-function flatUnits(w) {
-  const out = [];
-  w.books.forEach(b => {
-    for (let i = 0; i < b.units; i++) out.push({ book:b.id, i });
-  });
-  return out;
-}
 function unitLabel(w, globalIdx) {
   let n = globalIdx;
   for (const b of w.books) {
@@ -546,30 +539,6 @@ function baitFor(w, fromGlobal, toGlobal) {
     if (!best || band.s > best.s) best = band;
   });
   return best || { t:'Distance night. No cliff, no wall — just pages behind you.', s:0 };
-}
-
-/* Rebuild the plan for every day from `fromDate` on, using what's actually
-   left to read. This is the catch-up button: nothing is ever "overdue". */
-function replan(w) {
-  const t = today();
-  const done = w.progress.unitsDone;
-  const remainingDays = w.days.filter(d => d.date >= t);
-  if (!remainingDays.length) return;
-  const left = totalUnits(w) - done;
-  if (left <= 0) { remainingDays.forEach(d => { d.goal = 0; }); return; }
-  const per = left / remainingDays.length;
-  let cursor = done, acc = 0;
-  remainingDays.forEach((d, i) => {
-    acc += per;
-    let take = Math.round(acc) - (cursor - done);
-    if (i === remainingDays.length - 1) take = totalUnits(w) - cursor;
-    take = Math.max(0, take);
-    d.fromGlobal = cursor;
-    d.toGlobal = Math.max(cursor, cursor + take - 1);
-    d.goal = take;
-    d.minWin = Math.min(2, take) || 0;
-    cursor += take;
-  });
 }
 
 /* Attach global unit indexes to the shipped plan (first run only). */
@@ -920,22 +889,6 @@ function migrateTasks(w) {
     moved[t ? t.id : k] = Object.assign({ date:k }, old[k]);
   });
   w.progress.log = moved;
-}
-
-/* Redistributing the plan rewrites the linked tasks in place, so edits to
-   title, hook or notes survive a catch-up. */
-function syncTasksFromPlan(w) {
-  (w.days || []).forEach(d => {
-    const t = (w.tasks || []).find(x => x.link && x.date === d.date);
-    if (!t) return;
-    const from = unitLabel(w, d.fromGlobal), to = unitLabel(w, d.toGlobal);
-    t.range = from + (from !== to ? ' – ' + to : '');
-    t.min = d.minWin || null;
-    t.max = d.goal || null;
-    t.link = { book: d.book, from: d.fromGlobal, to: d.toGlobal };
-    const bait = baitFor(w, d.fromGlobal, d.toGlobal);
-    if (!t.hookEdited) t.hook = bait.t;
-  });
 }
 
 function taskCategories(w) {
@@ -1774,47 +1727,13 @@ function paint() {
    for what you just did; the server is how the other devices
    find out. Last write wins, by timestamp.
    ============================================================ */
+/* Every method below is filled in later, once the Account object exists —
+   this shell just holds the state that outlives any one sync call. */
 const Sync = {
-  cfgKey: 'onwego.sync',
-  cfg: { key:'', base:'' },
   status: 'off',      // off | idle | syncing | error
   lastAt: 0,
   _t: null,
 
-  loadCfg() {
-    try { this.cfg = JSON.parse(localStorage.getItem(this.cfgKey)) || this.cfg; } catch (e) {}
-    if (this.cfg.key) this.status = 'idle';
-    return this.cfg;
-  },
-  saveCfg(key, base) {
-    this.cfg = { key: (key || '').trim(), base: (base || '').trim().replace(/\/$/, '') };
-    try { localStorage.setItem(this.cfgKey, JSON.stringify(this.cfg)); } catch (e) {}
-    this.status = this.cfg.key ? 'idle' : 'off';
-  },
-  endpoint() {
-    if (this.cfg.base) return this.cfg.base + '/api/sync';
-    if (location.protocol === 'http:' || location.protocol === 'https:') return '/api/sync';
-    return null;   // running inside the native shell with no site URL set
-  },
-  ready() { return !!(this.cfg.key && this.endpoint()); },
-
-  async pull() {
-    if (!this.ready()) return null;
-    const res = await fetch(this.endpoint(), { headers:{ 'x-onwego-key': this.cfg.key } });
-    if (!res.ok) throw new Error('pull failed');
-    const body = await res.json();
-    return body.data || null;
-  },
-  async push(state) {
-    if (!this.ready()) return;
-    const res = await fetch(this.endpoint(), {
-      method:'POST',
-      headers:{ 'content-type':'application/json', 'x-onwego-key': this.cfg.key },
-      body: JSON.stringify(state)
-    });
-    if (!res.ok) throw new Error('push failed');
-    this.lastAt = Date.now();
-  },
   schedulePush() {
     if (!this.ready()) return;
     clearTimeout(this._t);
@@ -1822,24 +1741,6 @@ const Sync = {
       try { this.status = 'syncing'; await this.push(S); this.status = 'idle'; }
       catch (e) { this.status = 'error'; }
     }, 1200);
-  },
-  /* Boot merge: whichever side was written last wins the whole file. */
-  async reconcile() {
-    if (!this.ready()) return false;
-    try {
-      this.status = 'syncing';
-      const remote = await this.pull();
-      if (remote && (remote.updatedAt || 0) > (S.updatedAt || 0)) {
-        S = remote;
-        W = S.worlds.find(w => w.id === S.activeId) || S.worlds[0];
-        await Store.save(S);
-        this.status = 'idle';
-        return true;
-      }
-      if (!remote || (S.updatedAt || 0) > (remote.updatedAt || 0)) await this.push(S);
-      this.status = 'idle';
-    } catch (e) { this.status = 'error'; }
-    return false;
   }
 };
 
@@ -2727,18 +2628,6 @@ function applyState(data, note) {
   toast(note || 'Restored');
   return true;
 }
-
-Sync.listSnapshots = async function () {
-  if (!this.ready()) return [];
-  const res = await fetch(this.endpoint() + '?snapshots=1', { headers: { 'x-onwego-key': this.cfg.key } });
-  if (!res.ok) throw new Error('list failed');
-  return (await res.json()).snapshots || [];
-};
-Sync.getSnapshot = async function (stamp) {
-  const res = await fetch(this.endpoint() + '?snapshot=' + encodeURIComponent(stamp), { headers: { 'x-onwego-key': this.cfg.key } });
-  if (!res.ok) throw new Error('fetch failed');
-  return (await res.json()).data;
-};
 
 SHEETS.backups = function () {
   const health = storageHealth();

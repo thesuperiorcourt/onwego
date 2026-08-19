@@ -106,7 +106,7 @@ test/*.cjs                   the suites; test/a11y_contrast.py for colour
 | `Store` | device storage, with legacy-key fallback |
 | `THEMES` | five theme packs; every colour token per pack |
 | `LEVELS` `PAYOUT` `LOOT` `RARITY_W` `DEFAULT_SHOP` | progression and rewards |
-| world engine | `flatUnits` `unitLabel` `baitFor` `replan` `levelFor` `rollLoot` |
+| world engine | `unitLabel` `baitFor` `levelFor` `rollLoot` |
 | `sceneSVG` `floraSVG` `motes` | the illustrated scene: sky, moon phase, sunrise, grove |
 | tasks | `TASK_FIELDS` `SHOW_FIELDS` `newTask` `filterTasks` `renderTasks` `taskEditor` |
 | tracks | `TASK_TYPES` `newTrack` `recomputeTrack` `relabelLinked` `tierImpact` `spawnRepeat` |
