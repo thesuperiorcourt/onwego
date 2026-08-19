@@ -1,23 +1,22 @@
 # On We Go — static site in /www, one function for cross-device sync.
- 
+
 [build.environment]
   # Pinned so a future default bump can't change how dependencies resolve.
   NODE_VERSION = "22"
- 
+
 [build]
   publish = "www"
   functions = "netlify/functions"
   command = "echo 'no build step — static files'"
- 
+
 # Fallback route in case path-based function routing isn't picked up.
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
- 
+
 [[headers]]
   for = "/*"
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
- 

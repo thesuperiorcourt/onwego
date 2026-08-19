@@ -1,0 +1,33 @@
+const {JSDOM}=require('jsdom');const fs=require('fs');
+const dom=new JSDOM(fs.readFileSync(require('path').join(__dirname,'..','www','index.html'),'utf8'),{runScripts:'dangerously',pretendToBeVisual:true,url:'https://x.test/'});
+const {window}=dom,d=window.document;
+window.addEventListener('error',e=>console.log('PAGE ERROR:',e.message));
+const P=(c,m)=>console.log((c?'PASS':'FAIL')+' — '+m);
+const audit=(where)=>{
+  const hs=[...d.querySelectorAll('h1,h2,h3,h4')].map(h=>+h.tagName[1]);
+  let ok=true,prev=hs[0];hs.forEach(l=>{if(l>prev+1)ok=false;prev=l});
+  P(d.querySelectorAll('h1').length===1,where+': one h1');
+  P(ok,where+': heading levels ok ('+hs.join(',')+')');
+  const unnamed=[...d.querySelectorAll('button')].filter(b=>((b.getAttribute('aria-label')||b.textContent||'').replace(/\s/g,'')).length<2);
+  P(unnamed.length===0,where+': all buttons named ('+unnamed.length+' unnamed)');
+  const bare=[...d.querySelectorAll('.g')].filter(e=>e.getAttribute('aria-hidden')!=='true');
+  P(bare.length===0,where+': emoji hidden');
+  const inputs=[...d.querySelectorAll('input:not([type=hidden]),select,textarea')];
+  const unlabelled=inputs.filter(i=>!i.id||!d.querySelector('label[for="'+i.id+'"]'));
+  P(unlabelled.length===0,where+': inputs labelled ('+unlabelled.map(i=>i.id||i.type).join(',')+')');
+  const toggles=[...d.querySelectorAll('[data-filtercat],[data-filtertag],[data-secfield],[data-seccat]')];
+  P(toggles.every(t=>t.hasAttribute('aria-pressed')),where+': toggle chips expose pressed state');
+};
+setTimeout(()=>{
+  d.querySelector('[data-view=tasks]').click(); audit('Tasks');
+  d.querySelector('[data-filtercat]').click();
+  P(d.querySelector('#live').textContent.match(/tasks? shown|No tasks/),'filtering announces the count, not the whole list: "'+d.querySelector('#live').textContent+'"');
+  d.querySelector('[data-filtercat]').click();
+  d.querySelector('#taskList [data-task]').click(); audit('Task editor');
+  P(d.querySelector('#tf_title').getAttribute('aria-required')==='true','title marked required');
+  d.querySelector('[data-close]').click();
+  d.querySelector('[data-view=tonight]').click();
+  d.querySelector('[data-sheet=home]').click();
+  d.querySelector('[data-section]').click(); audit('Section editor');
+  process.exit(0);
+},900);

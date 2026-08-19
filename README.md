@@ -1,18 +1,10 @@
 # On We Go
 
-A campaign tracker that behaves like a world instead of a checklist. One HTML file, one serverless function, no framework, no build step.
+A customisable, gamified productivity app that behaves like a world instead of a checklist.
 
-Ships with the **Maasverse** campaign loaded: *Kingdom of Ash* Ch. 58 → epilogue (Aug 18–30), then all three *Crescent City* books, ending Oct 25 with Oct 26 as buffer and Oct 27 as the finish line.
+Anything with parts, amounts and a deadline fits: a course, a training block, a renovation, a thesis, a job hunt, a reading campaign. You define worlds, tasks and tracks; the app handles pacing, momentum and the part where falling behind doesn't feel like failure.
 
-```
-www/index.html              the entire app
-netlify/functions/sync.mjs  cross-device sync
-netlify.toml                build + routing
-capacitor.config.json       iOS wrapper config (for TestFlight later)
-package.json
-```
-
----
+**The build currently ships with an example campaign** — a 69-day Sarah J. Maas reading run ending 27 Oct 2026 — as seed content for testing against a real use case. It comes out before public launch, replaced by generic starter content. The engine knows nothing about books: everything is worlds, tasks, units and dates, with the labels supplied by whoever is using it.
 
 ## 1. Push it to GitHub
 
@@ -182,6 +174,10 @@ Types are a set — a task can be several at once, and the nightly reading quest
 | **Milestone** | No work — marks a moment |
 | **Bonus** | Earns XP but never touches the pace |
 
+## Dependency and Node versions
+
+`package.json` pins `@netlify/blobs` to an exact version rather than a range, and `netlify.toml` pins `NODE_VERSION`. That is deliberate: a floating `latest` means your build resolves to whatever was published that morning, which is a bad way to find out a new major exists. If you bump the pin, check the new version's `engines` field against the pinned Node version.
+
 ## If you rename the project
 
 Three strings have to agree, and two of them live in different files:
@@ -195,6 +191,32 @@ Three strings have to agree, and two of them live in different files:
 Renaming the GitHub repo or the Netlify site changes none of these. Renaming the strings without care does two things: a mismatched header makes every sync call fail with a misleading "passphrase too short", and a changed storage key makes the app look freshly wiped even though the data is still there.
 
 This build handles the questline → onwego rename for you: it reads the old device key and the old blob store if the new ones are empty, and the function still accepts the old header. Those fallbacks can be deleted once you've launched the app on every device you use.
+
+## Accounts and sync (Neon)
+
+Sign-in is handled by **Managed Better Auth** on Neon; data lives in your Neon Postgres. There is no passphrase any more.
+
+**Files involved**
+
+| File | Job |
+|---|---|
+| `www/config.js` | Your Auth URL and (for iOS) your site address |
+| `db/schema.sql` | Run once in the Neon SQL Editor |
+| `netlify/functions/sync.mjs` | Verifies the session token, reads/writes your rows |
+
+**Netlify environment variables**
+
+| Name | Value |
+|---|---|
+| `DATABASE_URL` | Neon **pooled** connection string |
+| `NEON_AUTH_URL` | The branch's Auth URL |
+| `ALLOW_EMAILS` | Optional. Comma-separated invite list; empty means anyone can sign up |
+
+**How a request is trusted.** The browser signs in against Neon and gets a session token. Every call to `/api/sync` carries that token, and the function verifies it against the auth service's published JWKS before touching the database. The user id inside the verified token is the only thing that selects rows — never the request body, never a query parameter. Two accounts cannot see each other's data even if one of them tries.
+
+**Signed out, the app still works.** Everything is local-first: logging a night, planting a tree, editing tasks all work with no account and no signal. Signing in adds sync and cloud backups. Sign out and the device keeps everything it had.
+
+**First sign-in with existing progress** pushes the device's copy up rather than pulling an empty account down — the reading you already did wins.
 
 ## Where your data lives
 
