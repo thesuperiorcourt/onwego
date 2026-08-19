@@ -17,11 +17,34 @@ Sections are by **category**, not by tab, because most of these cut across scree
 ---
 
 ## 2. Gamification
-
 The heart of the product, and the part that will take longest to get right. Not the core system — the core is projects and pacing — but the reason anyone stays.
 
 ### Layered progression
 The spine everything hangs from: upgrades, loot, skill trees, prestige. Effort compounds visibly. Manual work should evolve into automation — the "earn your way out of grunt work" arc that idle games do so well. In a productivity context, automation can mean *permission*: the app granting you the right to skip, batch, or auto-complete something you've proven you can do.
+
+### Simple interactions, combinatorial depth
+The core interactions should be easy to understand almost immediately, while depth comes from how simple things combine, interact and chain together. Complexity should emerge from possibilities, not complicated controls.
+* Favor clear verbs: drag, combine, assign, collect, craft, sell, equip, upgrade.
+* Let simple inputs create increasingly useful or valuable outputs.
+* Build chains where one result becomes the ingredient, resource or prerequisite for something else.
+* Let the same items, resources or tools participate in multiple systems so players discover increasingly clever uses for what they already have.
+* New complexity should come primarily from new combinations and interactions, not from making individual actions harder to understand.
+* Give players frequent small moments of cause and effect: combine these things, assign this here, and something visibly happens.
+* Let optimization emerge naturally as players discover better recipes, combinations, assignments and sequences.
+* Favor combinatorial strategy across resources, equipment, cards, staff and systems over isolated upgrade trees.
+* Start with a premise that can be understood in seconds, then reveal substantially more depth than the premise initially suggests.
+
+### Transformation chains
+Real-world effort should turn into things that turn into other things. Avoid reducing productivity to task → XP → level when the same effort could flow through a visible production or progression system.
+* Favor tangible chains: effort → resource → ingredient → product → sale → upgrade → new capability.
+* Let outputs from one stage become meaningful inputs for another.
+* Make it easy to see where something came from, what it became and what it can now enable.
+* Small actions should frequently create visible transformations even when larger goals take time.
+* Resources should have purposes beyond accumulation: crafting, trading, upgrading, staffing, unlocking, combining or investing.
+* Allow production chains to grow in complexity as new resources, recipes, staff, equipment and automation become available.
+* Let earlier manual transformations eventually become streamlined or automated, opening room for higher-level decisions.
+* Progress should visibly alter the state of the world: businesses grow, environments change, collections fill, staff appear, equipment improves and new spaces open.
+* The player should be able to look at the current game state and see what their real-world effort has become.
 
 ### Depth to aim at
 Many upgrades (think in the hundreds, not the dozens). Equipment or loadout combinations. Secrets. Jackpots. Deckbuilding-adjacent strategy where choices interact. New mechanics between areas so the game changes as you go, rather than the same loop with bigger numbers.
@@ -44,6 +67,63 @@ Backstories, characters, exploration, design and decoration — for narrative mo
 - No dead time.
 - The reward layer must introduce itself. Four unexplained currencies is worse than one explained one.
 - Nothing punishes. Difficulty is opt-in; failure is never humiliating.
+
+### Expansion over inflation
+Progress should unlock **new capabilities, not just bigger numbers**. New mechanics, jobs, resources, areas, characters, equipment, recipes and strategic options should keep appearing throughout the experience.
+- Early/manual work should lead to genuinely different things the player can do later.
+- Avoid long stretches where progression only increases speed, output or currency totals.
+- Unlocks should change decisions, not merely make the same decision more efficient.
+- The player should regularly have the feeling of, *wait, I can do that now?*
+
+### Interconnected systems
+Depth should come from systems interacting with one another, not from piling on disconnected activities.
+- Skills, equipment, staff, resources, projects, exploration and rewards should feed into each other.
+- Prefer "this unlocks that" chains over separate feature silos.
+- Something earned in one part of the game should often create possibilities somewhere else.
+- The more the player progresses, the more interesting the relationships between systems should become.
+
+### Meaningful choices
+Progression should create different possible paths rather than one obvious upgrade ladder.
+- Choices can unlock different tools, jobs, strategies, staff, equipment, mechanics or future upgrades.
+- Equipment and loadouts should create combinations and tradeoffs, not simply higher stats.
+- Earlier choices can shape what becomes available later without permanently trapping the player.
+- Respeccing or changing direction should be possible enough that experimentation feels safe.
+
+### Management as strategy
+The business metaphor should create real management decisions, not just business-themed rewards.
+- Give players resources, staff, schedules, capacity, inventory, production or competing priorities to manage.
+- As progression deepens, the question should shift from *what task do I need to complete?* toward *what should I do with the resources and options I have?*
+- Staff and automation should gradually take over routine work while creating higher-level decisions.
+- New complexity should arrive coherently, after the player understands the systems it builds on.
+
+### Discovery creates momentum
+The player should never know absolutely everything waiting ahead.
+- Hide some mechanics, rewards, characters, areas, upgrades and unusual events until they are discovered naturally.
+- Secrets and rare jackpots should make ordinary play capable of producing unexpected moments.
+- New areas should introduce surprises rather than simply reskinning the same progression loop.
+- Curiosity about what comes next should be one of the reasons to return.
+
+### Visible transformation
+Work should leave a persistent, visible mark on the game world.
+- Businesses grow. Environments change. Collections fill. Staff appear. Equipment improves. New spaces open.
+- A player should be able to look at something and immediately see evidence of what their real-world effort has built.
+- Favor transformation over abstract level numbers whenever possible.
+- Environmental progress can provide motivation even when the underlying productivity goal is repetitive.
+
+### Return momentum
+Every session should deliver some payoff while exposing an appealing next step.
+- Leave upgrades nearly within reach, areas partly unlocked, discoveries unresolved or meaningful choices waiting.
+- Short sessions should still move something visible forward.
+- The player should have a clear reason to reopen the app without relying on punishment, guilt or streak anxiety.
+- Design for *wanting to see what happens next*, not merely remembering that another task is due.
+
+### Creativity without placement burden
+Customization should create ownership and personality without turning into a blank-canvas design problem.
+- Favor presets, themes, snapping, auto-layout and easily reversible choices.
+- Avoid requiring players to individually position large numbers of rooms, machines, furniture or decorative objects.
+- Functional progression should not depend on making a space look good.
+- Detailed decorating can exist for people who love it, but optimal gameplay should never require it.
+- Give players strong defaults so customization starts from *change this if you want* rather than *build everything from nothing*.
 
 ---
 
