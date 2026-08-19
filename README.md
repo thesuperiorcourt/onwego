@@ -1,4 +1,4 @@
-# Questline
+# OnWeGo
 
 A campaign tracker that behaves like a world instead of a checklist. One HTML file, one serverless function, no framework, no build step.
 
@@ -17,10 +17,10 @@ package.json
 ## 1. Push it to GitHub
 
 ```bash
-cd questline
+cd onwego
 git init
 git add .
-git commit -m "Questline"
+git commit -m "onwego"
 git branch -M main
 git remote add origin https://github.com/YOUR-NAME/YOUR-REPO.git
 git push -u origin main
@@ -60,7 +60,7 @@ npx cap open ios
 
 Before the first build:
 
-1. In `capacitor.config.json`, change `appId` to your real bundle ID (`com.yourname.questline`) and register that same ID in App Store Connect.
+1. In `capacitor.config.json`, change `appId` to your real bundle ID (`com.yourname.onwego`) and register that same ID in App Store Connect.
 2. In the app, set **Site address** in the sync sheet to your Netlify URL (`https://your-site.netlify.app`). The native shell serves the HTML locally, so it needs the full URL to reach the sync function — on the web version, leave it blank.
 3. In Xcode: pick your team under Signing & Capabilities, set the version and build number.
 
