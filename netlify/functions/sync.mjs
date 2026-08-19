@@ -79,10 +79,11 @@ export default async (req) => {
     return json({ error: err.message }, err.status || 401);
   }
 
-  const sql = globalThis.__onwegoSql || db();
   const url = new URL(req.url);
 
   try {
+    const sql = globalThis.__onwegoSql || db();
+
     if (req.method === 'GET') {
       if (url.searchParams.get('snapshots')) {
         const rows = await sql`
