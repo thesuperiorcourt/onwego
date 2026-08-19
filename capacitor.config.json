@@ -1,0 +1,9 @@
+{
+  "appId": "com.CHANGE-ME.onwego",
+  "appName": "On We Go",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0A0720"
+  }
+}
