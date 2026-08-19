@@ -1,0 +1,144 @@
+import { neon } from '@neondatabase/serverless';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+
+/* On We Go — sync + backups, per account.
+
+   GET  /api/sync                → { ok, data }          this account's save
+   GET  /api/sync?snapshots=1    → { ok, snapshots:[] }  dated backups, newest first
+   GET  /api/sync?snapshot=STAMP → { ok, data }          one dated backup
+   POST /api/sync                → { ok, updatedAt }     saves, keeps a daily snapshot
+
+   Every request carries a session token from Managed Better Auth in the
+   Authorization header. The token is verified against the auth service's
+   published JWKS, so this function never sees a password and a forged or
+   expired token gets nothing. The user id inside the token decides which rows
+   are readable — it is never taken from the body or the query string.
+
+   Environment variables (set in Netlify):
+     DATABASE_URL   Neon pooled connection string
+     NEON_AUTH_URL  the branch's Auth URL
+     ALLOW_EMAILS   optional comma-separated allowlist; empty means open signup
+*/
+
+const CORS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET,POST,OPTIONS',
+  'access-control-allow-headers': 'content-type,authorization',
+  'cache-control': 'no-store'
+};
+const json = (body, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...CORS, 'content-type': 'application/json' } });
+
+let jwks = null;
+function keySet() {
+  if (jwks) return jwks;
+  const base = (process.env.NEON_AUTH_URL || '').replace(/\/$/, '');
+  if (!base) throw new Error('NEON_AUTH_URL is not set');
+  jwks = createRemoteJWKSet(new URL(base + '/.well-known/jwks.json'));
+  return jwks;
+}
+
+/* Returns { id, email } or throws. */
+async function whoIs(req) {
+  const header = req.headers.get('authorization') || '';
+  const token = header.toLowerCase().startsWith('bearer ') ? header.slice(7).trim() : '';
+  if (!token) { const e = new Error('Not signed in'); e.status = 401; throw e; }
+
+  let payload;
+  try {
+    ({ payload } = await (globalThis.__onwegoVerify || jwtVerify)(token, keySet()));
+  } catch (err) {
+    const e = new Error('Session expired or invalid');
+    e.status = 401; throw e;
+  }
+  const id = payload.sub || payload.userId || payload.id;
+  if (!id) { const e = new Error('Token carries no user'); e.status = 401; throw e; }
+
+  const allow = (process.env.ALLOW_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  const email = (payload.email || '').toLowerCase();
+  if (allow.length && !allow.includes(email)) {
+    const e = new Error('This account is not on the invite list yet');
+    e.status = 403; throw e;
+  }
+  return { id: String(id), email };
+}
+
+function db() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('DATABASE_URL is not set');
+  return neon(url);
+}
+
+export default async (req) => {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+
+  let user;
+  try {
+    user = await whoIs(req);
+  } catch (err) {
+    return json({ error: err.message }, err.status || 401);
+  }
+
+  const sql = globalThis.__onwegoSql || db();
+  const url = new URL(req.url);
+
+  try {
+    if (req.method === 'GET') {
+      if (url.searchParams.get('snapshots')) {
+        const rows = await sql`
+          select to_char(stamp, 'YYYY-MM-DD') as stamp
+            from app_snapshot
+           where user_id = ${user.id}
+           order by stamp desc`;
+        return json({ ok: true, snapshots: rows.map(r => r.stamp) });
+      }
+
+      const stamp = url.searchParams.get('snapshot');
+      if (stamp) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(stamp)) return json({ error: 'Bad snapshot name' }, 400);
+        const rows = await sql`
+          select data from app_snapshot
+           where user_id = ${user.id} and stamp = ${stamp}::date`;
+        return json({ ok: true, data: rows.length ? rows[0].data : null });
+      }
+
+      const rows = await sql`select data from app_state where user_id = ${user.id}`;
+      return json({ ok: true, data: rows.length ? rows[0].data : null, email: user.email });
+    }
+
+    if (req.method === 'POST') {
+      const incoming = await req.json();
+      if (!incoming || !Array.isArray(incoming.worlds)) return json({ error: 'Not an On We Go payload' }, 400);
+      const updatedAt = Number(incoming.updatedAt) || 0;
+
+      /* A device that has been offline must not overwrite newer work done
+         elsewhere — hand the newer copy back instead. */
+      const current = await sql`select data, updated_at from app_state where user_id = ${user.id}`;
+      if (current.length && Number(current[0].updated_at) > updatedAt) {
+        return json({ ok: true, stale: true, data: current[0].data });
+      }
+
+      await sql`
+        insert into app_state (user_id, data, updated_at, saved_at)
+        values (${user.id}, ${JSON.stringify(incoming)}::jsonb, ${updatedAt}, now())
+        on conflict (user_id) do update
+          set data = excluded.data, updated_at = excluded.updated_at, saved_at = now()`;
+
+      const stamp = new Date().toISOString().slice(0, 10);
+      await sql`
+        insert into app_snapshot (user_id, stamp, data, saved_at)
+        values (${user.id}, ${stamp}::date, ${JSON.stringify(incoming)}::jsonb, now())
+        on conflict (user_id, stamp) do update
+          set data = excluded.data, saved_at = now()`;
+      await sql`select prune_snapshots(${user.id}, 30)`;
+
+      return json({ ok: true, updatedAt, snapshot: stamp });
+    }
+  } catch (err) {
+    return json({ error: 'Storage error', detail: String(err && err.message || err) }, 500);
+  }
+
+  return json({ error: 'Method not allowed' }, 405);
+};
+
+export const config = { path: '/api/sync' };

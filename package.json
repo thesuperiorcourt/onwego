@@ -1,0 +1,19 @@
+{
+  "name": "onwego",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "On We Go — a campaign tracker that behaves like a world instead of a checklist.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "netlify dev",
+    "ios": "npx cap sync ios && npx cap open ios"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "1.1.0",
+    "jose": "6.2.9",
+    "jsdom": "^30.0.1"
+  }
+}

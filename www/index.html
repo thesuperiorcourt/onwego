@@ -1,0 +1,3130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0720">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="On We Go">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="A reading campaign tracker that behaves like a world instead of a checklist.">
+<title>Tonight · On We Go</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..800,50,1;1,9..144,400..700,50,1&family=Figtree:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ON WE GO
+   Built to WCAG 2.1 AA: every text colour is checked against the
+   surface it actually lands on, colour never carries meaning on
+   its own, and nothing needs a mouse.
+   Theme packs live in THEMES (see script).
+   ============================================================ */
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--sky-1);
+  color:var(--ink);
+  font-family:'Figtree',ui-sans-serif,system-ui,-apple-system,sans-serif;
+  font-size:16px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+:root{
+  --sky-1:#0A0720; --sky-2:#1D1547; --sky-3:#3B2A6E;
+  --ink:#EFE9FF; --muted:#B6A9DE;
+  --glow:#F3C56B; --bloom:#F0709E; --leaf:#63C6A3;
+  --glow-ink:#F3C56B; --bloom-ink:#F0709E; --leaf-ink:#63C6A3;
+  --ground:#150F33; --ground-2:#241A55;
+  --card:rgba(10,7,32,.88); --edge:rgba(255,255,255,.16); --edge-strong:#6E63A0;
+  --focus:#F3C56B; --btn-ink:#241704;
+  --r:22px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+  --dock-h:calc(70px + var(--safe-b));
+}
+h1,h2,h3,h4,.display{
+  font-family:'Fraunces',Georgia,serif;
+  font-variation-settings:'SOFT' 50,'WONK' 1,'opsz' 96;
+  font-weight:600;letter-spacing:-.01em;margin:0;
+}
+.eyebrow{
+  font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;text-align:left}
+
+/* Focus is never removed, only replaced with something clearer. */
+:focus{outline:none}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:14px}
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+.skip{
+  position:absolute;left:12px;top:-120px;z-index:99;
+  background:var(--glow);color:var(--btn-ink);font-weight:700;padding:14px 18px;border-radius:0 0 14px 14px;
+  text-decoration:none;
+}
+.skip:focus{top:0}
+
+/* ---------------------------------------------------- app frame */
+#app{min-height:100%;display:flex;flex-direction:column}
+#main:focus{outline:none}
+.screen{flex:1;padding-bottom:calc(var(--dock-h) + 20px);animation:rise .45s cubic-bezier(.2,.7,.3,1)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.wrap{padding:0 18px;max-width:560px;margin:0 auto}
+.page-title{font-size:28px}
+
+/* ---------------------------------------------------- the scene */
+.scene{position:relative;height:46vh;min-height:290px;max-height:420px;overflow:hidden}
+.scene svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.scene .veil{
+  position:absolute;left:0;right:0;bottom:0;height:38%;
+  background:linear-gradient(to bottom,transparent,var(--sky-1) 92%);pointer-events:none;
+}
+.scene-cap{position:absolute;left:18px;right:18px;top:calc(14px + var(--safe-t));display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.worldbtn,.counter{
+  background:var(--card);border:1px solid var(--edge-strong);border-radius:999px;
+  backdrop-filter:blur(8px);min-height:44px;padding:9px 15px;
+}
+.worldbtn{display:flex;align-items:center;gap:8px}
+.worldbtn b{font-family:'Fraunces',serif;font-weight:600;font-size:15px}
+.worldbtn small,.counter small{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.counter{text-align:right}
+.counter b{display:block;font-family:'Fraunces',serif;font-size:19px;line-height:1.15;color:var(--glow-ink)}
+
+.mote{position:absolute;border-radius:50%;opacity:.5;filter:blur(.4px);animation:drift linear infinite;pointer-events:none}
+@keyframes drift{
+  0%{transform:translate3d(0,0,0);opacity:0}
+  15%{opacity:.65}
+  85%{opacity:.5}
+  100%{transform:translate3d(24px,-90px,0);opacity:0}
+}
+
+/* ---------------------------------------------------- cards */
+.card{
+  background:var(--card);border:1px solid var(--edge);border-radius:var(--r);
+  padding:20px;backdrop-filter:blur(14px);
+}
+.quest{margin-top:-46px;position:relative;z-index:2;box-shadow:0 24px 60px -30px rgba(0,0,0,.9)}
+.quest .date{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.quest .stars{color:var(--glow-ink);letter-spacing:2px;font-size:13px}
+.quest h1{font-size:clamp(27px,7.4vw,36px);line-height:1.05;margin:8px 0 14px;font-variation-settings:'SOFT' 50,'WONK' 1,'opsz' 144;font-weight:700}
+.target{
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  padding:14px 16px;border-radius:16px;background:var(--card);border:1px solid var(--edge-strong);
+}
+.target b{font-family:'Fraunces',serif;font-size:22px;color:var(--glow-ink)}
+.target span{color:var(--muted);font-size:13.5px}
+
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.tier{
+  border:1px solid var(--edge-strong);border-radius:16px;padding:12px 8px;text-align:center;
+  background:transparent;min-height:92px;transition:transform .15s,border-color .2s,background .2s;
+}
+.tier:active{transform:scale(.96)}
+.tier b{display:block;font-family:'Fraunces',serif;font-size:15px}
+.tier small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.tier .pay{display:block;margin-top:7px;font-size:12px;color:var(--glow-ink);letter-spacing:.03em}
+.tier .impact{display:block;margin-top:5px;font-size:11.5px;color:var(--muted);line-height:1.25}
+.tier[aria-pressed="true"]{border-color:var(--leaf-ink);border-width:2px}
+.tier[aria-pressed="true"] b::before{content:'✓ '}
+
+.bait{margin-top:14px}
+.bait-btn{
+  width:100%;text-align:left;padding:15px 16px;border-radius:16px;min-height:52px;
+  border:1px dashed var(--edge-strong);background:transparent;
+  display:flex;align-items:center;gap:10px;color:var(--glow-ink);font-weight:600;font-size:14.5px;
+}
+.bait-open{
+  padding:15px 16px;border-radius:16px;background:var(--card);
+  border:1px solid var(--edge-strong);animation:rise .4s ease;
+}
+.bait-open p{margin:0;font-family:'Fraunces',serif;font-size:17px;line-height:1.4;font-variation-settings:'SOFT' 50,'WONK' 1,'opsz' 60}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  font-size:12.5px;padding:8px 12px;border-radius:999px;
+  background:transparent;border:1px solid var(--edge-strong);color:var(--muted);
+  display:inline-flex;align-items:center;
+}
+button.chip{min-height:44px;padding:8px 14px}
+button.chip[aria-pressed="true"]{border-color:var(--glow-ink);border-width:2px;color:var(--ink)}
+button.chip[aria-pressed="true"]::after{content:' ✓';color:var(--glow-ink)}
+.chip b{color:var(--ink);font-weight:600}
+
+.momentum{margin-top:18px}
+.bar{height:10px;border-radius:99px;background:rgba(127,127,127,.32);overflow:hidden;margin-top:7px;border:1px solid var(--edge)}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--glow-ink);transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.momentum .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;color:var(--muted)}
+.momentum .row b{color:var(--ink);font-weight:600}
+
+.escape{
+  margin-top:14px;width:100%;text-align:left;padding:16px;border-radius:18px;
+  background:transparent;border:1px solid var(--edge-strong);
+}
+.escape b{display:block;font-family:'Fraunces',serif;font-size:16.5px;color:var(--bloom-ink)}
+.escape small{color:var(--muted);font-size:13px;line-height:1.5;display:block;margin-top:4px}
+
+/* ---------------------------------------------------- sections */
+.sec{margin-top:26px}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px}
+.sec-head h2{font-size:21px}
+.link{font-size:13.5px;color:var(--glow-ink);font-weight:600;padding:10px 4px;min-height:44px;display:inline-flex;align-items:center}
+
+/* ---------------------------------------------------- campaign map */
+.trail{position:relative;padding-left:34px;list-style:none;margin:0}
+.trail::before{content:'';position:absolute;left:11px;top:6px;bottom:6px;width:2px;background:var(--edge-strong)}
+.node{position:relative;padding:12px 0}
+.node::before{
+  content:'';position:absolute;left:-28px;top:18px;width:12px;height:12px;border-radius:50%;
+  background:var(--sky-1);border:2px solid var(--edge-strong);
+}
+.node.done::before{background:var(--leaf-ink);border-color:var(--leaf-ink)}
+.node.today::before{background:var(--glow-ink);border-color:var(--glow-ink);box-shadow:0 0 0 5px rgba(127,127,127,.28)}
+.node .d{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.node h3{font-size:16px;margin:2px 0 3px;font-variation-settings:'SOFT' 50,'WONK' 1,'opsz' 40}
+.node p{margin:0;font-size:13.5px;color:var(--muted)}
+.node .res{font-size:12px;color:var(--leaf-ink);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.node .res.now{color:var(--glow-ink)}
+.realm-head{
+  margin:22px 0 6px;padding:14px 16px;border-radius:18px;
+  background:var(--card);border:1px solid var(--edge-strong);
+}
+.realm-head h2{font-size:18px}
+.realm-head small{color:var(--muted);font-size:12.5px}
+
+/* ---------------------------------------------------- hoard */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{padding:16px;border-radius:18px;background:var(--card);border:1px solid var(--edge)}
+.stat b{display:block;font-family:'Fraunces',serif;font-size:26px;line-height:1.15;color:var(--glow-ink)}
+.stat small{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.loot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:9px;list-style:none;padding:0;margin:0}
+.loot{
+  border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;text-align:center;padding:12px 8px;background:var(--card);border:1px solid var(--edge-strong);
+}
+.loot .g{font-size:24px;line-height:1}
+.loot .n{font-size:12px;font-weight:600;line-height:1.25}
+.loot small{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.loot.rare{border-color:var(--leaf-ink)}
+.loot.epic{border-color:var(--bloom-ink)}
+.loot.legendary{border-color:var(--glow-ink);border-width:2px}
+
+.shelf{display:flex;flex-direction:column;gap:9px;list-style:none;padding:0;margin:0}
+.row-item{
+  display:flex;align-items:center;gap:13px;padding:15px 16px;border-radius:18px;min-height:56px;
+  background:var(--card);border:1px solid var(--edge);text-align:left;width:100%;
+}
+.row-item .g{font-size:21px;flex:none}
+.row-item .t{flex:1;min-width:0}
+.row-item .t b{display:block;font-size:15px;font-weight:600}
+.row-item .t small{color:var(--muted);font-size:12.5px;display:block;line-height:1.4}
+.row-item .bar{margin-top:8px;height:7px}
+.row-item[aria-pressed="true"]{border-color:var(--glow-ink);border-width:2px}
+.row-item .price{color:var(--glow-ink);font-weight:700;font-size:14px;white-space:nowrap}
+.row-item.locked{border-style:dashed}
+.row-item.claimed{border-color:var(--leaf-ink);border-width:2px}
+.ach.got{border-color:var(--glow-ink)}
+
+/* ---------------------------------------------------- focus mode */
+.sprint{
+  display:flex;align-items:center;gap:14px;width:100%;padding:17px 16px;border-radius:20px;
+  background:var(--card);border:1px solid var(--edge-strong);text-align:left;min-height:64px;
+}
+.sprint .g{font-size:26px}
+.sprint b{display:block;font-family:'Fraunces',serif;font-size:17px}
+.sprint small{color:var(--muted);font-size:13px}
+
+.timer-face{text-align:center;padding:20px 0 10px;position:relative}
+.timer-face .t{
+  font-family:'Fraunces',serif;font-size:60px;line-height:1;font-variation-settings:'opsz' 144;
+  color:var(--glow-ink);font-variant-numeric:tabular-nums;
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-56%);
+}
+.ring{width:190px;height:190px;margin:0 auto;display:block}
+.ring circle{fill:none;stroke-width:8;stroke-linecap:round}
+.ring .bg{stroke:rgba(127,127,127,.34)}
+.ring .fg{stroke:var(--glow-ink);transition:stroke-dashoffset 1s linear;transform:rotate(-90deg);transform-origin:50% 50%}
+
+/* ---------------------------------------------------- dock */
+.dock{
+  position:fixed;left:0;right:0;bottom:0;height:var(--dock-h);padding-bottom:var(--safe-b);
+  display:flex;background:var(--card);backdrop-filter:blur(18px);
+  border-top:1px solid var(--edge-strong);z-index:40;
+}
+.dock button{
+  position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:var(--muted);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;text-align:center;min-height:56px;
+}
+.dock button .g{font-size:20px;line-height:1}
+.dock button[aria-current="page"]{color:var(--glow-ink);font-weight:700}
+.dock button[aria-current="page"]::after{
+  content:'';position:absolute;bottom:6px;width:22px;height:3px;border-radius:9px;background:var(--glow-ink);
+}
+
+/* ---------------------------------------------------- sheets & modals */
+.veilbg{position:fixed;inset:0;background:rgba(5,3,18,.74);backdrop-filter:blur(4px);z-index:50;animation:fade .25s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:51;max-height:88vh;overflow:auto;
+  background:var(--sky-1);
+  border-top-left-radius:28px;border-top-right-radius:28px;border-top:1px solid var(--edge-strong);
+  padding:10px 18px calc(28px + var(--safe-b));animation:up .35s cubic-bezier(.2,.8,.25,1);
+}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.grab{width:40px;height:4px;border-radius:99px;background:var(--edge-strong);margin:6px auto 6px}
+.sheet-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
+.close{
+  width:44px;height:44px;border-radius:999px;border:1px solid var(--edge-strong);
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex:none;
+}
+.sheet h2{font-size:23px;margin-bottom:4px}
+.sheet .sub{color:var(--muted);font-size:14px;margin:0 0 18px}
+.err{color:var(--bloom-ink);font-size:14px;font-weight:600;margin:0 0 12px}
+
+.drop{
+  position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:26px;
+  background:rgba(5,3,18,.92);animation:fade .3s ease;
+}
+.drop-card{
+  text-align:center;padding:34px 26px;border-radius:28px;max-width:340px;width:100%;
+  background:var(--sky-1);border:2px solid var(--glow-ink);animation:pop .5s cubic-bezier(.2,1.3,.4,1);
+}
+@keyframes pop{0%{transform:scale(.7) rotate(-4deg);opacity:0}100%{transform:none;opacity:1}}
+.drop-card .g{font-size:62px;display:block;animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.drop-card h2{font-size:26px;margin:12px 0 6px}
+.drop-card .rarity{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--glow-ink);font-weight:700}
+.drop-card p{color:var(--muted);font-size:14.5px;margin:10px 0 20px}
+
+.btn{
+  display:block;width:100%;padding:16px;border-radius:16px;text-align:center;font-weight:700;font-size:15.5px;
+  background:var(--glow);color:var(--btn-ink);min-height:52px;border:1px solid transparent;
+}
+.btn.ghost{background:transparent;border-color:var(--edge-strong);color:var(--ink)}
+.btn.line{background:transparent;border-color:var(--edge-strong);color:var(--muted);font-weight:600;font-size:14px}
+.btn+.btn{margin-top:9px}
+
+label.f{display:block;margin-bottom:14px}
+label.f>span{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+label.f .hint{text-transform:none;letter-spacing:0;font-size:12.5px}
+input,select,textarea{
+  width:100%;padding:14px;border-radius:14px;background:transparent;
+  border:1px solid var(--edge-strong);color:var(--ink);font:inherit;font-size:16px;min-height:52px;
+}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
+input[type=date]{-webkit-appearance:none}
+.swatches{display:flex;gap:10px;flex-wrap:wrap;list-style:none;padding:0;margin:0}
+.sw{
+  width:84px;min-height:84px;border-radius:18px;border:2px solid var(--edge-strong);position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:8px;
+}
+.sw[aria-pressed="true"]{border-color:var(--focus);border-width:3px}
+.sw .n{font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.95)}
+.sw .dot{position:absolute;top:14px;width:16px;height:16px;border-radius:50%}
+.sw .on{position:absolute;top:7px;right:9px;font-size:14px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.95)}
+
+.empty{text-align:center;padding:34px 20px;color:var(--muted);font-size:14.5px}
+.empty b{display:block;font-family:'Fraunces',serif;font-size:19px;color:var(--ink);margin-bottom:6px}
+
+#live{position:fixed;left:50%;bottom:calc(var(--dock-h) + 16px);transform:translateX(-50%);z-index:70;pointer-events:none;display:flex;justify-content:center}
+.toast{
+  padding:13px 18px;border-radius:99px;background:var(--sky-1);border:1px solid var(--edge-strong);
+  font-size:14px;font-weight:600;animation:rise .3s ease;max-width:92vw;text-align:center;
+}
+
+/* Motion: the system preference, or the switch in Settings. */
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  .mote{display:none}
+}
+html.calm *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+html.calm .mote{display:none}
+
+@media (forced-colors:active){
+  .card,.tier,.row-item,.chip,.btn,.sheet,.drop-card,.sw{border:1px solid CanvasText}
+  .bar i{background:Highlight}
+}
+</style>
+</head>
+<body>
+<script src="./config.js"></script>
+<a class="skip" href="#main">Skip to tonight's quest</a>
+<div id="app">
+  <main id="main" tabindex="-1"></main>
+  <nav class="dock" id="dock" aria-label="Sections"></nav>
+</div>
+<div id="live" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+const MAASVERSE_CAMPAIGN = {"id":"maasverse","name":"Maasverse","tagline":"Kingdom of Ash \u2192 Crescent City \u2192 the 27th","unit":"chapter","unitPlural":"chapters","currency":"Wyrdmarks","xpName":"Reading XP","theme":"midnight","start":"2026-08-18","end":"2026-10-26","launch":"2026-10-27","launchLabel":"ACOTAR 6","bufferDay":"2026-10-26","books":[{"id":"koa","title":"Kingdom of Ash","short":"KOA","realm":"Erilea","start":"2026-08-18","end":"2026-08-30","units":65,"first":"Ch. 58","last":"Epilogue","startNote":"Resuming at Ch. 58"},{"id":"cc1","title":"House of Earth and Blood","short":"CC1","realm":"Lunathion","start":"2026-08-31","end":"2026-09-18","units":98,"first":"Ch. 1","last":"Epilogue","startNote":"From the top"},{"id":"cc2","title":"House of Sky and Breath","short":"CC2","realm":"The Eternal City","start":"2026-09-19","end":"2026-10-06","units":80,"first":"Prologue","last":"Epilogue","startNote":"From the top"},{"id":"cc3","title":"House of Flame and Shadow","short":"CC3","realm":"Beneath","start":"2026-10-07","end":"2026-10-25","units":104,"first":"Prologue","last":"Epilogue","startNote":"From the top"}],"days":[{"date":"2026-08-18","book":"koa","bookTitle":"Kingdom of Ash","title":"BACK IN THE SADDLE","fromUnit":"Ch. 58","toUnit":"Ch. 62","fromIdx":0,"toIdx":4,"goal":5,"minWin":2,"bait":"You are literally three chapters from a major payoff. Do not stop here.","stars":1,"mode":"Read + Listen","speed":"1.5\u00d7"},{"date":"2026-08-19","book":"koa","bookTitle":"Kingdom of Ash","title":"THE DAM IS BREAKING","fromUnit":"Ch. 63","toUnit":"Ch. 67","fromIdx":5,"toIdx":9,"goal":5,"minWin":2,"bait":"The current storyline resolves enough that the book changes gears.","stars":0,"mode":"Physical + audio","speed":"1.25\u00d7"},{"date":"2026-08-20","book":"koa","bookTitle":"Kingdom of Ash","title":"NEW PART, NEW BRAIN","fromUnit":"Ch. 68","toUnit":"Ch. 72","fromIdx":10,"toIdx":14,"goal":5,"minWin":2,"bait":"PART TWO \u2014 Gods and Gates. Fresh-start effect, plus extremely Dorian-is-smarter-than-everyone material.","stars":2,"mode":"Read + Listen","speed":"1.75\u00d7"},{"date":"2026-08-21","book":"koa","bookTitle":"Kingdom of Ash","title":"THE MAP REDRAWS ITSELF","fromUnit":"Ch. 73","toUnit":"Ch. 77","fromIdx":15,"toIdx":19,"goal":5,"minWin":2,"bait":"PART TWO \u2014 Gods and Gates. Fresh-start effect, plus extremely Dorian-is-smarter-than-everyone material.","stars":2,"mode":"Audio first, ebook to close","speed":"1.5\u00d7"},{"date":"2026-08-22","book":"koa","bookTitle":"Kingdom of Ash","title":"SMARTEST PERSON IN THE ROOM","fromUnit":"Ch. 78","toUnit":"Ch. 82","fromIdx":20,"toIdx":24,"goal":5,"minWin":2,"bait":"PART TWO \u2014 Gods and Gates. Fresh-start effect, plus extremely Dorian-is-smarter-than-everyone material.","stars":2,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-08-23","book":"koa","bookTitle":"Kingdom of Ash","title":"THREADS PULL TIGHT","fromUnit":"Ch. 83","toUnit":"Ch. 87","fromIdx":25,"toIdx":29,"goal":5,"minWin":2,"bait":"Threads start visibly converging. The everyone-is-scattered feeling drops off a cliff.","stars":0,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-08-24","book":"koa","bookTitle":"Kingdom of Ash","title":"THE SCATTERING ENDS","fromUnit":"Ch. 88","toUnit":"Ch. 92","fromIdx":30,"toIdx":34,"goal":5,"minWin":2,"bait":"This is one of THE sequences people remember from Kingdom of Ash.","stars":3,"mode":"Physical book, no audio","speed":"\u2014"},{"date":"2026-08-25","book":"koa","bookTitle":"Kingdom of Ash","title":"THE ONE PEOPLE REMEMBER","fromUnit":"Ch. 93","toUnit":"Ch. 97","fromIdx":35,"toIdx":39,"goal":5,"minWin":2,"bait":"This is one of THE sequences people remember from Kingdom of Ash.","stars":3,"mode":"Read + Listen","speed":"1.5\u00d7"},{"date":"2026-08-26","book":"koa","bookTitle":"Kingdom of Ash","title":"MYTHOLOGY UNLOCKED","fromUnit":"Ch. 98","toUnit":"Ch. 102","fromIdx":40,"toIdx":44,"goal":5,"minWin":2,"bait":"Huge series-lore payoff territory \u2014 and something here gets very fun once you start Crescent City.","stars":2,"mode":"Physical + audio","speed":"1.25\u00d7"},{"date":"2026-08-27","book":"koa","bookTitle":"Kingdom of Ash","title":"FINAL-ACT GRAVITY","fromUnit":"Ch. 103","toUnit":"Ch. 107","fromIdx":45,"toIdx":49,"goal":5,"minWin":2,"bait":"Basically no more 'when is something going to happen' problem.","stars":2,"mode":"Read + Listen","speed":"1.75\u00d7"},{"date":"2026-08-28","book":"koa","bookTitle":"Kingdom of Ash","title":"NO MORE WAITING","fromUnit":"Ch. 108","toUnit":"Ch. 112","fromIdx":50,"toIdx":54,"goal":5,"minWin":2,"bait":"Basically no more 'when is something going to happen' problem.","stars":2,"mode":"Audio first, ebook to close","speed":"1.5\u00d7"},{"date":"2026-08-29","book":"koa","bookTitle":"Kingdom of Ash","title":"THE LONG GOODBYE","fromUnit":"Ch. 113","toUnit":"Ch. 117","fromIdx":55,"toIdx":59,"goal":5,"minWin":2,"bait":"Basically no more 'when is something going to happen' problem.","stars":2,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-08-30","book":"koa","bookTitle":"Kingdom of Ash","title":"YOU DID NOT DNF","fromUnit":"Ch. 118","toUnit":"Epilogue","fromIdx":60,"toIdx":64,"goal":5,"minWin":2,"bait":"THRONE OF GLASS: COMPLETE. You did not DNF the ending.","stars":3,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-08-31","book":"cc1","bookTitle":"House of Earth and Blood","title":"WELCOME TO LUNATHION","fromUnit":"Ch. 1","toUnit":"Ch. 6","fromIdx":0,"toIdx":5,"goal":6,"minWin":2,"bait":"Day one in a new book. Lowest-friction night of the whole stretch \u2014 new world, new voice, zero backlog.","stars":2,"mode":"Audio first, ebook to close","speed":"1.5\u00d7"},{"date":"2026-09-01","book":"cc1","bookTitle":"House of Earth and Blood","title":"NEON AND NONSENSE","fromUnit":"Ch. 7","toUnit":"Ch. 12","fromIdx":6,"toIdx":11,"goal":6,"minWin":2,"bait":"Rhythm night. No cliff, no wall \u2014 just distance covered.","stars":0,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-09-02","book":"cc1","bookTitle":"House of Earth and Blood","title":"THE CITY HAS OPINIONS","fromUnit":"Ch. 13","toUnit":"Ch. 18","fromIdx":12,"toIdx":17,"goal":6,"minWin":2,"bait":"Something small here pays off much later. Bank it.","stars":0,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-09-03","book":"cc1","bookTitle":"House of Earth and Blood","title":"PARTY, THEN CONSEQUENCES","fromUnit":"Ch. 19","toUnit":"Ch. 23","fromIdx":18,"toIdx":22,"goal":5,"minWin":2,"bait":"You are in the part where putting it down is harder than continuing.","stars":0,"mode":"Physical book, no audio","speed":"\u2014"},{"date":"2026-09-04","book":"cc1","bookTitle":"House of Earth and Blood","title":"SOMETHING IS OFF","fromUnit":"Ch. 24","toUnit":"Ch. 28","fromIdx":23,"toIdx":27,"goal":5,"minWin":2,"bait":"You're past the point where quitting would feel neutral. It would now feel bad.","stars":0,"mode":"Read + Listen","speed":"1.5\u00d7"},{"date":"2026-09-05","book":"cc1","bookTitle":"House of Earth and Blood","title":"THE FLOOR TILTS","fromUnit":"Ch. 29","toUnit":"Ch. 33","fromIdx":28,"toIdx":32,"goal":5,"minWin":2,"bait":"This is the stretch people say they read in one sitting.","stars":0,"mode":"Physical + audio","speed":"1.25\u00d7"},{"date":"2026-09-06","book":"cc1","bookTitle":"House of Earth and Blood","title":"ASK THE WRONG QUESTION","fromUnit":"Ch. 34","toUnit":"Ch. 38","fromIdx":33,"toIdx":37,"goal":5,"minWin":2,"bait":"You are in the part where putting it down is harder than continuing.","stars":0,"mode":"Read + Listen","speed":"1.75\u00d7"},{"date":"2026-09-07","book":"cc1","bookTitle":"House of Earth and Blood","title":"EVERYONE IS LYING SLIGHTLY","fromUnit":"Ch. 39","toUnit":"Ch. 43","fromIdx":38,"toIdx":42,"goal":5,"minWin":2,"bait":"You're past the point where quitting would feel neutral. It would now feel bad.","stars":0,"mode":"Audio first, ebook to close","speed":"1.5\u00d7"},{"date":"2026-09-08","book":"cc1","bookTitle":"House of Earth and Blood","title":"THE MIDDLE IS THE TRAP","fromUnit":"Ch. 44","toUnit":"Ch. 48","fromIdx":43,"toIdx":47,"goal":5,"minWin":2,"bait":"Midpoint. Past here, the remaining pile is smaller than the pile behind you.","stars":0,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-09-09","book":"cc1","bookTitle":"House of Earth and Blood","title":"PUSH THROUGH THE MIDDLE","fromUnit":"Ch. 49","toUnit":"Ch. 53","fromIdx":48,"toIdx":52,"goal":5,"minWin":2,"bait":"Midpoint. Past here, the remaining pile is smaller than the pile behind you.","stars":0,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-09-10","book":"cc1","bookTitle":"House of Earth and Blood","title":"IT STOPS BEING SLOW","fromUnit":"Ch. 54","toUnit":"Ch. 58","fromIdx":53,"toIdx":57,"goal":5,"minWin":2,"bait":"You're past the point where quitting would feel neutral. It would now feel bad.","stars":0,"mode":"Physical book, no audio","speed":"\u2014"},{"date":"2026-09-11","book":"cc1","bookTitle":"House of Earth and Blood","title":"THE PIECES SNAP","fromUnit":"Ch. 59","toUnit":"Ch. 63","fromIdx":58,"toIdx":62,"goal":5,"minWin":2,"bait":"This is the stretch people say they read in one sitting.","stars":0,"mode":"Read + Listen","speed":"1.5\u00d7"},{"date":"2026-09-12","book":"cc1","bookTitle":"House of Earth and Blood","title":"OH. OH NO.","fromUnit":"Ch. 64","toUnit":"Ch. 68","fromIdx":63,"toIdx":67,"goal":5,"minWin":2,"bait":"You are in the part where putting it down is harder than continuing.","stars":0,"mode":"Physical + audio","speed":"1.25\u00d7"},{"date":"2026-09-13","book":"cc1","bookTitle":"House of Earth and Blood","title":"GLORIOUS CHAOS","fromUnit":"Ch. 69","toUnit":"Ch. 73","fromIdx":68,"toIdx":72,"goal":5,"minWin":2,"bait":"You're past the point where quitting would feel neutral. It would now feel bad.","stars":0,"mode":"Read + Listen","speed":"1.75\u00d7"},{"date":"2026-09-14","book":"cc1","bookTitle":"House of Earth and Blood","title":"RUNNING NOW","fromUnit":"Ch. 74","toUnit":"Ch. 78","fromIdx":73,"toIdx":77,"goal":5,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Audio first, ebook to close","speed":"1.5\u00d7"},{"date":"2026-09-15","book":"cc1","bookTitle":"House of Earth and Blood","title":"THE LAST STRETCH","fromUnit":"Ch. 79","toUnit":"Ch. 83","fromIdx":78,"toIdx":82,"goal":5,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-09-16","book":"cc1","bookTitle":"House of Earth and Blood","title":"ENDGAME, CITY EDITION","fromUnit":"Ch. 84","toUnit":"Ch. 88","fromIdx":83,"toIdx":87,"goal":5,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-09-17","book":"cc1","bookTitle":"House of Earth and Blood","title":"CLOSING THE HOUSE","fromUnit":"Ch. 89","toUnit":"Ch. 93","fromIdx":88,"toIdx":92,"goal":5,"minWin":2,"bait":"The last stretch. You already know you're finishing this one.","stars":3,"mode":"Physical book, no audio","speed":"\u2014"},{"date":"2026-09-18","book":"cc1","bookTitle":"House of Earth and Blood","title":"ONE BOOK DOWN, TWO TO GO","fromUnit":"Ch. 94","toUnit":"Epilogue","fromIdx":93,"toIdx":97,"goal":5,"minWin":2,"bait":"Book complete. That's another series-finality gremlin dead.","stars":3,"mode":"Read + Listen","speed":"1.5\u00d7"},{"date":"2026-09-19","book":"cc2","bookTitle":"House of Sky and Breath","title":"BACK THROUGH THE GATE","fromUnit":"Prologue","toUnit":"Ch. 4","fromIdx":0,"toIdx":4,"goal":5,"minWin":2,"bait":"Day one in a new book. Lowest-friction night of the whole stretch \u2014 new world, new voice, zero backlog.","stars":2,"mode":"Read + Listen","speed":"1.75\u00d7"},{"date":"2026-09-20","book":"cc2","bookTitle":"House of Sky and Breath","title":"THE STAKES GOT WEIRD","fromUnit":"Ch. 5","toUnit":"Ch. 9","fromIdx":5,"toIdx":9,"goal":5,"minWin":2,"bait":"Momentum chapters. Short, mean, fast.","stars":0,"mode":"Audio first, ebook to close","speed":"1.5\u00d7"},{"date":"2026-09-21","book":"cc2","bookTitle":"House of Sky and Breath","title":"NEW ROOMS, NEW RULES","fromUnit":"Ch. 10","toUnit":"Ch. 14","fromIdx":10,"toIdx":14,"goal":5,"minWin":2,"bait":"Opening stretch. The only job tonight is getting the world back in your head.","stars":0,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-09-22","book":"cc2","bookTitle":"House of Sky and Breath","title":"QUIET BEFORE LOUD","fromUnit":"Ch. 15","toUnit":"Ch. 19","fromIdx":15,"toIdx":19,"goal":5,"minWin":2,"bait":"Rhythm night. No cliff, no wall \u2014 just distance covered.","stars":0,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-09-23","book":"cc2","bookTitle":"House of Sky and Breath","title":"SOMEONE IS PLANNING SOMETHING","fromUnit":"Ch. 20","toUnit":"Ch. 24","fromIdx":20,"toIdx":24,"goal":5,"minWin":2,"bait":"Momentum chapters. Short, mean, fast.","stars":0,"mode":"Physical book, no audio","speed":"\u2014"},{"date":"2026-09-24","book":"cc2","bookTitle":"House of Sky and Breath","title":"THE UNDERCURRENT","fromUnit":"Ch. 25","toUnit":"Ch. 29","fromIdx":25,"toIdx":29,"goal":5,"minWin":2,"bait":"Opening stretch. The only job tonight is getting the world back in your head.","stars":0,"mode":"Read + Listen","speed":"1.5\u00d7"},{"date":"2026-09-25","book":"cc2","bookTitle":"House of Sky and Breath","title":"IT'S BIGGER THAN THE CITY","fromUnit":"Ch. 30","toUnit":"Ch. 34","fromIdx":30,"toIdx":34,"goal":5,"minWin":2,"bait":"Rhythm night. No cliff, no wall \u2014 just distance covered.","stars":0,"mode":"Physical + audio","speed":"1.25\u00d7"},{"date":"2026-09-26","book":"cc2","bookTitle":"House of Sky and Breath","title":"MIDPOINT MOMENTUM","fromUnit":"Ch. 35","toUnit":"Ch. 39","fromIdx":35,"toIdx":39,"goal":5,"minWin":2,"bait":"Midpoint. Past here, the remaining pile is smaller than the pile behind you.","stars":0,"mode":"Read + Listen","speed":"1.75\u00d7"},{"date":"2026-09-27","book":"cc2","bookTitle":"House of Sky and Breath","title":"THE FLOOR TILTS AGAIN","fromUnit":"Ch. 40","toUnit":"Ch. 43","fromIdx":40,"toIdx":43,"goal":4,"minWin":2,"bait":"Midpoint. Past here, the remaining pile is smaller than the pile behind you.","stars":0,"mode":"Audio first, ebook to close","speed":"1.5\u00d7"},{"date":"2026-09-28","book":"cc2","bookTitle":"House of Sky and Breath","title":"YOU ARE OVER THE HILL","fromUnit":"Ch. 44","toUnit":"Ch. 47","fromIdx":44,"toIdx":47,"goal":4,"minWin":2,"bait":"Final-act gravity. It reads itself from here.","stars":0,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-09-29","book":"cc2","bookTitle":"House of Sky and Breath","title":"ACCELERATION","fromUnit":"Ch. 48","toUnit":"Ch. 51","fromIdx":48,"toIdx":51,"goal":4,"minWin":2,"bait":"Do not look anything up tonight. Seriously. Not one search.","stars":0,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-09-30","book":"cc2","bookTitle":"House of Sky and Breath","title":"THINGS CONVERGE","fromUnit":"Ch. 52","toUnit":"Ch. 55","fromIdx":52,"toIdx":55,"goal":4,"minWin":2,"bait":"This is the stretch people say they read in one sitting.","stars":0,"mode":"Physical book, no audio","speed":"\u2014"},{"date":"2026-10-01","book":"cc2","bookTitle":"House of Sky and Breath","title":"STOP GOOGLING. STOP IT.","fromUnit":"Ch. 56","toUnit":"Ch. 59","fromIdx":56,"toIdx":59,"goal":4,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Read + Listen","speed":"1.5\u00d7"},{"date":"2026-10-02","book":"cc2","bookTitle":"House of Sky and Breath","title":"THE PART WITH NO BRAKES","fromUnit":"Ch. 60","toUnit":"Ch. 63","fromIdx":60,"toIdx":63,"goal":4,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Physical + audio","speed":"1.25\u00d7"},{"date":"2026-10-03","book":"cc2","bookTitle":"House of Sky and Breath","title":"DO NOT LOOK IT UP","fromUnit":"Ch. 64","toUnit":"Ch. 67","fromIdx":64,"toIdx":67,"goal":4,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Read + Listen","speed":"1.75\u00d7"},{"date":"2026-10-04","book":"cc2","bookTitle":"House of Sky and Breath","title":"THE ENDING NOBODY SHUTS UP ABOUT","fromUnit":"Ch. 68","toUnit":"Ch. 71","fromIdx":68,"toIdx":71,"goal":4,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Audio first, ebook to close","speed":"1.5\u00d7"},{"date":"2026-10-05","book":"cc2","bookTitle":"House of Sky and Breath","title":"AFTERSHOCK","fromUnit":"Ch. 72","toUnit":"Ch. 75","fromIdx":72,"toIdx":75,"goal":4,"minWin":2,"bait":"The last stretch. You already know you're finishing this one.","stars":3,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-10-06","book":"cc2","bookTitle":"House of Sky and Breath","title":"TWO DOWN","fromUnit":"Ch. 76","toUnit":"Epilogue","fromIdx":76,"toIdx":79,"goal":4,"minWin":2,"bait":"Book complete. That's another series-finality gremlin dead.","stars":3,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-10-07","book":"cc3","bookTitle":"House of Flame and Shadow","title":"STRAIGHT INTO IT","fromUnit":"Prologue","toUnit":"Ch. 5","fromIdx":0,"toIdx":5,"goal":6,"minWin":2,"bait":"Day one in a new book. Lowest-friction night of the whole stretch \u2014 new world, new voice, zero backlog.","stars":2,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-10-08","book":"cc3","bookTitle":"House of Flame and Shadow","title":"NO WARM-UP HERE","fromUnit":"Ch. 6","toUnit":"Ch. 11","fromIdx":6,"toIdx":11,"goal":6,"minWin":2,"bait":"Do not look anything up tonight. Seriously. Not one search.","stars":0,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-10-09","book":"cc3","bookTitle":"House of Flame and Shadow","title":"THE HUNT BEGINS","fromUnit":"Ch. 12","toUnit":"Ch. 17","fromIdx":12,"toIdx":17,"goal":6,"minWin":2,"bait":"Halfway is closer than it looks. Look at the meter.","stars":0,"mode":"Physical book, no audio","speed":"\u2014"},{"date":"2026-10-10","book":"cc3","bookTitle":"House of Flame and Shadow","title":"PRESSURE BUILDS","fromUnit":"Ch. 18","toUnit":"Ch. 23","fromIdx":18,"toIdx":23,"goal":6,"minWin":2,"bait":"Rhythm night. No cliff, no wall \u2014 just distance covered.","stars":0,"mode":"Read + Listen","speed":"1.5\u00d7"},{"date":"2026-10-11","book":"cc3","bookTitle":"House of Flame and Shadow","title":"EVERY THREAD IS LIVE","fromUnit":"Ch. 24","toUnit":"Ch. 29","fromIdx":24,"toIdx":29,"goal":6,"minWin":2,"bait":"Something small here pays off much later. Bank it.","stars":0,"mode":"Physical + audio","speed":"1.25\u00d7"},{"date":"2026-10-12","book":"cc3","bookTitle":"House of Flame and Shadow","title":"OLD NAMES RETURN","fromUnit":"Ch. 30","toUnit":"Ch. 35","fromIdx":30,"toIdx":35,"goal":6,"minWin":2,"bait":"You are in the part where putting it down is harder than continuing.","stars":0,"mode":"Read + Listen","speed":"1.75\u00d7"},{"date":"2026-10-13","book":"cc3","bookTitle":"House of Flame and Shadow","title":"THE MAASVERSE CONNECTS","fromUnit":"Ch. 36","toUnit":"Ch. 41","fromIdx":36,"toIdx":41,"goal":6,"minWin":2,"bait":"Do not look anything up tonight. Seriously. Not one search.","stars":0,"mode":"Audio first, ebook to close","speed":"1.5\u00d7"},{"date":"2026-10-14","book":"cc3","bookTitle":"House of Flame and Shadow","title":"MIDPOINT, MAXIMUM","fromUnit":"Ch. 42","toUnit":"Ch. 47","fromIdx":42,"toIdx":47,"goal":6,"minWin":2,"bait":"Midpoint. Past here, the remaining pile is smaller than the pile behind you.","stars":0,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-10-15","book":"cc3","bookTitle":"House of Flame and Shadow","title":"SOMETHING GIVES","fromUnit":"Ch. 48","toUnit":"Ch. 53","fromIdx":48,"toIdx":53,"goal":6,"minWin":2,"bait":"Midpoint. Past here, the remaining pile is smaller than the pile behind you.","stars":0,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-10-16","book":"cc3","bookTitle":"House of Flame and Shadow","title":"THE TURN","fromUnit":"Ch. 54","toUnit":"Ch. 58","fromIdx":54,"toIdx":58,"goal":5,"minWin":2,"bait":"Something small here pays off much later. Bank it.","stars":0,"mode":"Physical book, no audio","speed":"\u2014"},{"date":"2026-10-17","book":"cc3","bookTitle":"House of Flame and Shadow","title":"ALL IN","fromUnit":"Ch. 59","toUnit":"Ch. 63","fromIdx":59,"toIdx":63,"goal":5,"minWin":2,"bait":"Reviewers use the phrase 'and then it took off' somewhere around here.","stars":0,"mode":"Read + Listen","speed":"1.5\u00d7"},{"date":"2026-10-18","book":"cc3","bookTitle":"House of Flame and Shadow","title":"THE LONG NIGHT","fromUnit":"Ch. 64","toUnit":"Ch. 68","fromIdx":64,"toIdx":68,"goal":5,"minWin":2,"bait":"The convergence is on. Everything you've been tracking starts touching.","stars":0,"mode":"Physical + audio","speed":"1.25\u00d7"},{"date":"2026-10-19","book":"cc3","bookTitle":"House of Flame and Shadow","title":"CONVERGENCE","fromUnit":"Ch. 69","toUnit":"Ch. 73","fromIdx":69,"toIdx":73,"goal":5,"minWin":2,"bait":"Something small here pays off much later. Bank it.","stars":0,"mode":"Read + Listen","speed":"1.75\u00d7"},{"date":"2026-10-20","book":"cc3","bookTitle":"House of Flame and Shadow","title":"FINAL APPROACH","fromUnit":"Ch. 74","toUnit":"Ch. 78","fromIdx":74,"toIdx":78,"goal":5,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Audio first, ebook to close","speed":"1.5\u00d7"},{"date":"2026-10-21","book":"cc3","bookTitle":"House of Flame and Shadow","title":"BOSS FIGHT","fromUnit":"Ch. 79","toUnit":"Ch. 83","fromIdx":79,"toIdx":83,"goal":5,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Ebook + audio together","speed":"1.5\u00d7"},{"date":"2026-10-22","book":"cc3","bookTitle":"House of Flame and Shadow","title":"THE LAST HUNDRED PAGES","fromUnit":"Ch. 84","toUnit":"Ch. 88","fromIdx":84,"toIdx":88,"goal":5,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Audio while walking, then ebook","speed":"1.75\u00d7"},{"date":"2026-10-23","book":"cc3","bookTitle":"House of Flame and Shadow","title":"CLOSE IT OUT","fromUnit":"Ch. 89","toUnit":"Ch. 93","fromIdx":89,"toIdx":93,"goal":5,"minWin":2,"bait":"Final-act gravity. Do not look up anything about the ending.","stars":1,"mode":"Physical book, no audio","speed":"\u2014"},{"date":"2026-10-24","book":"cc3","bookTitle":"House of Flame and Shadow","title":"THE HOUSE CLOSES","fromUnit":"Ch. 94","toUnit":"Ch. 98","fromIdx":94,"toIdx":98,"goal":5,"minWin":2,"bait":"The last stretch. You already know you're finishing this one.","stars":3,"mode":"Read + Listen","speed":"1.5\u00d7"},{"date":"2026-10-25","book":"cc3","bookTitle":"House of Flame and Shadow","title":"READY FOR PRYTHIAN","fromUnit":"Ch. 99","toUnit":"Epilogue","fromIdx":99,"toIdx":103,"goal":5,"minWin":2,"bait":"Book complete. That's another series-finality gremlin dead.","stars":3,"mode":"Physical + audio","speed":"1.25\u00d7"}],"baits":[{"b":"koa","a":0,"z":3,"t":"You are literally three chapters from a major payoff. Do not stop here.","s":1},{"b":"koa","a":4,"z":9,"t":"The current storyline resolves enough that the book changes gears.","s":0},{"b":"koa","a":10,"z":20,"t":"PART TWO \u2014 Gods and Gates. Fresh-start effect, plus extremely Dorian-is-smarter-than-everyone material.","s":2},{"b":"koa","a":21,"z":30,"t":"Threads start visibly converging. The everyone-is-scattered feeling drops off a cliff.","s":0},{"b":"koa","a":31,"z":35,"t":"This is one of THE sequences people remember from Kingdom of Ash.","s":3},{"b":"koa","a":36,"z":41,"t":"Huge series-lore payoff territory \u2014 and something here gets very fun once you start Crescent City.","s":2},{"b":"koa","a":42,"z":46,"t":"You have officially entered final-act gravity.","s":0},{"b":"koa","a":47,"z":58,"t":"Basically no more 'when is something going to happen' problem.","s":2},{"b":"koa","a":59,"z":63,"t":"The reward for reading seven books: actual closure. Lots of it.","s":1},{"b":"koa","a":64,"z":64,"t":"THRONE OF GLASS: COMPLETE. You did not DNF the ending.","s":3},{"b":"cc1","a":0,"z":4,"t":"Day one in a new book. Lowest-friction night of the whole stretch \u2014 new world, new voice, zero backlog.","s":2},{"b":"cc1","a":5,"z":16,"t":"Setup chapters. The only job is getting the world into your head.","s":0},{"b":"cc1","a":17,"z":28,"t":"This is where the setup stops being setup.","s":0},{"b":"cc1","a":29,"z":40,"t":"Rhythm stretch. No cliff, no wall \u2014 just distance covered.","s":0},{"b":"cc1","a":41,"z":49,"t":"Reviewers use the phrase 'and then it took off' somewhere around here.","s":1},{"b":"cc1","a":50,"z":59,"t":"Midpoint. The pile behind you is now bigger than the pile ahead.","s":1},{"b":"cc1","a":60,"z":72,"t":"The scattered feeling collapses back together through here.","s":0},{"b":"cc1","a":73,"z":83,"t":"Final-act gravity. Do not look up anything about the ending.","s":1},{"b":"cc1","a":84,"z":90,"t":"This is the stretch people say they read in one sitting.","s":2},{"b":"cc1","a":91,"z":97,"t":"The last stretch. You already know you're finishing this one.","s":3},{"b":"cc1","a":97,"z":97,"t":"Book complete. That's another finality gremlin dead.","s":3},{"b":"cc2","a":0,"z":3,"t":"Day one in a new book. Lowest-friction night of the whole stretch \u2014 new world, new voice, zero backlog.","s":2},{"b":"cc2","a":4,"z":13,"t":"Setup chapters. The only job is getting the world into your head.","s":0},{"b":"cc2","a":14,"z":23,"t":"This is where the setup stops being setup.","s":0},{"b":"cc2","a":24,"z":32,"t":"Rhythm stretch. No cliff, no wall \u2014 just distance covered.","s":0},{"b":"cc2","a":33,"z":40,"t":"Reviewers use the phrase 'and then it took off' somewhere around here.","s":1},{"b":"cc2","a":41,"z":48,"t":"Midpoint. The pile behind you is now bigger than the pile ahead.","s":1},{"b":"cc2","a":49,"z":59,"t":"The scattered feeling collapses back together through here.","s":0},{"b":"cc2","a":60,"z":67,"t":"Final-act gravity. Do not look up anything about the ending.","s":1},{"b":"cc2","a":68,"z":73,"t":"This is the stretch people say they read in one sitting.","s":2},{"b":"cc2","a":74,"z":79,"t":"The last stretch. You already know you're finishing this one.","s":3},{"b":"cc2","a":79,"z":79,"t":"Book complete. That's another finality gremlin dead.","s":3},{"b":"cc3","a":0,"z":5,"t":"Day one in a new book. Lowest-friction night of the whole stretch \u2014 new world, new voice, zero backlog.","s":2},{"b":"cc3","a":6,"z":17,"t":"Setup chapters. The only job is getting the world into your head.","s":0},{"b":"cc3","a":18,"z":30,"t":"This is where the setup stops being setup.","s":0},{"b":"cc3","a":31,"z":42,"t":"Rhythm stretch. No cliff, no wall \u2014 just distance covered.","s":0},{"b":"cc3","a":43,"z":53,"t":"Reviewers use the phrase 'and then it took off' somewhere around here.","s":1},{"b":"cc3","a":54,"z":63,"t":"Midpoint. The pile behind you is now bigger than the pile ahead.","s":1},{"b":"cc3","a":64,"z":77,"t":"The scattered feeling collapses back together through here.","s":0},{"b":"cc3","a":78,"z":88,"t":"Final-act gravity. Do not look up anything about the ending.","s":1},{"b":"cc3","a":89,"z":95,"t":"This is the stretch people say they read in one sitting.","s":2},{"b":"cc3","a":96,"z":103,"t":"The last stretch. You already know you're finishing this one.","s":3},{"b":"cc3","a":103,"z":103,"t":"Book complete. That's another finality gremlin dead.","s":3}],"milestones":[{"id":"m_gates","book":"koa","atUnit":"Ch. 68","name":"Gods & Gates","blurb":"Part Two. Fresh-start effect, and the reason tonight is not 'more of the same'.","reward":"biome","biome":"gatefield","icon":"gate"},{"id":"m_legend","book":"koa","atUnit":"Ch. 93","name":"The Sequence","blurb":"You cleared the stretch people never shut up about.","reward":"legendary","icon":"tree"},{"id":"m_koa","book":"koa","atUnit":"Epilogue","name":"The Long Goodbye","blurb":"Throne of Glass: complete. Seven books. No DNF.","reward":"biome","biome":"lunathion","icon":"crown"},{"id":"m_cc1","book":"cc1","atUnit":"Epilogue","name":"House of Earth and Blood, closed","blurb":"First Crescent City book down.","reward":"biome","biome":"eternal","icon":"crown"},{"id":"m_cc2","book":"cc2","atUnit":"Epilogue","name":"House of Sky and Breath, closed","blurb":"Two down. Do not look up anything. Ever. Again.","reward":"biome","biome":"beneath","icon":"crown"},{"id":"m_cc3","book":"cc3","atUnit":"Epilogue","name":"Ready for Prythian","blurb":"Four books, seventy days, October 27 met head-on.","reward":"legendary","icon":"star"}]};
+/* ============================================================
+   ON WE GO — core: storage, theme packs, world engine
+   ============================================================ */
+
+/* ---------- storage: artifact sandbox OR plain browser (Netlify) ---------- */
+const Store = {
+  key: 'onwego.v1',
+  legacy: ['questline.v1'],          /* earlier name — read once, then migrated */
+  async load() {
+    for (const k of [this.key, ...this.legacy]) {
+      try {
+        if (window.storage) {
+          const r = await window.storage.get(k);
+          if (r && r.value) return JSON.parse(r.value);
+          continue;
+        }
+      } catch (e) { /* key absent in sandbox */ }
+      try {
+        const v = localStorage.getItem(k);
+        if (v) return JSON.parse(v);
+      } catch (e) { return null; }
+    }
+    return null;
+  },
+  async save(data) {
+    const s = JSON.stringify(data);
+    try {
+      if (window.storage) { await window.storage.set(this.key, s); return; }
+    } catch (e) { /* fall through */ }
+    try { localStorage.setItem(this.key, s); } catch (e) {}
+  }
+};
+
+/* ------------------------------- theme packs -------------------------------
+   Each pack paints the whole world: sky, ground, what hangs in the sky, and
+   what grows. Add a pack here and it shows up everywhere, for every world.  */
+const THEMES = {
+  midnight: {
+    name: 'Midnight', blurb: 'Suns, moons and stars',
+    vars: { '--sky-1':'#0A0720','--sky-2':'#1D1547','--sky-3':'#3B2A6E','--ink':'#EFE9FF','--muted':'#B6A9DE',
+            '--glow':'#F3C56B','--bloom':'#F0709E','--leaf':'#63C6A3',
+            '--glow-ink':'#F3C56B','--bloom-ink':'#F0709E','--leaf-ink':'#63C6A3',
+            '--ground':'#150F33','--ground-2':'#241A55',
+            '--card':'rgba(10,7,32,.88)','--edge':'rgba(255,255,255,.16)','--edge-strong':'#6E63A0',
+            '--focus':'#F3C56B','--btn-ink':'#241704' },
+    sky: { stars: 70, moon: true, sun: 'rising', clouds: 0, motes: 'firefly' },
+    canopy: ['#63C6A3','#4FA9E0','#B487F0','#F0709E'], trunk: '#2B1F52', bloomDot: '#F3C56B'
+  },
+  meadow: {
+    name: 'Meadow', blurb: 'Long afternoon, wildflowers',
+    vars: { '--sky-1':'#DCEFE0','--sky-2':'#A9DCC8','--sky-3':'#7FC9B7','--ink':'#12291F','--muted':'#3B5A4C',
+            '--glow':'#E08A2E','--bloom':'#E2557F','--leaf':'#2F7D5B',
+            '--glow-ink':'#8A4A06','--bloom-ink':'#A32450','--leaf-ink':'#17593C',
+            '--ground':'#BFE3C4','--ground-2':'#8FCBA4',
+            '--card':'rgba(220,239,224,.90)','--edge':'rgba(18,41,31,.20)','--edge-strong':'#4E7060',
+            '--focus':'#123B2C','--btn-ink':'#241704' },
+    sky: { stars: 0, moon: false, sun: 'high', clouds: 3, motes: 'pollen' },
+    canopy: ['#2F7D5B','#4FA06B','#7FBF6A','#E2557F'], trunk: '#5C4326', bloomDot: '#E2557F'
+  },
+  ember: {
+    name: 'Ember', blurb: 'Late autumn, low sun',
+    vars: { '--sky-1':'#2A1410','--sky-2':'#5C2418','--sky-3':'#A8471F','--ink':'#FFEBDD','--muted':'#DCA98F',
+            '--glow':'#FFC15E','--bloom':'#FF7A5C','--leaf':'#E0913B',
+            '--glow-ink':'#FFC15E','--bloom-ink':'#FF8E72','--leaf-ink':'#E8A24E',
+            '--ground':'#31160F','--ground-2':'#5A2716',
+            '--card':'rgba(42,20,16,.90)','--edge':'rgba(255,235,221,.20)','--edge-strong':'#A06A55',
+            '--focus':'#FFC15E','--btn-ink':'#241704' },
+    sky: { stars: 12, moon: false, sun: 'setting', clouds: 2, motes: 'ember' },
+    canopy: ['#E0913B','#FF7A5C','#C24E2C','#FFC15E'], trunk: '#40201A', bloomDot: '#FFC15E'
+  },
+  tidewater: {
+    name: 'Tidewater', blurb: 'Moon over deep water',
+    vars: { '--sky-1':'#04161F','--sky-2':'#0A3244','--sky-3':'#12586B','--ink':'#E4F7FA','--muted':'#9CC8D4',
+            '--glow':'#7FE3D6','--bloom':'#7FA9F0','--leaf':'#3FBFA8',
+            '--glow-ink':'#7FE3D6','--bloom-ink':'#93B6F5','--leaf-ink':'#4FCDB5',
+            '--ground':'#05202B','--ground-2':'#0B3B4A',
+            '--card':'rgba(4,22,31,.90)','--edge':'rgba(228,247,250,.20)','--edge-strong':'#5B8C9C',
+            '--focus':'#7FE3D6','--btn-ink':'#04161F' },
+    sky: { stars: 40, moon: true, sun: 'none', clouds: 0, motes: 'bubble' },
+    canopy: ['#3FBFA8','#7FE3D6','#7FA9F0','#B79BE8'], trunk: '#0C3543', bloomDot: '#7FE3D6'
+  },
+  orchard: {
+    name: 'Orchard', blurb: 'Blossom dusk',
+    vars: { '--sky-1':'#1A0F26','--sky-2':'#472050','--sky-3':'#8E3F6B','--ink':'#FDEBF3','--muted':'#CDA5BD',
+            '--glow':'#FFD1A8','--bloom':'#FF8FB8','--leaf':'#8ED6A8',
+            '--glow-ink':'#FFD1A8','--bloom-ink':'#FF9DC1','--leaf-ink':'#8ED6A8',
+            '--ground':'#22122C','--ground-2':'#4A2246',
+            '--card':'rgba(26,15,38,.90)','--edge':'rgba(253,235,243,.20)','--edge-strong':'#8C6883',
+            '--focus':'#FFD1A8','--btn-ink':'#241704' },
+    sky: { stars: 26, moon: true, sun: 'setting', clouds: 1, motes: 'petal' },
+    canopy: ['#FF8FB8','#FFD1A8','#8ED6A8','#D6A8FF'], trunk: '#3A1E38', bloomDot: '#FFD1A8'
+  }
+};
+
+/* ------------------------------ progression ------------------------------- */
+const LEVELS = [
+  { at:0,   name:'Page One' },      { at:60,  name:'Kindling' },
+  { at:150, name:'Wanderer' },      { at:280, name:'Marked' },
+  { at:450, name:'Gatewalker' },    { at:660, name:'Stormcaller' },
+  { at:920, name:'Fireheart' },     { at:1230,name:'Oathkeeper' },
+  { at:1600,name:'Worldwalker' },   { at:2030,name:'Starborn' },
+  { at:2520,name:'Godslayer' },     { at:3080,name:'The One Who Finished' }
+];
+
+const PAYOUT = {
+  min:  { xp:10, coins:5,  label:'Minimum win', sub:'2 chapters. Counts.',       lootChance:0    },
+  full: { xp:20, coins:12, label:'Full clear',  sub:"Today's whole target",      lootChance:0.35 },
+  boss: { xp:30, coins:20, label:'Boss mode',   sub:'You kept going',            lootChance:1    }
+};
+
+const LOOT = [
+  { g:'🕯️', n:'Guttering Candle',   r:'common' },   { g:'🪶', n:'Inked Quill',       r:'common' },
+  { g:'🍂', n:'Pressed Leaf',       r:'common' },   { g:'🔑', n:'Small Brass Key',    r:'common' },
+  { g:'🫙', n:'Jar of Nothing',     r:'common' },   { g:'🧭', n:'Off Compass',        r:'common' },
+  { g:'🍄', n:'Glowcap',            r:'rare' },     { g:'🪺', n:'Abandoned Nest',     r:'rare' },
+  { g:'💧', n:'Vial of Rain',       r:'rare' },     { g:'🗝️', n:'Gate Key',          r:'rare' },
+  { g:'🪞', n:'Honest Mirror',      r:'epic' },     { g:'🜲', n:'Wyrdmark',           r:'epic' },
+  { g:'🦴', n:'Something Old',      r:'epic' },     { g:'👑', n:'Crown of Ash',       r:'legendary' },
+  { g:'🌟', n:'Fallen Star',        r:'legendary' },{ g:'🐉', n:'Wyvern Scale',       r:'legendary' }
+];
+const RARITY_W = { common:0.55, rare:0.29, epic:0.13, legendary:0.03 };
+
+const DEFAULT_SHOP = [
+  { g:'☕', n:'Fancy coffee',            c:25  },
+  { g:'🎮', n:'Guilt-free gaming night', c:50  },
+  { g:'🍬', n:'Silly little treat',      c:75  },
+  { g:'📚', n:'New book',                c:150 },
+  { g:'🏆', n:'Campaign boss reward',    c:250 }
+];
+
+/* --------------------------------- dates ---------------------------------- */
+const iso = d => d.toISOString().slice(0,10);
+const parseISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const today = () => iso(new Date(Date.now() - new Date().getTimezoneOffset()*60000));
+const fmtDay = s => parseISO(s).toLocaleDateString(undefined,{ month:'short', day:'numeric' }).toUpperCase();
+const fmtLong = s => parseISO(s).toLocaleDateString(undefined,{ weekday:'long', month:'long', day:'numeric' });
+const daysBetween = (a,b) => Math.round((parseISO(b) - parseISO(a)) / 86400000);
+
+/* ------------------------------ world engine -------------------------------
+   A world is a campaign of ordered units (chapters, episodes, lessons…)
+   spread across dates. Everything else — bait, milestones, the grove — hangs
+   off the unit index, so falling behind never invalidates the story.        */
+
+function flatUnits(w) {
+  const out = [];
+  w.books.forEach(b => {
+    for (let i = 0; i < b.units; i++) out.push({ book:b.id, i });
+  });
+  return out;
+}
+function unitLabel(w, globalIdx) {
+  let n = globalIdx;
+  for (const b of w.books) {
+    if (n < b.units) {
+      if (b.labels) return b.labels[n];
+      if (n === 0 && b.first && b.first !== 'Ch. 1') return b.first;
+      if (n === b.units - 1 && b.last) return b.last;
+      const off = (b.first === 'Prologue') ? 0 : parseInt(String(b.first).replace(/\D/g,''), 10) || 1;
+      return 'Ch. ' + (b.first === 'Prologue' ? n : n + off);
+    }
+    n -= b.units;
+  }
+  return '—';
+}
+function bookAt(w, globalIdx) {
+  let n = globalIdx;
+  for (const b of w.books) { if (n < b.units) return b; n -= b.units; }
+  return w.books[w.books.length - 1];
+}
+function bookOffset(w, bookId) {
+  let n = 0;
+  for (const b of w.books) { if (b.id === bookId) return n; n += b.units; }
+  return 0;
+}
+function totalUnits(w) { return w.books.reduce((s,b) => s + b.units, 0); }
+
+function baitFor(w, fromGlobal, toGlobal) {
+  const bk = bookAt(w, fromGlobal), off = bookOffset(w, bk.id);
+  const a = fromGlobal - off, z = toGlobal - off;
+  let best = null;
+  (w.baits || []).forEach(band => {
+    if (band.b !== bk.id) return;
+    if (z < band.a || a > band.z) return;
+    if (!best || band.s > best.s) best = band;
+  });
+  return best || { t:'Distance night. No cliff, no wall — just pages behind you.', s:0 };
+}
+
+/* Rebuild the plan for every day from `fromDate` on, using what's actually
+   left to read. This is the catch-up button: nothing is ever "overdue". */
+function replan(w) {
+  const t = today();
+  const done = w.progress.unitsDone;
+  const remainingDays = w.days.filter(d => d.date >= t);
+  if (!remainingDays.length) return;
+  const left = totalUnits(w) - done;
+  if (left <= 0) { remainingDays.forEach(d => { d.goal = 0; }); return; }
+  const per = left / remainingDays.length;
+  let cursor = done, acc = 0;
+  remainingDays.forEach((d, i) => {
+    acc += per;
+    let take = Math.round(acc) - (cursor - done);
+    if (i === remainingDays.length - 1) take = totalUnits(w) - cursor;
+    take = Math.max(0, take);
+    d.fromGlobal = cursor;
+    d.toGlobal = Math.max(cursor, cursor + take - 1);
+    d.goal = take;
+    d.minWin = Math.min(2, take) || 0;
+    cursor += take;
+  });
+}
+
+/* Attach global unit indexes to the shipped plan (first run only). */
+function indexDays(w) {
+  let cursor = 0;
+  w.days.forEach(d => {
+    d.fromGlobal = cursor;
+    d.toGlobal = cursor + d.goal - 1;
+    cursor += d.goal;
+  });
+}
+
+function dayFor(w, date) { return w.days.find(d => d.date === date) || null; }
+
+function levelFor(xp) {
+  let idx = 0;
+  LEVELS.forEach((l, i) => { if (xp >= l.at) idx = i; });
+  const next = LEVELS[idx + 1];
+  return {
+    n: idx + 1, name: LEVELS[idx].name, at: LEVELS[idx].at,
+    nextAt: next ? next.at : null,
+    pct: next ? (xp - LEVELS[idx].at) / (next.at - LEVELS[idx].at) : 1
+  };
+}
+
+function rollLoot(guaranteedRarity) {
+  let rarity = guaranteedRarity;
+  if (!rarity) {
+    const roll = Math.random(); let acc = 0;
+    for (const [r, w] of Object.entries(RARITY_W)) { acc += w; if (roll <= acc) { rarity = r; break; } }
+    rarity = rarity || 'common';
+  }
+  const pool = LOOT.filter(l => l.r === rarity);
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  return { ...item, at: Date.now() };
+}
+
+/* --------------------------- world construction --------------------------- */
+function newProgress() {
+  return { unitsDone:0, xp:0, coins:0, log:{}, loot:[], flora:[], biomes:[], achieved:[],
+           shop: DEFAULT_SHOP.map(s => ({...s})), claimed:[], sprints:0, sprintMinutes:0 };
+}
+
+function makeWorld(spec) {
+  /* spec: {name, unit, unitPlural, currency, theme, start, end, launch, launchLabel, parts:[{name,units}]} */
+  const id = 'w' + Date.now().toString(36);
+  const books = spec.parts.map((p, i) => ({
+    id: 'p' + i, title: p.name, short: p.name.slice(0, 3).toUpperCase(),
+    realm: p.name, units: p.units, first: 'Ch. 1', last: 'Ch. ' + p.units, startNote: 'From the top'
+  }));
+  const dates = [];
+  for (let d = parseISO(spec.start); iso(d) <= spec.end; d.setDate(d.getDate() + 1)) dates.push(iso(d));
+  const total = books.reduce((s,b) => s + b.units, 0);
+  const per = total / dates.length;
+  const titles = ['OPENING MOVE','FIND THE RHYTHM','KEEP THE THREAD','QUIET PROGRESS','THE MIDDLE IS THE TRAP',
+                  'PAST HALFWAY','MOMENTUM','THE TURN','CLOSING IN','FINAL APPROACH','LAST STRETCH','FINISH IT'];
+  let cursor = 0, acc = 0;
+  const days = dates.map((date, i) => {
+    acc += per;
+    let take = Math.round(acc) - cursor;
+    if (i === dates.length - 1) take = total - cursor;
+    const from = cursor; cursor += take;
+    let acc2 = 0, bid = books[0].id;
+    for (const b of books) { if (from < acc2 + b.units) { bid = b.id; break; } acc2 += b.units; }
+    return { date, book: bid, title: titles[i % titles.length], goal: take,
+             minWin: Math.min(2, take), stars: 0, mode: 'Whatever works', speed: '—' };
+  });
+  const baits = [];
+  books.forEach(b => {
+    const marks = [0, .12, .3, .5, .72, .9, 1];
+    const texts = [
+      ['Opening stretch. Only job: get back into it.', 1],
+      ['The setup stops being setup here.', 0],
+      ['Rhythm section. Distance covered, nothing dramatic.', 0],
+      ['Midpoint. The pile behind you is bigger than the pile ahead.', 1],
+      ['This is the part that goes fast.', 1],
+      ['Final approach. You already know you\'re finishing.', 3]
+    ];
+    for (let i = 0; i < marks.length - 1; i++) {
+      const a = Math.floor(marks[i]*b.units), z = Math.max(a, Math.floor(marks[i+1]*b.units) - 1);
+      baits.push({ b:b.id, a, z, t:texts[i][0], s:texts[i][1] });
+    }
+  });
+  const BIOMES = ['gatefield','lunathion','eternal','beneath','grove'];
+  const milestones = books.map((b, i) => ({
+    id: 'ms' + i, book: b.id, atUnit: 'end', atIndex: b.units - 1,
+    name: b.title + ' — done', blurb: 'One more finished thing.',
+    reward: i === books.length - 1 ? 'legendary' : 'biome', biome: BIOMES[i % BIOMES.length], icon:'crown'
+  }));
+  return {
+    id, name: spec.name, tagline: spec.tagline || '', unit: spec.unit || 'chapter',
+    unitPlural: spec.unitPlural || (spec.unit ? spec.unit + 's' : 'chapters'),
+    currency: spec.currency || 'Coins', xpName: 'XP', theme: spec.theme || 'meadow',
+    start: spec.start, end: spec.end, launch: spec.launch || '', launchLabel: spec.launchLabel || '',
+    books, days, baits, milestones, progress: newProgress()
+  };
+}
+/* ============================================================
+   ON WE GO — the world on screen
+   ============================================================ */
+
+let S = null;               // full state
+let W = null;               // active world
+let view = 'tonight';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* seeded noise so the sky and the grove look the same every time you open it */
+function mulberry(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ------------------------------ the scene --------------------------------- */
+function floraSVG(f, th, x, y, seed, scale) {
+  const r = mulberry(seed);
+  const c = th.canopy[Math.floor(r() * th.canopy.length)];
+  const s = (scale || 1) * (f.kind === 'legendary' ? 1.6 : f.kind === 'bloom' ? 1.15 : f.kind === 'tree' ? 1 : .62);
+  const g = [];
+  g.push(`<g transform="translate(${x} ${y}) scale(${s.toFixed(2)})">`);
+  if (f.kind === 'sprout') {
+    g.push(`<path d="M0 0 L0 -13" stroke="${th.trunk}" stroke-width="2.4" stroke-linecap="round"/>`);
+    g.push(`<ellipse cx="-5" cy="-12" rx="6" ry="3.4" fill="${c}" transform="rotate(-24 -5 -12)"/>`);
+    g.push(`<ellipse cx="5" cy="-15" rx="6" ry="3.4" fill="${c}" transform="rotate(24 5 -15)"/>`);
+  } else {
+    const h = 22 + r() * 8;
+    g.push(`<path d="M0 0 L0 ${-h}" stroke="${th.trunk}" stroke-width="3.4" stroke-linecap="round"/>`);
+    if (f.kind === 'legendary') g.push(`<circle cx="0" cy="${-h - 12}" r="26" fill="${th.bloomDot}" opacity=".18"/>`);
+    g.push(`<circle cx="0" cy="${-h - 10}" r="13" fill="${c}"/>`);
+    g.push(`<circle cx="-10" cy="${-h - 3}" r="9.5" fill="${c}" opacity=".92"/>`);
+    g.push(`<circle cx="10" cy="${-h - 4}" r="9" fill="${c}" opacity=".92"/>`);
+    if (f.kind === 'bloom' || f.kind === 'legendary') {
+      for (let i = 0; i < (f.kind === 'legendary' ? 7 : 4); i++) {
+        g.push(`<circle cx="${(r()*26-13).toFixed(1)}" cy="${(-h-14+r()*16).toFixed(1)}" r="2.1" fill="${th.bloomDot}"/>`);
+      }
+    }
+    if (f.kind === 'legendary') g.push(`<path d="M0 ${-h-27} l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z" fill="${th.bloomDot}"/>`);
+  }
+  g.push('</g>');
+  return g.join('');
+}
+
+function sceneSVG(opts) {
+  const th = THEMES[W.theme] || THEMES.midnight;
+  const pct = campaignPct();
+  const flora = (W.progress.flora || []).slice(-(opts.max || 16));
+  const H = 300, GY = 232;
+  const p = [];
+  p.push(`<svg viewBox="0 0 400 ${H}" preserveAspectRatio="xMidYMax slice" aria-hidden="true">`);
+  p.push(`<defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${th.vars['--sky-1']}"/>
+      <stop offset="55%" stop-color="${th.vars['--sky-2']}"/>
+      <stop offset="100%" stop-color="${th.vars['--sky-3']}"/>
+    </linearGradient>
+    <radialGradient id="halo"><stop offset="0%" stop-color="${th.vars['--glow']}" stop-opacity=".55"/><stop offset="100%" stop-color="${th.vars['--glow']}" stop-opacity="0"/></radialGradient>
+  </defs>`);
+  p.push(`<rect width="400" height="${H}" fill="url(#sky)"/>`);
+
+  const r = mulberry(9421);
+  for (let i = 0; i < th.sky.stars; i++) {
+    const x = r() * 400, y = r() * (GY - 60), rad = r() * 1.3 + .5, o = (.35 + r() * .6).toFixed(2);
+    p.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rad.toFixed(1)}" fill="${th.vars['--ink']}" opacity="${o}"/>`);
+  }
+  /* the moon keeps time: new at day one, full on the last day */
+  if (th.sky.moon) {
+    const mx = 305, my = 62, mr = 26, shift = (pct * 2 - 1) * mr * 2.1;
+    p.push(`<circle cx="${mx}" cy="${my}" r="${mr + 26}" fill="url(#halo)"/>`);
+    p.push(`<circle cx="${mx}" cy="${my}" r="${mr}" fill="${th.vars['--glow']}"/>`);
+    p.push(`<circle cx="${(mx + shift).toFixed(1)}" cy="${my}" r="${mr}" fill="${th.vars['--sky-2']}" opacity="${pct >= .99 ? 0 : .96}"/>`);
+    p.push(`<circle cx="${mx}" cy="${my}" r="${mr}" fill="none" stroke="${th.vars['--glow']}" stroke-width="1" opacity=".5"/>`);
+  }
+  /* the sun rises toward the finish line */
+  if (th.sky.sun === 'rising') {
+    const sy = GY + 46 - pct * 62;
+    p.push(`<circle cx="86" cy="${sy.toFixed(1)}" r="70" fill="url(#halo)" opacity=".7"/>`);
+    p.push(`<circle cx="86" cy="${sy.toFixed(1)}" r="24" fill="${th.vars['--glow']}" opacity=".9"/>`);
+  } else if (th.sky.sun === 'high') {
+    p.push(`<circle cx="312" cy="58" r="64" fill="url(#halo)"/><circle cx="312" cy="58" r="27" fill="${th.vars['--glow']}"/>`);
+  } else if (th.sky.sun === 'setting') {
+    p.push(`<circle cx="300" cy="176" r="78" fill="url(#halo)"/><circle cx="300" cy="176" r="30" fill="${th.vars['--glow']}" opacity=".92"/>`);
+  }
+  for (let i = 0; i < th.sky.clouds; i++) {
+    const cx = 40 + i * 130 + r() * 40, cy = 50 + r() * 46;
+    p.push(`<g opacity=".5" fill="${th.vars['--ink']}"><ellipse cx="${cx}" cy="${cy}" rx="30" ry="12"/><ellipse cx="${cx+20}" cy="${cy-6}" rx="20" ry="11"/><ellipse cx="${cx-20}" cy="${cy-3}" rx="17" ry="9"/></g>`);
+  }
+  /* land */
+  p.push(`<path d="M0 ${GY-16} Q70 ${GY-40} 150 ${GY-18} T400 ${GY-30} L400 ${H} L0 ${H} Z" fill="${th.vars['--ground-2']}" opacity=".85"/>`);
+  p.push(`<path d="M0 ${GY} Q110 ${GY-14} 230 ${GY+4} T400 ${GY-6} L400 ${H} L0 ${H} Z" fill="${th.vars['--ground']}"/>`);
+
+  flora.forEach((f, i) => {
+    const rr = mulberry(f.seed || i * 977);
+    const x = 24 + ((i * 47 + (f.seed || 0) % 23) % 356);
+    const y = GY + 6 + rr() * 34;
+    p.push(floraSVG(f, th, x, y, f.seed || i * 331, .82 + rr() * .3));
+  });
+  p.push('</svg>');
+  return p.join('');
+}
+
+function motes() {
+  const th = THEMES[W.theme] || THEMES.midnight;
+  const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (calm) return '';
+  const r = mulberry(77);
+  let out = '';
+  for (let i = 0; i < 9; i++) {
+    const size = (2 + r() * 3).toFixed(1), left = (r() * 100).toFixed(1),
+          top = (55 + r() * 40).toFixed(1), dur = (6 + r() * 8).toFixed(1), del = (r() * 8).toFixed(1);
+    const color = th.sky.motes === 'bubble' ? th.vars['--leaf'] : th.sky.motes === 'petal' ? th.vars['--bloom'] : th.vars['--glow'];
+    out += `<i class="mote" style="width:${size}px;height:${size}px;left:${left}%;top:${top}%;animation-duration:${dur}s;animation-delay:${del}s;background:${color}"></i>`;
+  }
+  return out;
+}
+
+/* ------------------------------- derived ---------------------------------- */
+function campaignPct() { return Math.min(1, W.progress.unitsDone / totalUnits(W)); }
+function streak() {
+  /* A streak day is any day something streak-eligible was logged. Skipping
+     never zeroes it — it just stops adding. */
+  const days = new Set();
+  Object.keys(W.progress.log).forEach(id => {
+    const l = W.progress.log[id];
+    if (!l || l.result === 'skip') return;
+    const task = (W.tasks || []).find(t => t.id === id);
+    if (task && task.streak === false) return;
+    days.add(l.date || id);
+  });
+  let n = 0, d = today();
+  if (!days.has(d)) d = iso(new Date(parseISO(d).getTime() - 86400000));
+  while (days.has(d)) { n++; d = iso(new Date(parseISO(d).getTime() - 86400000)); }
+  return n;
+}
+function nextMilestone() {
+  const done = W.progress.unitsDone;
+  return (W.milestones || []).map(m => ({...m})).filter(m => m.atIndex >= done)
+    .sort((a,b) => a.atIndex - b.atIndex)[0] || null;
+}
+function daysLeft() {
+  const t = today();
+  return Math.max(0, W.days.filter(d => d.date >= t).length);
+}
+
+/* ============================================================
+   TASKS — the data layer behind every screen.
+
+   A task is deliberately generic: a title and nothing else is
+   required. Books, workouts, lessons, chores and job applications
+   all fit the same shape, so a world isn't a reading world unless
+   you fill it in like one.
+   ============================================================ */
+
+const TASK_FIELDS = [
+  { k:'range',       label:'Target',      hint:'What you are aiming at — “Ch. 63–67”, “3 miles”, “Section 2”' },
+  { k:'min',         label:'Minimum',     hint:'The smallest amount that still counts', type:'number' },
+  { k:'max',         label:'Maximum',     hint:'The full amount you planned', type:'number' },
+  { k:'hook',        label:'Hook',        hint:'Why you want to — the bait', long:true },
+  { k:'how',         label:'How',         hint:'The approach that works for this one' },
+  { k:'payoff',      label:'Payoff',      hint:'What you get out of finishing it' },
+  { k:'notes',       label:'Notes',       hint:'Anything else', long:true },
+  { k:'category',    label:'Category',    hint:'The big grouping — a book, a course, a room' },
+  { k:'subcategory', label:'Subcategory', hint:'The smaller grouping inside it' },
+  { k:'tags',        label:'Tags',        hint:'Comma separated' },
+  { k:'date',        label:'Date',        hint:'Leave blank for anytime', type:'date' }
+];
+
+/* What a home section can show on each card. */
+const SHOW_FIELDS = [
+  { k:'range',    label:'Target' },
+  { k:'tiers',    label:'Minimum / maximum buttons' },
+  { k:'hook',     label:'Hook (hidden until tapped)' },
+  { k:'how',      label:'How' },
+  { k:'payoff',   label:'Payoff' },
+  { k:'notes',    label:'Notes' },
+  { k:'date',     label:'Date' },
+  { k:'category', label:'Category' },
+  { k:'tags',     label:'Tags' },
+  { k:'momentum', label:'Progress meter' }
+];
+
+const SORTS = [
+  { k:'date',     label:'Date' },
+  { k:'title',    label:'Title' },
+  { k:'category', label:'Category' },
+  { k:'max',      label:'Maximum' },
+  { k:'min',      label:'Minimum' },
+  { k:'added',    label:'When added' }
+];
+
+const SCOPES = [
+  { k:'today',    label:'Today only' },
+  { k:'upcoming', label:'Today and later' },
+  { k:'open',     label:'Anything not logged' },
+  { k:'all',      label:'Everything' }
+];
+
+function newTask(over) {
+  return Object.assign({
+    id: 't' + Date.now().toString(36) + Math.floor(Math.random()*999).toString(36),
+    title:'', date:'', category:'', subcategory:'', tags:[], streak:true,
+    types:['streak'], repeat:null, planMax:null,
+    min:null, max:null, range:'', hook:'', how:'', payoff:'', notes:'',
+    link:null, added: Date.now()
+  }, over || {});
+}
+
+function defaultHome() {
+  return { sections: [
+    { id:'s1', name:'Tonight', categories:[], tags:[], scope:'today', limit:1,
+      sort:'date', dir:'asc', fields:['range','tiers','hook','how','momentum'] },
+    { id:'s2', name:'Coming up', categories:[], tags:[], scope:'upcoming', limit:3,
+      sort:'date', dir:'asc', fields:['range','date'] }
+  ]};
+}
+
+/* One-time move: the shipped campaign becomes editable task records. */
+function migrateTasks(w) {
+  if (!w.home) w.home = defaultHome();
+  if (w.tasks) return;
+  w.tasks = (w.days || []).map(d => {
+    const bait = baitFor(w, d.fromGlobal, d.toGlobal);
+    const bk = w.books.find(b => b.id === d.book) || {};
+    const from = unitLabel(w, d.fromGlobal), to = unitLabel(w, d.toGlobal);
+    const tags = [];
+    if (Math.max(bait.s, d.stars || 0) >= 2) tags.push('starred');
+    return newTask({
+      id: 't_' + d.date,
+      title: d.title, date: d.date,
+      category: bk.title || '', subcategory: bk.realm || '',
+      tags, streak: true, types: ['target','streak'], planMax: d.goal || null,
+      min: d.minWin || null, max: d.goal || null,
+      range: from + (from !== to ? ' – ' + to : ''),
+      hook: bait.t,
+      how: (d.mode || '') + (d.speed && d.speed !== '—' ? ' · ' + d.speed : ''),
+      payoff: '', notes: '',
+      link: { book: d.book, from: d.fromGlobal, to: d.toGlobal }
+    });
+  });
+  /* Carry over anything already logged by date. */
+  const old = w.progress.log || {};
+  const moved = {};
+  Object.keys(old).forEach(k => {
+    const t = w.tasks.find(x => x.date === k);
+    moved[t ? t.id : k] = Object.assign({ date:k }, old[k]);
+  });
+  w.progress.log = moved;
+}
+
+/* Redistributing the plan rewrites the linked tasks in place, so edits to
+   title, hook or notes survive a catch-up. */
+function syncTasksFromPlan(w) {
+  (w.days || []).forEach(d => {
+    const t = (w.tasks || []).find(x => x.link && x.date === d.date);
+    if (!t) return;
+    const from = unitLabel(w, d.fromGlobal), to = unitLabel(w, d.toGlobal);
+    t.range = from + (from !== to ? ' – ' + to : '');
+    t.min = d.minWin || null;
+    t.max = d.goal || null;
+    t.link = { book: d.book, from: d.fromGlobal, to: d.toGlobal };
+    const bait = baitFor(w, d.fromGlobal, d.toGlobal);
+    if (!t.hookEdited) t.hook = bait.t;
+  });
+}
+
+function taskCategories(w) {
+  return [...new Set((w.tasks || []).map(t => t.category).filter(Boolean))];
+}
+function taskTags(w) {
+  return [...new Set([].concat(...(w.tasks || []).map(t => t.tags || [])))].filter(Boolean);
+}
+function isLogged(w, t) { const l = w.progress.log[t.id]; return !!(l && l.result !== 'skip'); }
+
+function filterTasks(w, o) {
+  const t0 = today();
+  let list = (w.tasks || []).slice();
+  if (o.q) {
+    const q = o.q.toLowerCase();
+    list = list.filter(t => [t.title,t.category,t.subcategory,t.hook,t.how,t.payoff,t.notes,t.range]
+      .concat(t.tags || []).join(' ').toLowerCase().includes(q));
+  }
+  if (o.categories && o.categories.length) list = list.filter(t => o.categories.includes(t.category));
+  if (o.tags && o.tags.length) list = list.filter(t => (t.tags || []).some(x => o.tags.includes(x)));
+  if (o.streakOnly) list = list.filter(t => t.streak);
+  if (o.scope === 'today')    list = list.filter(t => t.date === t0);
+  if (o.scope === 'upcoming') list = list.filter(t => !t.date || t.date >= t0);
+  if (o.scope === 'open')     list = list.filter(t => !isLogged(w, t));
+  if (o.scope === 'done')     list = list.filter(t => isLogged(w, t));
+  const dir = o.dir === 'desc' ? -1 : 1;
+  const key = o.sort || 'date';
+  list.sort((a,b) => {
+    let x = a[key], y = b[key];
+    if (key === 'min' || key === 'max' || key === 'added') { x = x || 0; y = y || 0; return (x - y) * dir; }
+    x = (x || '').toString().toLowerCase(); y = (y || '').toString().toLowerCase();
+    if (key === 'date') { if (!x) return 1; if (!y) return -1; }
+    return x < y ? -dir : x > y ? dir : 0;
+  });
+  return list;
+}
+
+/* ------------------------------ Tasks screen ------------------------------ */
+let taskUI = { q:'', categories:[], tags:[], streakOnly:false, scope:'all', sort:'date', dir:'asc' };
+
+function taskRow(t) {
+  const l = W.progress.log[t.id];
+  const bits = [];
+  if (t.range) bits.push(esc(t.range));
+  if (t.min || t.max) bits.push(`${t.min || 0}–${t.max || t.min}`);
+  if (t.date) bits.push(fmtDay(t.date));
+  if (t.category) bits.push(esc(t.category));
+  return `<li><button class="row-item" data-task="${t.id}" aria-label="Edit ${esc(t.title)}${l ? ', logged' : ''}">
+    <span class="g" aria-hidden="true">${l ? '✅' : t.streak ? '🔥' : '○'}</span>
+    <span class="t"><b>${esc(t.title || 'Untitled')}</b>
+      <small>${bits.join(' · ') || 'No details yet'}${l ? ' · ' + PAYOUT[l.result].label : ''}</small></span>
+    <span aria-hidden="true" style="color:var(--muted)">›</span></button></li>`;
+}
+
+function renderTaskList() {
+  const list = filterTasks(W, taskUI);
+  if (!list.length) {
+    return `<p class="empty"><b>Nothing matches</b>Clear the search or filters, or add a task.</p>`;
+  }
+  return `<p class="eyebrow" id="taskCount">${list.length} of ${(W.tasks||[]).length} tasks</p>
+    <ul class="shelf" role="list" aria-labelledby="taskCount">${list.map(taskRow).join('')}</ul>`;
+}
+
+function renderTasks() {
+  const cats = taskCategories(W), tags = taskTags(W);
+  const activeFilters = taskUI.categories.length + taskUI.tags.length + (taskUI.streakOnly ? 1 : 0) + (taskUI.scope !== 'all' ? 1 : 0);
+  return `<div class="wrap" style="padding-top:calc(20px + var(--safe-t))">
+    <div class="sec-head" style="margin-bottom:12px">
+      <h1 class="page-title" id="screenTitle">Tasks</h1>
+      <button class="link" data-task="new" aria-haspopup="dialog">Add a task</button>
+    </div>
+    <p style="margin:0 0 14px;color:var(--muted);font-size:14px">Everything in ${esc(W.name)} lives here. Edit anything — the other screens follow.</p>
+    ${trackBlock()}
+    <h2 style="font-size:19px;margin:26px 0 10px">All tasks</h2>
+
+    <label class="f" for="taskSearch"><span>Search</span></label>
+    <input id="taskSearch" type="search" value="${esc(taskUI.q)}" placeholder="Title, hook, notes, tags…"
+      autocomplete="off" style="margin-bottom:12px">
+
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <div style="flex:1">
+        <label class="f" for="taskSort"><span>Sort by</span></label>
+        <select id="taskSort">${SORTS.map(s => `<option value="${s.k}"${taskUI.sort===s.k?' selected':''}>${s.label}</option>`).join('')}</select>
+      </div>
+      <div style="flex:1">
+        <label class="f" for="taskDir"><span>Order</span></label>
+        <select id="taskDir">
+          <option value="asc"${taskUI.dir==='asc'?' selected':''}>First to last</option>
+          <option value="desc"${taskUI.dir==='desc'?' selected':''}>Last to first</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec-head" style="margin-bottom:10px">
+      <h2 style="font-size:17px">Filters${activeFilters ? ` (${activeFilters} on)` : ''}</h2>
+      ${activeFilters ? '<button class="link" id="clearFilters">Clear all</button>' : ''}
+    </div>
+    <div style="margin-bottom:8px">
+      <label class="f" for="taskScope"><span>Show</span></label>
+      <select id="taskScope">
+        <option value="all"${taskUI.scope==='all'?' selected':''}>Everything</option>
+        ${SCOPES.filter(s=>s.k!=='all').map(s => `<option value="${s.k}"${taskUI.scope===s.k?' selected':''}>${s.label}</option>`).join('')}
+        <option value="done"${taskUI.scope==='done'?' selected':''}>Already logged</option>
+      </select>
+    </div>
+    ${cats.length ? `<fieldset style="border:0;padding:0;margin:0 0 10px">
+      <legend class="eyebrow" style="padding:0;margin-bottom:7px">Categories</legend>
+      <div class="meta" style="margin-top:0">${cats.map(c => `<button class="chip" data-filtercat="${esc(c)}"
+        aria-pressed="${taskUI.categories.includes(c)}">${esc(c)}</button>`).join('')}</div></fieldset>` : ''}
+    ${tags.length ? `<fieldset style="border:0;padding:0;margin:0 0 10px">
+      <legend class="eyebrow" style="padding:0;margin-bottom:7px">Tags</legend>
+      <div class="meta" style="margin-top:0">${tags.map(c => `<button class="chip" data-filtertag="${esc(c)}"
+        aria-pressed="${taskUI.tags.includes(c)}">${esc(c)}</button>`).join('')}</div></fieldset>` : ''}
+    <div class="meta" style="margin-bottom:18px"><button class="chip" id="filterStreak" aria-pressed="${taskUI.streakOnly}">Streak tasks only</button></div>
+
+    <div id="taskList">${renderTaskList()}</div>
+  </div>`;
+}
+
+/* ------------------------------ task editor ------------------------------- */
+function taskEditor(id) {
+  const t = id === 'new' ? newTask({ date: today() }) : (W.tasks || []).find(x => x.id === id);
+  if (!t) return '<h2>Task not found</h2>';
+  const f = (k) => {
+    const def = TASK_FIELDS.find(x => x.k === k);
+    const val = k === 'tags' ? (t.tags || []).join(', ') : (t[k] === null || t[k] === undefined ? '' : t[k]);
+    const input = def.long
+      ? `<textarea id="tf_${k}" rows="3">${esc(val)}</textarea>`
+      : `<input id="tf_${k}" type="${def.type || 'text'}"${def.type === 'number' ? ' inputmode="numeric" min="0"' : ''} value="${esc(val)}">`;
+    return `<label class="f" for="tf_${k}"><span>${def.label} <span class="hint">— ${esc(def.hint)}</span></span></label>
+      ${input}<div style="height:14px"></div>`;
+  };
+  return `<h2>${id === 'new' ? 'New task' : 'Edit task'}</h2>
+    <p class="sub">Only the title is required. Everything else is there if you want it.</p>
+    <p class="err" id="formErr" role="alert"></p>
+    <input type="hidden" id="tf_id" value="${t.id}">
+    <label class="f" for="tf_title"><span>Title <span class="hint">— required</span></span></label>
+    <input id="tf_title" value="${esc(t.title)}" required aria-required="true"><div style="height:14px"></div>
+    ${['range','min','max','hook','how','payoff','notes','category','subcategory','tags','date'].map(f).join('')}
+    <fieldset style="border:0;padding:0;margin:0 0 14px">
+      <legend class="f"><span>Types <span class="hint">— a task can be several at once</span></span></legend>
+      <div class="meta" style="margin-top:0">${TASK_TYPES.map(x => `<button class="chip" data-type="${x.k}"
+        aria-pressed="${(t.types||[]).includes(x.k)}">${x.label}</button>`).join('')}</div>
+      <p class="sub" style="margin:8px 0 0">${TASK_TYPES.map(x => `<b>${x.label}</b> — ${x.hint}`).join('<br>')}</p>
+    </fieldset>
+    <div id="repeatBox"${(t.types||[]).includes('repeating') ? '' : ' hidden'} style="margin-bottom:14px">
+      <label class="f" for="tf_repeat"><span>Repeats</span></label>
+      <select id="tf_repeat">${REPEATS.map(r => `<option value="${r.k}"${((t.repeat&&t.repeat.freq)||'')===r.k?' selected':''}>${r.label}</option>`).join('')}</select>
+      <div style="height:10px"></div>
+      <label class="f" for="tf_repeatN"><span>Every how many days <span class="hint">— only for “every N days”</span></span></label>
+      <input id="tf_repeatN" type="number" inputmode="numeric" min="1" value="${(t.repeat && t.repeat.n) || 2}">
+    </div>
+    <button class="btn" id="tf_save">${id === 'new' ? 'Add task' : 'Save changes'}</button>
+    ${id === 'new' ? '' : `<button class="btn line" id="tf_delete">Delete this task</button>`}`;
+}
+
+/* --------------------------- home layout config --------------------------- */
+function homeConfigSheet() {
+  const secs = (W.home || defaultHome()).sections;
+  return `<h2>What shows on Tonight</h2>
+    <p class="sub">Build as many sections as you want. Each one picks its own categories, fields, count and order.</p>
+    <ul class="shelf">
+      ${secs.map((s,i) => `<li><button class="row-item" data-section="${s.id}" aria-haspopup="dialog"
+        aria-label="Edit section ${esc(s.name)}">
+        <span class="g" aria-hidden="true">▤</span>
+        <span class="t"><b>${esc(s.name)}</b><small>${(s.categories||[]).length ? esc(s.categories.join(', ')) : 'All categories'} · ${(SCOPES.find(x=>x.k===s.scope)||{}).label} · ${s.limit} shown · ${(SORTS.find(x=>x.k===s.sort)||{}).label} ${s.dir === 'desc' ? '↓' : '↑'}</small></span>
+        <span aria-hidden="true" style="color:var(--muted)">›</span></button></li>`).join('')}
+    </ul>
+    <button class="btn" style="margin-top:14px" data-section="new">Add a section</button>`;
+}
+
+function sectionEditor(id) {
+  const home = W.home || defaultHome();
+  const s = id === 'new'
+    ? { id:'s' + Date.now().toString(36), name:'New section', categories:[], tags:[], scope:'today', limit:3, sort:'date', dir:'asc', fields:['range','tiers'] }
+    : home.sections.find(x => x.id === id);
+  if (!s) return '<h2>Section not found</h2>';
+  window._draft = JSON.parse(JSON.stringify(s));
+  const cats = taskCategories(W), tags = taskTags(W);
+  return `<h2>${id === 'new' ? 'New section' : 'Edit section'}</h2>
+    <p class="sub">Leave categories empty to include all of them.</p>
+    <p class="err" id="formErr" role="alert"></p>
+    <input type="hidden" id="sf_id" value="${s.id}">
+    <label class="f" for="sf_name"><span>Section heading</span></label>
+    <input id="sf_name" value="${esc(s.name)}"><div style="height:14px"></div>
+
+    ${cats.length ? `<fieldset style="border:0;padding:0;margin:0 0 14px">
+      <legend class="f"><span>Categories</span></legend>
+      <div class="meta" style="margin-top:0">${cats.map(c => `<button class="chip" data-seccat="${esc(c)}"
+        aria-pressed="${(s.categories||[]).includes(c)}">${esc(c)}</button>`).join('')}</div></fieldset>` : ''}
+    ${tags.length ? `<fieldset style="border:0;padding:0;margin:0 0 14px">
+      <legend class="f"><span>Tags</span></legend>
+      <div class="meta" style="margin-top:0">${tags.map(c => `<button class="chip" data-sectag="${esc(c)}"
+        aria-pressed="${(s.tags||[]).includes(c)}">${esc(c)}</button>`).join('')}</div></fieldset>` : ''}
+
+    <label class="f" for="sf_scope"><span>Which tasks</span></label>
+    <select id="sf_scope">${SCOPES.map(x => `<option value="${x.k}"${s.scope===x.k?' selected':''}>${x.label}</option>`).join('')}</select>
+    <div style="height:14px"></div>
+    <label class="f" for="sf_limit"><span>How many to show</span></label>
+    <input id="sf_limit" type="number" inputmode="numeric" min="1" max="20" value="${s.limit}"><div style="height:14px"></div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><label class="f" for="sf_sort"><span>Sort by</span></label>
+        <select id="sf_sort">${SORTS.map(x => `<option value="${x.k}"${s.sort===x.k?' selected':''}>${x.label}</option>`).join('')}</select></div>
+      <div style="flex:1"><label class="f" for="sf_dir"><span>Order</span></label>
+        <select id="sf_dir"><option value="asc"${s.dir==='asc'?' selected':''}>First to last</option>
+          <option value="desc"${s.dir==='desc'?' selected':''}>Last to first</option></select></div>
+    </div>
+    <fieldset style="border:0;padding:0;margin:14px 0">
+      <legend class="f"><span>Fields to show on each card</span></legend>
+      <div class="meta" style="margin-top:0">${SHOW_FIELDS.map(x => `<button class="chip" data-secfield="${x.k}"
+        aria-pressed="${(s.fields||[]).includes(x.k)}">${x.label}</button>`).join('')}</div>
+    </fieldset>
+    <button class="btn" id="sf_save">${id === 'new' ? 'Add section' : 'Save section'}</button>
+    ${id === 'new' || home.sections.length < 2 ? '' : '<button class="btn line" id="sf_delete">Remove this section</button>'}`;
+}
+/* ============================================================
+   TRACKS — what happens to everything else when you log a result.
+
+   A track owns one or more categories and holds a total to finish.
+   One thing about it is pinned down, and logging moves the other:
+
+     anchor 'deadline' → the date holds, the amounts move
+     anchor 'pace'     → the amounts hold, the finish date moves
+     anchor 'none'     → nothing is rewritten, you just get a forecast
+
+   How the difference lands is a second choice:
+
+     ripple 'smooth'  → spread it evenly over everything left
+     ripple 'consume' → amounts stay put, the dates slide
+     ripple 'fixed'   → nothing is rewritten; surplus banks as "ahead"
+   ============================================================ */
+
+const TASK_TYPES = [
+  { k:'target',    label:'Target',    hint:'Has amounts and moves a track forward' },
+  { k:'streak',    label:'Streak',    hint:'Logging it keeps the streak alive' },
+  { k:'repeating', label:'Repeating', hint:'Comes back on a schedule' },
+  { k:'anytime',   label:'Anytime',   hint:'No date, never late' },
+  { k:'milestone', label:'Milestone', hint:'No work — marks a moment' },
+  { k:'bonus',     label:'Bonus',     hint:'Earns XP but never changes the pace' }
+];
+
+const REPEATS = [
+  { k:'',        label:"Doesn't repeat" },
+  { k:'daily',   label:'Every day' },
+  { k:'weekdays',label:'Weekdays' },
+  { k:'weekly',  label:'Every week' },
+  { k:'everyN',  label:'Every N days' }
+];
+
+const ANCHORS = [
+  { k:'deadline', label:'The end date holds', hint:'Amounts on future tasks move instead' },
+  { k:'pace',     label:'The amount holds',   hint:'The finish date moves instead' },
+  { k:'none',     label:'Nothing is pinned',  hint:'Just show me the forecast' }
+];
+
+const RIPPLES = [
+  { k:'smooth',  label:'Smooth',  hint:'Spread the difference over everything left' },
+  { k:'consume', label:'Consume', hint:'Amounts stay; the dates slide' },
+  { k:'fixed',   label:'Fixed',   hint:'Never rewrite — bank it as ahead or behind' }
+];
+
+const addDays = (isoStr, n) => iso(new Date(parseISO(isoStr).getTime() + n * 86400000));
+
+function hasType(t, k) { return (t.types || []).includes(k); }
+
+function newTrack(over) {
+  return Object.assign({
+    id: 'tr' + Date.now().toString(36), name:'New track', categories:[],
+    total: 100, mode:'count', anchor:'deadline', endDate:'', pace:5,
+    ripple:'smooth', comfort:null, basePace:null
+  }, over || {});
+}
+
+function trackTasks(w, tr) {
+  return (w.tasks || []).filter(t => hasType(t, 'target') &&
+    (!tr.categories.length || tr.categories.includes(t.category)));
+}
+function trackFor(w, task) {
+  if (!hasType(task, 'target')) return null;
+  return (w.tracks || []).find(tr => !tr.categories.length || tr.categories.includes(task.category)) || null;
+}
+function trackDone(w, tr) {
+  return trackTasks(w, tr).reduce((s,t) => {
+    const l = w.progress.log[t.id];
+    return s + (l && l.result !== 'skip' ? (l.units || 0) : 0);
+  }, 0);
+}
+function openSlots(w, tr) {
+  const t0 = today();
+  return trackTasks(w, tr)
+    .filter(t => !w.progress.log[t.id])
+    .filter(t => !t.date || t.date >= t0)
+    .sort((a,b) => (a.date || '9999') < (b.date || '9999') ? -1 : 1);
+}
+
+/* Everything the Tonight screen and the Tracks list need to say out loud. */
+function trackStatus(w, tr) {
+  const done = trackDone(w, tr);
+  const remaining = Math.max(0, tr.total - done);
+  const slots = openSlots(w, tr);
+  const perSlot = slots.length ? remaining / slots.length : 0;
+  const pace = tr.anchor === 'pace' ? (tr.pace || 1) : perSlot;
+  const daysNeeded = pace > 0 ? Math.ceil(remaining / pace) : 0;
+  const active = slots.filter(t => (t.max || 0) > 0);
+  const tail = active.length ? active : slots;
+  const projectedEnd = tr.anchor === 'pace'
+    ? (remaining ? addDays(today(), Math.max(0, daysNeeded - 1)) : today())
+    : (tail.length ? tail[tail.length - 1].date : tr.endDate);
+  const comfort = tr.comfort || (tr.basePace ? tr.basePace * 1.6 : null);
+  return {
+    done, remaining, slots: slots.length, perSlot, projectedEnd,
+    pct: tr.total ? Math.min(100, Math.round(done / tr.total * 100)) : 0,
+    strained: !!(comfort && tr.anchor === 'deadline' && perSlot > comfort),
+    comfort
+  };
+}
+
+/* Rewrite the future. Called after every log, and by Redistribute. */
+function recomputeTrack(w, tr) {
+  if (tr.ripple === 'fixed' || tr.anchor === 'none') { relabelLinked(w, tr); return; }
+  const slots = openSlots(w, tr);
+  if (!slots.length) return;
+  const remaining = Math.max(0, tr.total - trackDone(w, tr));
+
+  if (tr.anchor === 'deadline' && tr.ripple === 'smooth') {
+    /* Same dates, new amounts. */
+    let acc = 0, given = 0;
+    const per = remaining / slots.length;
+    slots.forEach((t, i) => {
+      acc += per;
+      let take = Math.round(acc) - given;
+      if (i === slots.length - 1) take = remaining - given;
+      take = Math.max(0, take);
+      given += take;
+      t.max = take;
+      t.min = take ? Math.min(2, take) : 0;
+    });
+  } else {
+    /* Amounts hold; the dates slide. Used by consume, and by pace anchors. */
+    const amount = tr.anchor === 'pace' ? Math.max(1, tr.pace || 1) : null;
+    let left = remaining, cursor = today(), i = 0;
+    while (left > 0) {
+      let t = slots[i];
+      if (!t) {
+        t = newTask({ title: tr.name + ' — next', category: tr.categories[0] || '',
+                      types:['target','streak'], streak:true, auto:true });
+        w.tasks.push(t);
+        slots.push(t);
+      }
+      const take = Math.min(left, amount || t.planMax || t.max || 1);
+      t.max = take;
+      t.min = Math.min(2, take);
+      t.date = cursor;
+      cursor = addDays(cursor, 1);
+      left -= take;
+      i++;
+      if (i > 2000) break;   /* safety */
+    }
+    /* Anything past the finish is surplus — getting ahead removed it. */
+    slots.slice(i).forEach(t => {
+      if (t.link || t.auto) { t.archived = true; t.date = ''; }
+      else { t.max = 0; t.min = 0; }
+    });
+    w.tasks = w.tasks.filter(t => !t.archived);
+  }
+  relabelLinked(w, tr);
+}
+
+/* Campaign tasks carry unit positions, so their targets are re-labelled
+   ("Ch. 63 – Ch. 67") and their hook re-pulled from the chapter bands. */
+function relabelLinked(w, tr) {
+  const linked = trackTasks(w, tr).filter(t => t.link).sort((a,b) => (a.date||'9999') < (b.date||'9999') ? -1 : 1);
+  if (!linked.length) return;
+  let cursor = 0;
+  linked.forEach(t => {
+    const l = w.progress.log[t.id];
+    const amount = l ? (l.units || 0) : (t.max || 0);
+    const from = cursor, to = Math.max(cursor, cursor + amount - 1);
+    t.link = { book: t.link.book, from, to };
+    if (amount > 0) {
+      const a = unitLabel(w, from), b = unitLabel(w, to);
+      t.range = a + (a !== b ? ' – ' + b : '');
+      if (!t.hookEdited) t.hook = baitFor(w, from, to).t;
+      const bk = bookAt(w, from);
+      if (bk) t.category = bk.title;
+    }
+    cursor += amount;
+  });
+  w.progress.unitsDone = Math.min(totalUnits(w), linked.reduce((s,t) => {
+    const l = w.progress.log[t.id];
+    return s + (l && l.result !== 'skip' ? (l.units || 0) : 0);
+  }, 0));
+}
+
+/* One session per day between today and the deadline: adds days when the
+   finish moves out, so a longer runway actually lightens each day. */
+function fitSlotsToDeadline(w, tr) {
+  if (tr.anchor !== 'deadline' || !tr.endDate) return;
+  const t0 = today();
+  const days = Math.max(1, daysBetween(t0, tr.endDate) + 1);
+  const slots = openSlots(w, tr);
+  for (let i = slots.length; i < days; i++) {
+    const t = newTask({ title: tr.name + ' — session', category: tr.categories[0] || '',
+                        types:['target','streak'], streak:true, auto:true });
+    w.tasks.push(t); slots.push(t);
+  }
+  slots.forEach((t, i) => { t.date = addDays(t0, Math.min(i, days - 1)); });
+}
+
+function recomputeAll(w) { (w.tracks || []).forEach(tr => recomputeTrack(w, tr)); }
+
+/* What each button would do to the plan — shown on the button itself. */
+function tierImpact(w, task, amount) {
+  const tr = trackFor(w, task);
+  if (!tr || tr.ripple === 'fixed' || tr.anchor === 'none') return '';
+  const already = w.progress.log[task.id];
+  const doneAfter = trackDone(w, tr) - (already ? (already.units || 0) : 0) + amount;
+  const remaining = Math.max(0, tr.total - doneAfter);
+  if (!remaining) return 'finishes it';
+  if (tr.anchor === 'pace' || tr.ripple === 'consume') {
+    const per = tr.anchor === 'pace' ? Math.max(1, tr.pace || 1) : (task.planMax || task.max || 1);
+    return 'ends ' + fmtDay(addDays(today(), Math.max(0, Math.ceil(remaining / per) - 1)));
+  }
+  const others = openSlots(w, tr).filter(t => t.id !== task.id).length;
+  if (!others) return 'last one';
+  const per = remaining / others;
+  /* Spread over many days the difference is small, so show enough decimals
+     that the three buttons actually read differently. */
+  return per.toFixed(others > 12 ? 2 : 1) + '/day left';
+}
+
+/* Repeating tasks lay their own next egg when logged. */
+function spawnRepeat(w, task) {
+  if (!hasType(task, 'repeating') || !task.repeat || !task.repeat.freq || !task.date) return null;
+  const r = task.repeat;
+  let next;
+  if (r.freq === 'daily') next = addDays(task.date, 1);
+  else if (r.freq === 'weekly') next = addDays(task.date, 7);
+  else if (r.freq === 'everyN') next = addDays(task.date, Math.max(1, r.n || 2));
+  else if (r.freq === 'weekdays') {
+    next = addDays(task.date, 1);
+    while ([0,6].includes(parseISO(next).getDay())) next = addDays(next, 1);
+  }
+  if (!next) return null;
+  if ((w.tasks || []).some(t => t.repeatOf === task.id && t.date === next)) return null;
+  const copy = newTask(Object.assign({}, task, {
+    id: undefined, date: next, repeatOf: task.id, added: Date.now()
+  }));
+  copy.id = newTask().id;
+  w.tasks.push(copy);
+  return copy;
+}
+
+/* On first run the shipped campaign becomes one deadline-anchored track. */
+function migrateTracks(w) {
+  (w.tasks || []).forEach(t => {
+    if (!t.types) t.types = t.link ? ['target','streak'] : (t.streak ? ['streak'] : []);
+    if (t.link && !t.types.includes('target')) t.types.push('target');
+    if (t.planMax === undefined) t.planMax = t.max || null;
+  });
+  if (w.tracks) return;
+  const linked = (w.tasks || []).filter(t => t.link);
+  if (!linked.length) { w.tracks = []; return; }
+  const total = totalUnits(w);
+  w.tracks = [ newTrack({
+    id: 'tr_main', name: w.name + ' campaign',
+    categories: [...new Set(linked.map(t => t.category).filter(Boolean))],
+    total, mode:'count', anchor:'deadline',
+    endDate: w.end || linked[linked.length - 1].date,
+    pace: Math.round(total / Math.max(1, linked.length)),
+    ripple:'smooth',
+    basePace: total / Math.max(1, linked.length)
+  }) ];
+}
+/* ============================================================
+   SCREENS
+   Rules followed here:
+   · one <h1> per screen, headings never skip a level
+   · every control has a text name; emoji are decoration only
+   · state is never carried by colour alone — there is always a word
+   · progress bars expose their value to assistive tech
+   ============================================================ */
+
+const RARITY_LABEL = { common:'Common', rare:'Rare', epic:'Epic', legendary:'Legendary' };
+
+function taskTiers(t, log) {
+  const hasNums = t.min || t.max;
+  if (!hasNums) {
+    const on = !!(log && log.result === 'full');
+    return `<div class="tiers" style="grid-template-columns:1fr 1fr">
+      <button class="tier" data-log="full" data-task-id="${t.id}" data-units="0" aria-pressed="${on}"
+        aria-label="Log ${esc(t.title)} as done, 20 ${esc(W.xpName)}${on ? ' — already logged' : ''}">
+        <b>Done</b><span class="pay">+20</span></button>
+      <button class="tier boss" data-log="boss" data-task-id="${t.id}" data-units="0" aria-pressed="${!!(log && log.result === 'boss')}"
+        aria-label="Log ${esc(t.title)} as boss mode, 30 ${esc(W.xpName)} and guaranteed loot">
+        <b>Boss</b><span class="pay">+30 · loot</span></button></div>`;
+  }
+  const base = t.max || t.min || 1;
+  const amounts = { min: t.min || Math.min(2, base), full: base, boss: base + 3 };
+  return `<div class="tiers">${['min','full','boss'].map(k => {
+    const p = PAYOUT[k], on = !!(log && log.result === k), amt = amounts[k];
+    const name = `${p.label} for ${t.title}: ${amt} ${W.unitPlural}, ${p.xp} ${W.xpName}${k === 'boss' ? ', guaranteed loot' : ''}${on ? ' — logged' : ''}`;
+    const impact = tierImpact(W, t, amt);
+    return `<button class="tier${k === 'boss' ? ' boss' : ''}" data-log="${k}" data-task-id="${t.id}" data-units="${amt}"
+      aria-pressed="${on}" aria-label="${esc(name + (impact ? '. Afterwards: ' + impact : ''))}">
+      <b>${p.label.split(' ')[0]}</b><small>${amt} ${esc(W.unitPlural)}</small>
+      <span class="pay">+${p.xp}${k === 'boss' ? ' · loot' : ''}</span>
+      ${impact ? `<span class="impact">${esc(impact)}</span>` : ''}</button>`;
+  }).join('')}</div>`;
+}
+
+function taskCard(t, sec, hero) {
+  const show = k => (sec.fields || []).includes(k);
+  const log = W.progress.log[t.id];
+  const ms = t.link ? nextMilestone() : null;
+  const H = hero ? 'h1' : 'h3';
+  const idAttr = hero ? ' id="screenTitle"' : '';
+  const starred = (t.tags || []).includes('starred');
+  const bits = [];
+  if (show('date') && t.date) bits.push(fmtDay(t.date));
+  if (show('category') && t.category) bits.push(esc(t.category));
+  let out = `<article class="card${hero ? ' quest' : ''}"${hero ? '' : ' style="margin-top:10px"'}>
+    ${bits.length || starred ? `<p class="date"><span class="eyebrow">${bits.join(' · ')}</span>
+      ${starred ? '<span class="stars"><span aria-hidden="true">★</span><span class="sr-only">Starred</span></span>' : ''}</p>` : ''}
+    <${H}${idAttr}${hero ? '' : ' style="font-size:19px;margin-bottom:8px"'}>${esc(t.title || 'Untitled')}</${H}>`;
+  if (show('range') && (t.range || t.max)) {
+    out += `<p class="target"><b>${esc(t.range || (t.max + ' ' + W.unitPlural))}</b>${t.range && t.max ? `<span>· ${t.max} ${esc(W.unitPlural)}</span>` : ''}</p>`;
+  }
+  if (show('tiers')) out += taskTiers(t, log);
+  if (show('hook') && t.hook) {
+    out += `<div class="bait"><div id="baitSlot_${t.id}">
+      <button class="bait-btn" data-bait="${t.id}" aria-expanded="false" aria-controls="baitText_${t.id}">
+        <span aria-hidden="true">🔥</span> <span>Peek at the hook</span></button></div></div>`;
+  }
+  const chips = [];
+  if (show('how') && t.how) chips.push(`<span class="chip"><span aria-hidden="true">🎧</span> ${esc(t.how)}</span>`);
+  if (show('payoff') && t.payoff) chips.push(`<span class="chip">Payoff: <b>${esc(t.payoff)}</b></span>`);
+  if (show('tags') && (t.tags || []).length) chips.push(...t.tags.map(x => `<span class="chip">#${esc(x)}</span>`));
+  if (chips.length) out += `<p class="meta">${chips.join('')}</p>`;
+  if (show('notes') && t.notes) out += `<p style="margin:12px 0 0;color:var(--muted);font-size:14px">${esc(t.notes)}</p>`;
+  if (show('momentum') && ms) {
+    const pct = Math.round(Math.min(1, Math.max(0, (W.progress.unitsDone - (ms.prevIndex || 0)) / Math.max(1, ms.atIndex - (ms.prevIndex || 0) + 1))) * 100);
+    out += `<div class="momentum">
+      <p class="row"><span id="msLabel_${t.id}">Progress to ${esc(ms.name)}</span><b>${pct}%</b></p>
+      <div class="bar" role="progressbar" aria-labelledby="msLabel_${t.id}" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+    </div>`;
+  }
+  if (hero) {
+    out += `<button class="escape" id="escapeBtn" aria-haspopup="dialog">
+      <b><span aria-hidden="true">🧠</span> Attention is garbage tonight</b>
+      <small>Ten minutes, whatever format works, and you may quit at ten. It still counts, and the streak holds.</small>
+    </button>`;
+  }
+  out += `<p style="margin:14px 0 0"><button class="link" data-task="${t.id}" aria-haspopup="dialog">Edit this task</button></p>`;
+  return out + '</article>';
+}
+
+function renderTonight() {
+  const lv = levelFor(W.progress.xp);
+  const ms = nextMilestone();
+  const home = W.home || defaultHome();
+  let heroUsed = false;
+  let body = '';
+
+  home.sections.forEach((sec, si) => {
+    const list = filterTasks(W, {
+      categories: sec.categories, tags: sec.tags, scope: sec.scope,
+      sort: sec.sort, dir: sec.dir
+    }).slice(0, Math.max(1, sec.limit || 1));
+    if (!list.length) {
+      body += `<section class="sec" aria-labelledby="sec${si}">
+        <div class="sec-head"><h2 id="sec${si}">${esc(sec.name)}</h2></div>
+        <p class="empty"><b>Nothing here right now</b>Add a task, or widen this section in Tonight's layout.</p></section>`;
+      return;
+    }
+    if (!heroUsed) {
+      heroUsed = true;
+      body += taskCard(list[0], sec, true);
+      const rest = list.slice(1);
+      if (rest.length) {
+        body += `<section class="sec" aria-labelledby="sec${si}">
+          <div class="sec-head"><h2 id="sec${si}">${esc(sec.name)}</h2></div>
+          ${rest.map(t => taskCard(t, sec, false)).join('')}</section>`;
+      }
+    } else {
+      body += `<section class="sec" aria-labelledby="sec${si}">
+        <div class="sec-head"><h2 id="sec${si}">${esc(sec.name)}</h2></div>
+        ${list.map(t => taskCard(t, sec, false)).join('')}</section>`;
+    }
+  });
+
+  if (!heroUsed) {
+    body = `<div class="card quest"><p class="eyebrow">${fmtDay(today())}</p>
+      <h1 id="screenTitle">Nothing scheduled</h1>
+      <p style="margin:0;color:var(--muted)">Add a task in the Tasks tab, or change what this screen pulls in.</p></div>` + body;
+  }
+
+  const lvPct = Math.round(lv.pct * 100);
+  return `
+    <div class="scene">${sceneSVG({max:16})}${motes()}<div class="veil"></div>
+      <div class="scene-cap">
+        <button class="worldbtn" data-sheet="worlds" aria-haspopup="dialog">
+          <span class="sr-only">Change world. Current world:</span><b>${esc(W.name)}</b><span aria-hidden="true">▾</span></button>
+        <button class="counter" data-sheet="pace" aria-haspopup="dialog">
+          <span class="sr-only">Pace and catch-up.</span><b>${daysLeft()}</b><small>days left</small></button>
+      </div>
+    </div>
+    <div class="wrap">
+      ${body}
+      ${strainCard()}
+      <div class="sec">
+        <button class="sprint" id="sprintBtn" aria-haspopup="dialog">
+          <span class="g" aria-hidden="true">⚔️</span>
+          <span style="flex:1"><b>Ten-minute sprint</b><small>Set the timer, work, collect what drops.</small></span>
+          <span aria-hidden="true" style="color:var(--muted)">›</span>
+        </button>
+      </div>
+      <section class="sec" aria-labelledby="standingH">
+        <h2 class="sr-only" id="standingH">Where you stand</h2>
+        <div class="grid2">
+          <p class="stat"><b>${streak()}</b><small>day streak</small></p>
+          <p class="stat"><b>${W.progress.coins}</b><small>${esc(W.currency)}</small></p>
+        </div>
+        <div class="momentum" style="margin-top:12px">
+          <p class="row"><span id="lvLabel">${esc(lv.name)} · level ${lv.n}</span><b>${W.progress.xp} ${esc(W.xpName)}</b></p>
+          <div class="bar" role="progressbar" aria-labelledby="lvLabel" aria-valuenow="${lvPct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${lvPct}%"></i></div>
+        </div>
+      </section>
+      ${ms ? `<section class="sec" aria-labelledby="shinyH"><div class="card" style="border-color:var(--edge-strong)">
+        <p class="eyebrow">Next shiny thing</p>
+        <h2 id="shinyH" style="margin:6px 0">${esc(ms.name)}</h2>
+        <p style="margin:0;color:var(--muted);font-size:14px">${esc(ms.blurb)}</p>
+        <p style="margin:10px 0 0;font-size:13.5px;color:var(--glow-ink)">${Math.max(0, ms.atIndex - W.progress.unitsDone + 1)} ${esc(W.unitPlural)} away${ms.reward === 'biome' ? ' · unlocks a new biome' : ms.reward === 'legendary' ? ' · plants a legendary tree' : ''}</p>
+      </div></section>` : ''}
+      <div class="sec">
+        <button class="btn line" data-sheet="home" aria-haspopup="dialog">Choose what shows on this screen</button>
+        <button class="btn line" data-sheet="position" aria-haspopup="dialog">Not where the plan thinks you are? Fix your place</button>
+      </div>
+    </div>`;
+}
+
+function renderGrove() {
+  const flora = W.progress.flora || [];
+  const biomes = [{ id:'home', name:'The Starting Wood', unlocked:true, by:'' }].concat(
+    (W.milestones || []).filter(m => m.reward === 'biome').map(m => ({
+      id: m.biome, name: biomeName(m.biome), unlocked: (W.progress.biomes||[]).includes(m.biome), by: m.name
+    })));
+  const open = biomes.filter(b => b.unlocked).length;
+  return `
+    <div class="scene" style="height:38vh">${sceneSVG({max:24})}${motes()}<div class="veil"></div>
+      <div class="scene-cap"><button class="worldbtn" data-sheet="themes" aria-haspopup="dialog">
+        <span aria-hidden="true">🎨</span><span class="sr-only">Change theme pack. Current pack:</span><b>${THEMES[W.theme].name}</b><span aria-hidden="true">▾</span></button></div>
+    </div>
+    <div class="wrap">
+      <div class="card quest">
+        <p class="eyebrow">The grove</p>
+        <h1 id="screenTitle" style="font-size:30px">${flora.length} ${flora.length === 1 ? 'thing' : 'things'} growing</h1>
+        <p style="margin:0;color:var(--muted);font-size:14.5px">Every logged night plants something. Nothing here wilts, dies, or gets taken away — including on the nights you skip.</p>
+        <p class="meta">
+          <span class="chip"><span aria-hidden="true">🌱</span> <b>${flora.filter(f=>f.kind==='sprout').length}</b> sprouts</span>
+          <span class="chip"><span aria-hidden="true">🌳</span> <b>${flora.filter(f=>f.kind==='tree'||f.kind==='bloom').length}</b> trees</span>
+          <span class="chip"><span aria-hidden="true">✨</span> <b>${flora.filter(f=>f.kind==='legendary').length}</b> legendary</span>
+        </p>
+      </div>
+      <section class="sec" aria-labelledby="biomeH">
+        <div class="sec-head"><h2 id="biomeH">Biomes</h2><span class="eyebrow">${open} of ${biomes.length} open</span></div>
+        <ul class="shelf">
+          ${biomes.map(b => `<li class="row-item ${b.unlocked ? '' : 'locked'}">
+            <span class="g" aria-hidden="true">${b.unlocked ? '🏞️' : '🌫️'}</span>
+            <span class="t"><b>${esc(b.name)}</b><small>${b.unlocked ? 'Open' : 'Locked — unlocks at ' + esc(b.by || 'a milestone')}</small></span>
+          </li>`).join('')}
+        </ul>
+      </section>
+    </div>`;
+}
+function biomeName(id) {
+  return ({ gatefield:'The Gate Field', lunathion:'Neon Quarter', eternal:'The Eternal Terrace',
+            beneath:'Beneath', grove:'The Deep Grove' })[id] || 'New ground';
+}
+
+function renderTrail() {
+  const t = today();
+  const groups = {};
+  filterTasks(W, { sort:'date', dir:'asc', scope:'all' }).forEach(task => {
+    const k = task.category || 'Everything else';
+    (groups[k] = groups[k] || []).push(task);
+  });
+  let out = '';
+  Object.keys(groups).forEach((cat, gi) => {
+    const list = groups[cat];
+    const doneN = list.filter(x => isLogged(W, x)).length;
+    out += `<section aria-labelledby="realm${gi}">
+      <div class="realm-head">
+        <h2 id="realm${gi}">${esc(cat)}</h2>
+        <small>${list.length} tasks · ${doneN} logged${list[0].date ? ' · from ' + fmtDay(list[0].date) : ''}</small>
+      </div><ol class="trail">`;
+    list.forEach(task => {
+      const log = W.progress.log[task.id];
+      const isToday = task.date === t;
+      const isDone = !!(log && log.result !== 'skip');
+      out += `<li class="node ${isDone ? 'done' : ''} ${isToday ? 'today' : ''}">
+        <p class="d">${task.date ? fmtDay(task.date) : 'Anytime'}${(task.tags||[]).includes('starred') ? ' · <span aria-hidden="true" style="color:var(--glow-ink)">★</span><span class="sr-only">starred</span>' : ''}</p>
+        <h3>${esc(task.title)}</h3>
+        ${task.range ? `<p>${esc(task.range)}</p>` : ''}
+        ${log ? `<p class="res">${log.result === 'skip' ? 'Rested' : PAYOUT[log.result].label} · +${log.xp || 0} ${esc(W.xpName)}</p>`
+              : isToday ? `<p class="res now">Today — not logged yet</p>` : ''}
+      </li>`;
+    });
+    out += '</ol></section>';
+  });
+  return `<div class="wrap" style="padding-top:calc(20px + var(--safe-t))">
+    <div class="sec-head" style="margin-bottom:14px">
+      <h1 class="page-title" id="screenTitle">The trail</h1>
+      <button class="link" data-sheet="pace" aria-haspopup="dialog">Catch up</button>
+    </div>
+    ${W.launch ? `<div class="card" style="margin-bottom:6px;border-color:var(--edge-strong)">
+      <p class="eyebrow">Finish line</p>
+      <h2 style="margin:5px 0 3px">${esc(W.launchLabel || 'Launch day')}</h2>
+      <p style="margin:0;color:var(--muted);font-size:14px">${fmtLong(W.launch)} · ${daysBetween(today(), W.launch)} days out</p>
+    </div>` : ''}
+    ${out}</div>`;
+}
+
+function renderHoard() {
+  const lv = levelFor(W.progress.xp);
+  const lvPct = Math.round(lv.pct * 100);
+  const loot = (W.progress.loot || []).slice().reverse();
+  const counts = {};
+  loot.forEach(l => { counts[l.n] = counts[l.n] || { ...l, c:0 }; counts[l.n].c++; });
+  const items = Object.values(counts);
+  const achieved = W.progress.achieved || [];
+  return `<div class="wrap" style="padding-top:calc(20px + var(--safe-t))">
+    <div class="sec-head" style="margin-bottom:14px">
+      <h1 class="page-title" id="screenTitle">The hoard</h1>
+      <button class="link" data-sheet="settings" aria-haspopup="dialog">Settings</button>
+    </div>
+    <section class="card" aria-labelledby="lvH">
+      <p class="eyebrow">${esc(lv.name)}</p>
+      <h2 id="lvH" style="font-size:32px;margin:6px 0 10px">Level ${lv.n}</h2>
+      <div class="bar" role="progressbar" aria-labelledby="lvH" aria-valuenow="${lvPct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${lvPct}%"></i></div>
+      <p class="row" style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin:7px 0 0">
+        <span>${W.progress.xp} ${esc(W.xpName)}</span>${lv.nextAt ? `<span>${lv.nextAt - W.progress.xp} to the next level</span>` : '<span>Top level</span>'}
+      </p>
+      <div class="grid2" style="margin-top:14px">
+        <p class="stat"><b>${W.progress.coins}</b><small>${esc(W.currency)}</small></p>
+        <p class="stat"><b>${W.progress.unitsDone}</b><small>${esc(W.unitPlural)} read</small></p>
+      </div>
+    </section>
+    <section class="sec" aria-labelledby="lootH">
+      <div class="sec-head"><h2 id="lootH">Loot</h2><span class="eyebrow">${loot.length} items</span></div>
+      ${items.length ? `<ul class="loot-grid">${items.map(l => `<li class="loot ${l.r}">
+        <span class="g" aria-hidden="true">${l.g}</span><span class="n">${esc(l.n)}</span>
+        <small>${RARITY_LABEL[l.r]}${l.c > 1 ? ' ×' + l.c : ''}</small></li>`).join('')}</ul>`
+      : `<p class="empty"><b>Nothing yet</b>Boss mode always drops something. Full clears drop about a third of the time.</p>`}
+    </section>
+    <section class="sec" aria-labelledby="shopH">
+      <div class="sec-head"><h2 id="shopH">Reward shop</h2><button class="link" data-sheet="addreward" aria-haspopup="dialog">Add a reward</button></div>
+      <ul class="shelf">
+        ${W.progress.shop.map((s,i) => {
+          const can = W.progress.coins >= s.c;
+          const name = `${s.n}, ${s.c} ${W.currency}. ${can ? 'Ready to redeem' : (s.c - W.progress.coins) + ' more needed'}`;
+          return `<li><button class="row-item ${can ? '' : 'locked'}" data-buy="${i}" aria-label="${esc(name)}">
+            <span class="g" aria-hidden="true">${s.g}</span>
+            <span class="t"><b>${esc(s.n)}</b><small>${can ? 'Ready to redeem' : (s.c - W.progress.coins) + ' more ' + esc(W.currency)}</small></span>
+            <span class="price" aria-hidden="true">${s.c}</span></button></li>`;
+        }).join('')}
+      </ul>
+    </section>
+    <section class="sec" aria-labelledby="msH">
+      <div class="sec-head"><h2 id="msH">Milestones</h2><span class="eyebrow">${achieved.length} of ${(W.milestones||[]).length} earned</span></div>
+      <ul class="shelf">
+        ${(W.milestones||[]).map(m => {
+          const got = achieved.includes(m.id);
+          const where = m.atUnit === 'end' ? 'the end of ' + ((W.books.find(b=>b.id===m.book)||{}).title || 'this part') : m.atUnit;
+          return `<li class="row-item ach ${got ? 'got' : 'locked'}">
+            <span class="g" aria-hidden="true">${got ? '🏅' : '🔒'}</span>
+            <span class="t"><b>${esc(m.name)}</b><small>${got ? 'Earned — ' + esc(m.blurb) : 'Locked — at ' + esc(where)}</small></span>
+          </li>`;
+        }).join('')}
+      </ul>
+    </section>
+    <section class="sec" aria-labelledby="focusH">
+      <h2 class="sr-only" id="focusH">Focus sessions</h2>
+      <div class="grid2">
+        <p class="stat"><b>${W.progress.sprints || 0}</b><small>sprints run</small></p>
+        <p class="stat"><b>${W.progress.sprintMinutes || 0}</b><small>focus minutes</small></p>
+      </div>
+    </section>
+  </div>`;
+}
+
+/* --------------------------------- shell ---------------------------------- */
+const DOCK = [
+  { id:'tonight', g:'🌙', label:'Tonight' },
+  { id:'grove',   g:'🌿', label:'Grove' },
+  { id:'trail',   g:'🗺️', label:'Trail' },
+  { id:'tasks',   g:'▤',  label:'Tasks' },
+  { id:'hoard',   g:'✨', label:'Hoard' }
+];
+
+/* Lists with their bullets removed lose list semantics in Safari + VoiceOver,
+   and the three win buttons should read as one group. Applied after every
+   render so no template can forget it. */
+function normalizeA11y(root) {
+  root.querySelectorAll('ul.shelf,ol.trail,ul.loot-grid,ul.swatches,ul.tasklist')
+      .forEach(l => l.setAttribute('role', 'list'));
+  root.querySelectorAll('.tiers').forEach(t => {
+    if (!t.getAttribute('role')) {
+      t.setAttribute('role', 'group');
+      t.setAttribute('aria-label', 'How much you got done');
+    }
+  });
+}
+
+function paint() {
+  const th = THEMES[W.theme] || THEMES.midnight;
+  Object.entries(th.vars).forEach(([k,v]) => document.documentElement.style.setProperty(k, v));
+  document.documentElement.classList.toggle('calm', !!(S.prefs && S.prefs.calm));
+  document.querySelector('meta[name=theme-color]').setAttribute('content', th.vars['--sky-1']);
+
+  const html = { tonight:renderTonight, grove:renderGrove, trail:renderTrail, tasks:renderTasks, hoard:renderHoard }[view]();
+  const label = (DOCK.find(d => d.id === view) || {}).label || 'On We Go';
+  document.title = label + ' · On We Go';
+  $('main').innerHTML = `<section class="screen" aria-labelledby="screenTitle">${html}</section>`;
+  $('dock').innerHTML = DOCK.map(d => `<button data-view="${d.id}"${view === d.id ? ' aria-current="page"' : ''}>
+    <span class="g" aria-hidden="true">${d.g}</span>${d.label}</button>`).join('');
+  normalizeA11y($('main'));
+}
+/* ============================================================
+   ON WE GO — actions, sheets, timer
+   ============================================================ */
+
+
+/* ============================================================
+   SYNC — local-first. The device is always the source of truth
+   for what you just did; the server is how the other devices
+   find out. Last write wins, by timestamp.
+   ============================================================ */
+const Sync = {
+  cfgKey: 'onwego.sync',
+  cfg: { key:'', base:'' },
+  status: 'off',      // off | idle | syncing | error
+  lastAt: 0,
+  _t: null,
+
+  loadCfg() {
+    try { this.cfg = JSON.parse(localStorage.getItem(this.cfgKey)) || this.cfg; } catch (e) {}
+    if (this.cfg.key) this.status = 'idle';
+    return this.cfg;
+  },
+  saveCfg(key, base) {
+    this.cfg = { key: (key || '').trim(), base: (base || '').trim().replace(/\/$/, '') };
+    try { localStorage.setItem(this.cfgKey, JSON.stringify(this.cfg)); } catch (e) {}
+    this.status = this.cfg.key ? 'idle' : 'off';
+  },
+  endpoint() {
+    if (this.cfg.base) return this.cfg.base + '/api/sync';
+    if (location.protocol === 'http:' || location.protocol === 'https:') return '/api/sync';
+    return null;   // running inside the native shell with no site URL set
+  },
+  ready() { return !!(this.cfg.key && this.endpoint()); },
+
+  async pull() {
+    if (!this.ready()) return null;
+    const res = await fetch(this.endpoint(), { headers:{ 'x-onwego-key': this.cfg.key } });
+    if (!res.ok) throw new Error('pull failed');
+    const body = await res.json();
+    return body.data || null;
+  },
+  async push(state) {
+    if (!this.ready()) return;
+    const res = await fetch(this.endpoint(), {
+      method:'POST',
+      headers:{ 'content-type':'application/json', 'x-onwego-key': this.cfg.key },
+      body: JSON.stringify(state)
+    });
+    if (!res.ok) throw new Error('push failed');
+    this.lastAt = Date.now();
+  },
+  schedulePush() {
+    if (!this.ready()) return;
+    clearTimeout(this._t);
+    this._t = setTimeout(async () => {
+      try { this.status = 'syncing'; await this.push(S); this.status = 'idle'; }
+      catch (e) { this.status = 'error'; }
+    }, 1200);
+  },
+  /* Boot merge: whichever side was written last wins the whole file. */
+  async reconcile() {
+    if (!this.ready()) return false;
+    try {
+      this.status = 'syncing';
+      const remote = await this.pull();
+      if (remote && (remote.updatedAt || 0) > (S.updatedAt || 0)) {
+        S = remote;
+        W = S.worlds.find(w => w.id === S.activeId) || S.worlds[0];
+        await Store.save(S);
+        this.status = 'idle';
+        return true;
+      }
+      if (!remote || (S.updatedAt || 0) > (remote.updatedAt || 0)) await this.push(S);
+      this.status = 'idle';
+    } catch (e) { this.status = 'error'; }
+    return false;
+  }
+};
+
+function save() {
+  S.updatedAt = Date.now();
+  Store.save(S);
+  /* One on-device snapshot a day, so a bad edit is recoverable offline. */
+  if (typeof writeLocalSnap === 'function' && S._snapDay !== today()) {
+    S._snapDay = today();
+    writeLocalSnap(JSON.parse(JSON.stringify(S)));
+  }
+  Sync.schedulePush();
+}
+/* Announcements go through one polite live region, so a screen reader
+   hears "+20 XP" without the focus moving anywhere. */
+function toast(msg) {
+  const live = $('live');
+  live.innerHTML = '';
+  const el = document.createElement('p');
+  el.className = 'toast'; el.textContent = msg;
+  live.appendChild(el);
+  clearTimeout(window._toastT);
+  window._toastT = setTimeout(() => { if (el.parentNode) el.remove(); }, 4000);
+}
+function setErr(msg) {
+  const e = $('formErr'); if (e) e.textContent = msg;
+  toast(msg);
+}
+
+let lastFocus = null;
+const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
+
+function closeSheet(restore) {
+  const had = document.querySelector('.sheet,.drop');
+  document.querySelectorAll('.veilbg,.sheet,.drop').forEach(n => n.remove());
+  if (window._timer) { clearInterval(window._timer); window._timer = null; }
+  window._paused = false;
+  if (had && restore !== false && lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  lastFocus = null;
+}
+
+function mountDialog(node, cls) {
+  node.setAttribute('role', cls === 'drop' ? 'alertdialog' : 'dialog');
+  node.setAttribute('aria-modal', 'true');
+  node.setAttribute('aria-labelledby', 'dialogTitle');
+  document.body.appendChild(node);
+  const first = node.querySelector('#dialogTitle') || node.querySelector(FOCUSABLE);
+  if (first) first.focus();
+}
+
+/* Tab stays inside the open dialog; Escape closes it. */
+document.addEventListener('keydown', e => {
+  const dlg = document.querySelector('.sheet,.drop');
+  if (!dlg) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeSheet(); return; }
+  if (e.key !== 'Tab') return;
+  const items = [...dlg.querySelectorAll(FOCUSABLE)].filter(n => n.offsetParent !== null || n === document.activeElement);
+  if (!items.length) return;
+  const first = items[0], last = items[items.length - 1];
+  if (e.shiftKey && (document.activeElement === first || document.activeElement === dlg || !dlg.contains(document.activeElement))) {
+    e.preventDefault(); last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault(); first.focus();
+  }
+});
+
+function openSheet(html, opener) {
+  const keep = opener || (document.activeElement !== document.body ? document.activeElement : null);
+  closeSheet(false);
+  lastFocus = keep;
+  const v = document.createElement('div');
+  v.className = 'veilbg'; v.onclick = () => closeSheet();
+  document.body.appendChild(v);
+  const s = document.createElement('div'); s.className = 'sheet';
+  s.innerHTML = '<div class="grab" aria-hidden="true"></div>' +
+    '<div class="sheet-bar"><span></span><button class="close" data-close="1" aria-label="Close">' +
+    '<span aria-hidden="true">\u2715</span></button></div>' +
+    html.replace('<h2>', '<h2 id="dialogTitle" tabindex="-1">');
+  normalizeA11y(s);
+  mountDialog(s, 'sheet');
+}
+
+function openDrop(html) {
+  const keep = document.activeElement !== document.body ? document.activeElement : null;
+  closeSheet(false);
+  lastFocus = keep;
+  const d = document.createElement('div'); d.className = 'drop';
+  d.innerHTML = `<div class="drop-card">${html.replace('<h2>', '<h2 id="dialogTitle" tabindex="-1">')}</div>`;
+  d.addEventListener('click', e => { if (e.target === d) closeSheet(); });
+  mountDialog(d, 'drop');
+}
+
+/* ------------------------------- logging ---------------------------------- */
+const FLORA_FOR = { min:'sprout', full:'tree', boss:'bloom' };
+
+function logTask(taskId, kind, units) {
+  const task = (W.tasks || []).find(x => x.id === taskId);
+  if (!task) return;
+  const when = task.date || today();
+  const prev = W.progress.log[taskId];
+  if (prev) {  /* re-logging replaces the earlier result, never punishes */
+    W.progress.unitsDone = Math.max(0, W.progress.unitsDone - (prev.units || 0));
+    W.progress.xp = Math.max(0, W.progress.xp - prev.xp);
+    W.progress.coins = Math.max(0, W.progress.coins - prev.coins);
+    W.progress.flora = W.progress.flora.filter(f => f.task !== taskId || f.milestone);
+  }
+  const p = PAYOUT[kind];
+  /* Target tasks move their track forward; everything else is XP only. */
+  units = hasType(task, 'target') ? Math.max(0, units) : 0;
+  W.progress.log[taskId] = { result:kind, units, xp:p.xp, coins:p.coins, date:when, at:Date.now() };
+  W.progress.unitsDone += units;
+  W.progress.xp += p.xp;
+  W.progress.coins += p.coins;
+  W.progress.flora.push({ kind:FLORA_FOR[kind], date:when, task:taskId, seed:Math.floor(Math.random()*99999) });
+
+  spawnRepeat(W, task);
+  const tr = trackFor(W, task);
+  if (tr) recomputeTrack(W, tr); else relabelLinked(W, { categories: [] });
+  const found = checkMilestones();
+  const drop = (!found && Math.random() < p.lootChance) ? grantLoot() : null;
+  save(); paint();
+  if (!found && drop) showDrop(drop);
+  else if (!found) toast(`+${p.xp} ${W.xpName} · +${p.coins} ${W.currency}`);
+}
+
+function grantLoot(rarity) {
+  const item = rollLoot(rarity);
+  W.progress.loot.push(item);
+  return item;
+}
+function showDrop(item) {
+  openDrop(`<span class="g" aria-hidden="true">${item.g}</span>
+    <p class="rarity">${RARITY_LABEL[item.r]} loot</p>
+    <h2>${esc(item.n)}</h2>
+    <p>Dropped into the hoard.</p>
+    <button class="btn" data-close="1">Take it</button>`);
+}
+
+function checkMilestones() {
+  const done = W.progress.unitsDone;
+  const hit = (W.milestones || []).filter(m => !W.progress.achieved.includes(m.id) && m.atIndex <= done - 1);
+  if (!hit.length) return null;
+  let last = null;
+  hit.forEach(m => {
+    W.progress.achieved.push(m.id);
+    W.progress.coins += 25;
+    if (m.reward === 'biome' && m.biome && !W.progress.biomes.includes(m.biome)) W.progress.biomes.push(m.biome);
+    if (m.reward === 'legendary' || m.reward === 'biome') {
+      W.progress.flora.push({ kind:'legendary', date:today(), seed:Math.floor(Math.random()*99999), milestone:m.id });
+    }
+    last = m;
+  });
+  const item = grantLoot('legendary');
+  save();
+  setTimeout(() => openDrop(`<span class="g" aria-hidden="true">${last.reward === 'biome' ? '🏞️' : '🌳'}</span>
+    <p class="rarity">Milestone reached</p>
+    <h2>${esc(last.name)}</h2>
+    <p>${esc(last.blurb)}</p>
+    <p style="color:var(--glow-ink);font-size:13.5px;margin:-6px 0 18px">
+      ${last.reward === 'biome' ? biomeName(last.biome) + ' unlocked' : 'A legendary tree takes root'} · +25 ${esc(W.currency)} · ${esc(item.n)} added to the hoard</p>
+    <button class="btn" data-close="1">See the grove</button>`), 260);
+  return last;
+}
+
+/* ------------------------------- sheets ----------------------------------- */
+const SHEETS = {
+  worlds() {
+    return `<h2>Worlds</h2><p class="sub">Each world has its own campaign, grove, currency and theme.</p>
+      <ul class="shelf">
+        ${S.worlds.map(w => `<li><button class="row-item ${w.id === W.id ? 'claimed' : ''}" data-world="${w.id}" aria-current="${w.id === W.id ? 'true' : 'false'}">
+          <span class="g" aria-hidden="true">${w.id === W.id ? '📍' : '🌍'}</span>
+          <span class="t"><b>${esc(w.name)}</b><small>${w.id === W.id ? 'Currently open · ' : ''}${esc(w.tagline || (w.books.length + ' parts'))} · ${THEMES[w.theme].name}</small></span>
+        </button></li>`).join('')}
+      </ul>
+      <button class="btn" style="margin-top:16px" data-sheet="newworld">Build a new world</button>`;
+  },
+  newworld() {
+    return `<h2>New world</h2><p class="sub">Anything with parts and a deadline works: a series, a course, a season, a backlog.</p>
+      <p class="err" id="formErr" role="alert"></p>
+      <label class="f" for="nw_name"><span>Name</span></label>
+      <input id="nw_name" placeholder="Stormlight, or Spanish, or the garage" style="margin-bottom:14px">
+      <label class="f" for="nw_unit"><span>What are you counting?</span></label>
+      <input id="nw_unit" placeholder="chapter" value="chapter" style="margin-bottom:14px">
+      <label class="f" for="nw_cur"><span>Currency name</span></label>
+      <input id="nw_cur" placeholder="Coins" value="Coins" style="margin-bottom:14px">
+      <label class="f" for="nw_theme"><span>Theme pack</span></label>
+      <select id="nw_theme" style="margin-bottom:14px">
+        ${Object.entries(THEMES).map(([k,t]) => `<option value="${k}">${t.name} — ${t.blurb}</option>`).join('')}
+      </select>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1"><label class="f" for="nw_start"><span>Start</span></label><input type="date" id="nw_start" value="${today()}"></div>
+        <div style="flex:1"><label class="f" for="nw_end"><span>End</span></label><input type="date" id="nw_end"></div>
+      </div>
+      <label class="f" for="nw_parts"><span>Parts <span class="hint">— one per line, as name, count</span></span></label>
+      <textarea id="nw_parts" rows="4" placeholder="Book one, 42&#10;Book two, 38" style="margin-bottom:14px"></textarea>
+      <button class="btn" id="nw_go">Create world</button>`;
+  },
+  themes() {
+    return `<h2>Theme packs</h2><p class="sub">The pack paints the sky, the ground and what grows. Change it any time — nothing resets.</p>
+      <ul class="swatches">
+        ${Object.entries(THEMES).map(([k,t]) => `<li><button class="sw" data-theme="${k}" aria-pressed="${W.theme === k}"
+          aria-label="${esc(t.name)} — ${esc(t.blurb)}${W.theme === k ? '. Currently selected' : ''}"
+          style="background:linear-gradient(160deg,${t.vars['--sky-1']},${t.vars['--sky-3']})">
+          <span class="dot" aria-hidden="true" style="background:${t.vars['--glow']}"></span>
+          ${W.theme === k ? '<span class="on" aria-hidden="true">✓</span>' : ''}
+          <span class="n">${t.name}</span></button></li>`).join('')}
+      </ul>
+      <p class="sub" style="margin-top:16px">${Object.values(THEMES).map(t => `<b>${t.name}</b> — ${t.blurb}`).join('<br>')}</p>`;
+  },
+  pace() {
+    const t = today(), left = daysLeft(), rem = totalUnits(W) - W.progress.unitsDone;
+    const per = left ? (rem / left) : 0;
+    const planned = dayFor(W, t);
+    return `<h2>Pace</h2><p class="sub">Falling behind is not a failure state. It's just a number that wants redistributing.</p>
+      <div class="grid2">
+        <p class="stat"><b>${rem}</b><small>${esc(W.unitPlural)} left</small></p>
+        <p class="stat"><b>${left}</b><small>days left</small></p>
+      </div>
+      <p class="stat" style="margin-top:10px"><b>${per.toFixed(1)}</b><small>${esc(W.unitPlural)} per day from here</small></p>
+      ${planned ? `<p class="sub" style="margin-top:14px">Today's plan asks for ${planned.goal}. Redistributing spreads everything you haven't read evenly across the days that are left, starting today.</p>` : ''}
+      <button class="btn" id="do_replan">Redistribute what's left</button>
+      <button class="btn ghost" data-track="${(W.tracks && W.tracks[0] ? W.tracks[0].id : 'new')}" aria-haspopup="dialog">Change what's pinned down</button>
+      <button class="btn line" onclick="closeSheet()">Leave the plan alone</button>`;
+  },
+  position() {
+    return `<h2>Where you actually are</h2><p class="sub">The plan follows you, not the other way around.</p>
+      <p class="stat" style="text-align:center;margin-bottom:14px">
+        <b>${esc(unitLabel(W, W.progress.unitsDone))}</b><small>${esc(bookAt(W, W.progress.unitsDone).title)}</small></p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        ${[-5,-1,1,5].map(n => `<button class="btn ghost" data-nudge="${n}" style="flex:1"
+          aria-label="${n > 0 ? 'Move forward ' + n : 'Move back ' + Math.abs(n)} ${esc(W.unitPlural)}">${n > 0 ? '+' : ''}${n}</button>`).join('')}
+      </div>
+      <p class="sub">Moving your place doesn't change XP or the grove. Nothing you've earned is ever taken back.</p>
+      <button class="btn line" onclick="closeSheet()">Done</button>`;
+  },
+  addreward() {
+    return `<h2>Add a reward</h2><p class="sub">Real-world bribes. Set the price yourself.</p>
+      <p class="err" id="formErr" role="alert"></p>
+      <label class="f" for="ar_g"><span>Emoji <span class="hint">(decoration only)</span></span></label>
+      <input id="ar_g" value="🎁" maxlength="4" style="margin-bottom:14px">
+      <label class="f" for="ar_n"><span>Reward</span></label>
+      <input id="ar_n" placeholder="Long bath, no phone" style="margin-bottom:14px">
+      <label class="f" for="ar_c"><span>Price in ${esc(W.currency)}</span></label>
+      <input id="ar_c" type="number" inputmode="numeric" min="1" value="50" style="margin-bottom:14px">
+      <button class="btn" id="ar_go">Add to shop</button>`;
+  },
+  settings() {
+    return `<h2>Settings</h2><p class="sub">${esc(W.name)} · ${THEMES[W.theme].name}</p>
+      <div class="shelf">
+        <button class="row-item" id="calmToggle" aria-pressed="${!!(S.prefs && S.prefs.calm)}">
+          <span class="g" aria-hidden="true">🌾</span>
+          <span class="t"><b>Reduce motion</b><small>${(S.prefs && S.prefs.calm) ? 'On — drifting light and animation are off' : 'Off — the scene drifts gently'}</small></span></button>
+        <button class="row-item" data-sheet="themes" aria-haspopup="dialog"><span class="g" aria-hidden="true">🎨</span><span class="t"><b>Theme pack</b><small>${THEMES[W.theme].name} — ${THEMES[W.theme].blurb}</small></span></button>
+        <button class="row-item" data-sheet="worlds" aria-haspopup="dialog"><span class="g" aria-hidden="true">🌍</span><span class="t"><b>Switch world</b><small>${S.worlds.length} saved</small></span></button>
+        <button class="row-item" data-sheet="pace" aria-haspopup="dialog"><span class="g" aria-hidden="true">↻</span><span class="t"><b>Redistribute the plan</b><small>Catch up without penalty</small></span></button>
+        <button class="row-item" id="clearToday"><span class="g" aria-hidden="true">↩︎</span><span class="t"><b>Undo today's log</b><small>Removes tonight's result only</small></span></button>
+        <button class="row-item" id="doExport"><span class="g" aria-hidden="true">⬇️</span><span class="t"><b>Export everything</b><small>Downloads a JSON backup</small></span></button>
+        <button class="row-item" data-sheet="import" aria-haspopup="dialog"><span class="g" aria-hidden="true">⬆️</span><span class="t"><b>Import a backup</b><small>Paste a previous export</small></span></button>
+        <button class="row-item" data-sheet="backups" aria-haspopup="dialog"><span class="g" aria-hidden="true">🗄️</span>
+          <span class="t"><b>Backups</b><small>Device history, cloud snapshots, and restore</small></span></button>
+        <button class="row-item" data-sheet="account" aria-haspopup="dialog"><span class="g" aria-hidden="true">👤</span><span class="t"><b>Account</b><small>${typeof Account === 'undefined' ? 'Sign in to sync' : Account.status === 'signedIn' ? 'Signed in as ' + esc((Account.user && (Account.user.email || Account.user.name)) || 'you') : Account.status === 'unconfigured' ? 'Not set up yet' : 'Not signed in — this device only'}</small></span></button>
+      </div>`;
+  },
+  import() {
+    return `<h2>Import</h2><p class="sub">Paste an export. This replaces everything currently saved.</p>
+      <p class="err" id="formErr" role="alert"></p>
+      <label class="f" for="imp"><span>Backup JSON</span></label>
+      <textarea id="imp" rows="6" style="margin-bottom:14px"></textarea>
+      <button class="btn" id="imp_go">Replace my data</button>`;
+  },
+
+  home() { return homeConfigSheet(); },
+  sprint() {
+    return `<h2>Sprint</h2><p class="sub">Read until it rings. You may quit when it rings. That is the whole deal.</p>
+      <div style="display:flex;gap:8px">
+        ${[10,15,25].map(m => `<button class="btn ghost" data-sprint="${m}" style="flex:1" aria-label="Start a ${m} minute sprint">${m} min</button>`).join('')}
+      </div>`;
+  }
+};
+
+function sprintFace(mins) {
+  const total = mins * 60;
+  openSheet(`<h2 style="text-align:center">${mins}-minute sprint</h2>
+    <div class="timer-face">
+      <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="bg" cx="50" cy="50" r="44"></circle>
+        <circle class="fg" id="ring" cx="50" cy="50" r="44" stroke-dasharray="276.5" stroke-dashoffset="0"></circle>
+      </svg>
+      <p class="t" id="clock" aria-hidden="true">${mins}:00</p>
+    </div>
+    <p class="sr-only" id="timerNote">${mins} minute sprint running. You can pause or stop at any time, and nothing is lost either way.</p>
+    <button class="btn ghost" id="pauseSprint" aria-pressed="false">Pause</button>
+    <button class="btn line" id="stopSprint">Stop — nothing lost</button>`);
+  let left = total;
+  const tick = () => {
+    if (window._paused) return;
+    left--;
+    const m = Math.floor(left / 60), s = String(left % 60).padStart(2, '0');
+    const clock = $('clock'); if (!clock) { clearInterval(window._timer); return; }
+    clock.textContent = `${m}:${s}`;
+    $('ring').setAttribute('stroke-dashoffset', String(276.5 * (1 - left / total)));
+    if (left <= 0) {
+      clearInterval(window._timer); window._timer = null;
+      W.progress.sprints = (W.progress.sprints || 0) + 1;
+      W.progress.sprintMinutes = (W.progress.sprintMinutes || 0) + mins;
+      const xp = mins, coins = Math.round(mins / 2);
+      W.progress.xp += xp; W.progress.coins += coins;
+      const drop = Math.random() < (mins >= 25 ? .55 : .3) ? grantLoot() : null;
+      save(); paint();
+      if (drop) showDrop(drop); else { closeSheet(); toast(`Sprint complete. Plus ${xp} ${W.xpName} and ${coins} ${W.currency}.`); }
+      try { navigator.vibrate && navigator.vibrate([120,60,120]); } catch (e) {}
+    }
+  };
+  window._timer = setInterval(tick, 1000);
+}
+
+/* -------------------------------- events ---------------------------------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-view],[data-sheet],[data-log],[data-theme],[data-world],[data-buy],[data-nudge],[data-sprint],[data-bait],#escapeBtn,#sprintBtn,#do_replan,#nw_go,#ar_go,#imp_go,#clearToday,#doExport,#stopSprint,#pauseSprint,#calmToggle,[data-close]');
+  if (!el) return;
+
+  if (el.dataset.close) { closeSheet(); return; }
+  if (el.dataset.view) {
+    view = el.dataset.view; paint();
+    try { window.scrollTo(0,0); } catch (err) {}
+    const h = document.querySelector('#screenTitle'); if (h) { h.setAttribute('tabindex','-1'); h.focus(); }
+    return;
+  }
+  if (el.dataset.sheet) { openSheet(SHEETS[el.dataset.sheet](), el); return; }
+
+  if (el.dataset.log) { logTask(el.dataset.taskId, el.dataset.log, parseInt(el.dataset.units, 10) || 0); return; }
+
+  if (el.dataset.bait) {
+    const t = (W.tasks || []).find(x => x.id === el.dataset.bait);
+    if (!t) return;
+    el.setAttribute('aria-expanded', 'true');
+    $('baitSlot_' + t.id).innerHTML = `<div class="bait-open" id="baitText_${t.id}" tabindex="-1">
+      <p class="eyebrow" style="margin:0 0 6px">The hook</p><p>${esc(t.hook)}</p></div>`;
+    $('baitText_' + t.id).focus();
+    return;
+  }
+  if (el.id === 'escapeBtn' || el.id === 'sprintBtn') { openSheet(SHEETS.sprint(), el); return; }
+  if (el.id === 'pauseSprint') {
+    window._paused = !window._paused;
+    el.setAttribute('aria-pressed', String(!!window._paused));
+    el.textContent = window._paused ? 'Resume' : 'Pause';
+    toast(window._paused ? 'Sprint paused' : 'Sprint running');
+    return;
+  }
+  if (el.id === 'calmToggle') {
+    S.prefs = S.prefs || {};
+    S.prefs.calm = !S.prefs.calm;
+    save(); paint();
+    openSheet(SHEETS.settings());
+    toast(S.prefs.calm ? 'Motion reduced' : 'Motion back on');
+    return;
+  }
+  if (el.dataset.sprint) { sprintFace(parseInt(el.dataset.sprint, 10)); return; }
+  if (el.id === 'stopSprint') { closeSheet(); toast('Stopped. Streak untouched.'); return; }
+
+  if (el.dataset.theme) { W.theme = el.dataset.theme; save(); closeSheet(); paint(); toast(THEMES[W.theme].name + ' theme applied'); return; }
+  if (el.dataset.world) { S.activeId = el.dataset.world; W = S.worlds.find(w => w.id === S.activeId); save(); closeSheet(); view='tonight'; paint(); toast('Switched to ' + W.name); return; }
+
+  if (el.dataset.buy) {
+    const i = +el.dataset.buy, item = W.progress.shop[i];
+    if (W.progress.coins < item.c) { toast(`${item.c - W.progress.coins} more ${W.currency}`); return; }
+    W.progress.coins -= item.c;
+    W.progress.claimed.push({ n:item.n, at:Date.now() });
+    save(); paint(); toast(`Redeemed: ${item.n}. Go get it.`); return;
+  }
+  if (el.dataset.nudge) {
+    const n = +el.dataset.nudge;
+    W.progress.unitsDone = Math.max(0, Math.min(totalUnits(W), W.progress.unitsDone + n));
+    checkMilestones(); save(); paint(); openSheet(SHEETS.position()); return;
+  }
+  if (el.id === 'do_replan') { recomputeAll(W); save(); closeSheet(); paint(); toast('Plan redistributed. Nothing is overdue.'); return; }
+
+  if (el.id === 'nw_go') {
+    const parts = $('nw_parts').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+      const m = l.split(','); return { name:(m[0]||'Part').trim(), units:Math.max(1, parseInt(m[1],10) || 10) };
+    });
+    const name = $('nw_name').value.trim(), start = $('nw_start').value, end = $('nw_end').value;
+    if (!name || !start || !end || !parts.length) { setErr('Add a name, both dates, and at least one part.'); return; }
+    if (end < start) { setErr('The end date has to come after the start date.'); return; }
+    const w = makeWorld({ name, unit:$('nw_unit').value.trim() || 'chapter', currency:$('nw_cur').value.trim() || 'Coins',
+                          theme:$('nw_theme').value, start, end, parts });
+    indexDays(w); linkMilestones(w); migrateTasks(w); migrateTracks(w);
+    S.worlds.push(w); S.activeId = w.id; W = w;
+    save(); closeSheet(); view = 'tonight'; paint(); toast(`${name} begins.`); return;
+  }
+  if (el.id === 'ar_go') {
+    const n = $('ar_n').value.trim(); if (!n) { setErr('Give the reward a name.'); return; }
+    W.progress.shop.push({ g:$('ar_g').value || '🎁', n, c:Math.max(1, parseInt($('ar_c').value,10) || 25) });
+    save(); closeSheet(); paint(); return;
+  }
+  if (el.id === 'clearToday') {
+    const t = today();
+    const ids = Object.keys(W.progress.log).filter(k => (W.progress.log[k].date || k) === t);
+    if (!ids.length) { toast('Nothing logged today'); return; }
+    ids.forEach(id => {
+      const prev = W.progress.log[id];
+      W.progress.unitsDone = Math.max(0, W.progress.unitsDone - (prev.units || 0));
+      W.progress.xp = Math.max(0, W.progress.xp - prev.xp);
+      W.progress.coins = Math.max(0, W.progress.coins - prev.coins);
+      W.progress.flora = W.progress.flora.filter(f => f.task !== id || f.milestone);
+      delete W.progress.log[id];
+    });
+    save(); closeSheet(); paint(); toast('Today cleared.'); return;
+  }
+  if (el.id === 'doExport') {
+    const blob = new Blob([JSON.stringify(S, null, 2)], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `onwego-${today()}.json`; a.click();
+    closeSheet(); toast('Backup downloaded'); return;
+  }
+  if (el.id === 'imp_go') {
+    try {
+      const data = JSON.parse($('imp').value);
+      if (!data.worlds) throw new Error('bad');
+      applyState(data, 'Imported');
+    } catch (err) { setErr("That doesn't look like an On We Go backup."); }
+    return;
+  }
+});
+
+/* -------------------------------- boot ------------------------------------ */
+function linkMilestones(w) {
+  (w.milestones || []).forEach(m => {
+    if (typeof m.atIndex === 'number') return;
+    const off = bookOffset(w, m.book), bk = w.books.find(b => b.id === m.book);
+    if (!bk) { m.atIndex = 0; return; }
+    let found = bk.units - 1;
+    for (let i = 0; i < bk.units; i++) if (unitLabel(w, off + i) === m.atUnit) { found = i; break; }
+    m.atIndex = off + found;
+  });
+  let prev = 0;
+  (w.milestones || []).sort((a,b) => a.atIndex - b.atIndex).forEach(m => { m.prevIndex = prev; prev = m.atIndex + 1; });
+}
+
+function seedMaasverse() {
+  const w = JSON.parse(JSON.stringify(MAASVERSE_CAMPAIGN));
+  w.progress = newProgress();
+  w.progress.shop = DEFAULT_SHOP.map(s => ({...s}));
+  indexDays(w); linkMilestones(w); migrateTasks(w); migrateTracks(w);
+  return w;
+}
+
+(async function boot() {
+  S = await Store.load();
+  if (!S || !S.worlds || !S.worlds.length) {
+    const m = seedMaasverse();
+    S = { v:1, activeId:m.id, worlds:[m] };
+    await Store.save(S);
+  }
+  W = S.worlds.find(w => w.id === S.activeId) || S.worlds[0];
+  S.worlds.forEach(w => { if (!w.days[0] || w.days[0].fromGlobal === undefined) indexDays(w); linkMilestones(w); migrateTasks(w); migrateTracks(w); });
+  paint();
+  const health = (typeof storageHealth === 'function') ? storageHealth() : { ok:true };
+  if (!health.ok) toast('Storage is blocked here — nothing will be saved');
+  if (typeof Account !== 'undefined') Account.loadCfg();
+  if (Sync.ready()) {
+    const pulled = await Sync.reconcile();
+    if (pulled) {
+      S.worlds.forEach(w => { if (!w.days[0] || w.days[0].fromGlobal === undefined) indexDays(w); linkMilestones(w); migrateTasks(w); migrateTracks(w); });
+      paint();
+    }
+  }
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && Sync.ready()) {
+      const pulled = await Sync.reconcile();
+      if (pulled) { S.worlds.forEach(w => linkMilestones(w)); paint(); }
+    }
+  });
+})();
+/* ============================================================
+   TASK INTERACTIONS
+   Search, filters, the editor, and the Tonight layout builder.
+   ============================================================ */
+
+function refreshTaskList(announce) {
+  const box = $('taskList');
+  if (!box) return;
+  box.innerHTML = renderTaskList();
+  normalizeA11y(box);
+  /* Announce the count, not the whole list — a live region wrapped around
+     seventy rows reads all seventy of them. */
+  if (announce !== false) {
+    const n = box.querySelectorAll('[data-task]').length;
+    toast(n === 0 ? 'No tasks match' : n + (n === 1 ? ' task' : ' tasks') + ' shown');
+  }
+}
+function toggleIn(arr, val) {
+  const i = arr.indexOf(val);
+  if (i < 0) arr.push(val); else arr.splice(i, 1);
+  return arr;
+}
+function readTaskForm() {
+  const g = k => { const el = $('tf_' + k); return el ? el.value.trim() : ''; };
+  const num = k => { const v = g(k); return v === '' ? null : Math.max(0, parseFloat(v) || 0); };
+  return {
+    title: g('title'), range: g('range'), min: num('min'), max: num('max'),
+    hook: g('hook'), how: g('how'), payoff: g('payoff'), notes: g('notes'),
+    category: g('category'), subcategory: g('subcategory'),
+    tags: g('tags').split(',').map(s => s.trim()).filter(Boolean),
+    date: g('date'),
+    types: [...document.querySelectorAll('[data-type][aria-pressed="true"]')].map(b => b.dataset.type),
+    repeat: (() => {
+      const f = $('tf_repeat') ? $('tf_repeat').value : '';
+      return f ? { freq:f, n: Math.max(1, parseInt(($('tf_repeatN') || {}).value, 10) || 2) } : null;
+    })()
+  };
+}
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'taskSearch') {
+    taskUI.q = e.target.value;
+    clearTimeout(window._searchT);
+    window._searchT = setTimeout(refreshTaskList, 400);
+  }
+});
+
+document.addEventListener('change', e => {
+  const id = e.target.id;
+  if (id === 'taskSort')  { taskUI.sort = e.target.value; refreshTaskList(); }
+  if (id === 'taskDir')   { taskUI.dir = e.target.value; refreshTaskList(); }
+  if (id === 'taskScope') { taskUI.scope = e.target.value; refreshTaskList(); }
+});
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-task],[data-section],[data-filtercat],[data-filtertag],[data-seccat],[data-sectag],[data-secfield],#filterStreak,#clearFilters,#tf_save,#tf_delete,#tf_streak,#sf_save,#sf_delete');
+  if (!el) return;
+
+  /* ---- filters on the Tasks tab ---- */
+  if (el.dataset.filtercat !== undefined) {
+    toggleIn(taskUI.categories, el.dataset.filtercat);
+    el.setAttribute('aria-pressed', String(taskUI.categories.includes(el.dataset.filtercat)));
+    refreshTaskList(); return;
+  }
+  if (el.dataset.filtertag !== undefined) {
+    toggleIn(taskUI.tags, el.dataset.filtertag);
+    el.setAttribute('aria-pressed', String(taskUI.tags.includes(el.dataset.filtertag)));
+    refreshTaskList(); return;
+  }
+  if (el.id === 'filterStreak') {
+    taskUI.streakOnly = !taskUI.streakOnly;
+    el.setAttribute('aria-pressed', String(taskUI.streakOnly));
+    refreshTaskList(); return;
+  }
+  if (el.id === 'clearFilters') {
+    taskUI = { q:'', categories:[], tags:[], streakOnly:false, scope:'all', sort:taskUI.sort, dir:taskUI.dir };
+    paint(); toast('Filters cleared'); return;
+  }
+
+  /* ---- the task editor ---- */
+  if (el.dataset.task !== undefined) { openSheet(taskEditor(el.dataset.task), el); return; }
+
+  if (el.id === 'tf_save') {
+    const vals = readTaskForm();
+    if (!vals.title) { setErr('A task needs a title. Everything else is optional.'); return; }
+    if (vals.min !== null && vals.max !== null && vals.min > vals.max) {
+      setErr('The minimum is larger than the maximum — swap them or clear one.'); return;
+    }
+    const id = $('tf_id').value;
+    const streak = vals.types.includes('streak');
+    const existing = (W.tasks || []).find(x => x.id === id);
+    if (existing) {
+      const hookChanged = existing.hook !== vals.hook;
+      Object.assign(existing, vals, { streak });
+      if (hookChanged) existing.hookEdited = true;
+      if (existing.planMax == null) existing.planMax = existing.max;
+      toast('Saved');
+    } else {
+      const nt = newTask(Object.assign({ id }, vals, { streak }));
+      nt.planMax = nt.max;
+      W.tasks.push(nt);
+      toast('Task added');
+    }
+    recomputeAll(W);
+    save(); closeSheet(); paint(); return;
+  }
+  if (el.id === 'tf_delete') {
+    if (el.dataset.armed !== '1') {
+      el.dataset.armed = '1';
+      el.textContent = 'Tap again to delete for good';
+      toast('Tap delete again to confirm');
+      return;
+    }
+    const id = $('tf_id').value;
+    W.tasks = (W.tasks || []).filter(x => x.id !== id);
+    delete W.progress.log[id];
+    save(); closeSheet(); paint(); toast('Task deleted'); return;
+  }
+
+  /* ---- Tonight layout sections ---- */
+  if (el.dataset.section !== undefined) { openSheet(sectionEditor(el.dataset.section), el); return; }
+
+  if (el.dataset.seccat !== undefined) {
+    toggleIn(window._draft.categories, el.dataset.seccat);
+    el.setAttribute('aria-pressed', String(window._draft.categories.includes(el.dataset.seccat))); return;
+  }
+  if (el.dataset.sectag !== undefined) {
+    toggleIn(window._draft.tags, el.dataset.sectag);
+    el.setAttribute('aria-pressed', String(window._draft.tags.includes(el.dataset.sectag))); return;
+  }
+  if (el.dataset.secfield !== undefined) {
+    toggleIn(window._draft.fields, el.dataset.secfield);
+    el.setAttribute('aria-pressed', String(window._draft.fields.includes(el.dataset.secfield))); return;
+  }
+  if (el.id === 'sf_save') {
+    const d = window._draft;
+    d.name = $('sf_name').value.trim() || 'Section';
+    d.scope = $('sf_scope').value;
+    d.limit = Math.max(1, Math.min(20, parseInt($('sf_limit').value, 10) || 1));
+    d.sort = $('sf_sort').value;
+    d.dir = $('sf_dir').value;
+    if (!d.fields.length) { setErr('Pick at least one field to show.'); return; }
+    W.home = W.home || defaultHome();
+    const i = W.home.sections.findIndex(x => x.id === d.id);
+    if (i >= 0) W.home.sections[i] = d; else W.home.sections.push(d);
+    save(); closeSheet(); paint(); toast(d.name + ' saved'); return;
+  }
+  if (el.id === 'sf_delete') {
+    if (el.dataset.armed !== '1') {
+      el.dataset.armed = '1';
+      el.textContent = 'Tap again to remove';
+      toast('Tap remove again to confirm');
+      return;
+    }
+    const id = $('sf_id').value;
+    W.home.sections = W.home.sections.filter(x => x.id !== id);
+    save(); closeSheet(); paint(); toast('Section removed'); return;
+  }
+});
+/* ============================================================
+   TRACK UI — the Tracks block, the editor, and the honest warning
+   ============================================================ */
+
+function trackBlock() {
+  const trs = W.tracks || [];
+  if (!trs.length) {
+    return `<section class="sec" aria-labelledby="trH">
+      <div class="sec-head"><h2 id="trH">Tracks</h2><button class="link" data-track="new" aria-haspopup="dialog">Add a track</button></div>
+      <p class="empty"><b>No tracks yet</b>A track holds a total to finish and decides what moves when you log — the amounts, or the date.</p>
+    </section>`;
+  }
+  return `<section class="sec" aria-labelledby="trH">
+    <div class="sec-head"><h2 id="trH">Tracks</h2><button class="link" data-track="new" aria-haspopup="dialog">Add a track</button></div>
+    <ul class="shelf">
+      ${trs.map(tr => {
+        const st = trackStatus(W, tr);
+        const anchor = tr.anchor === 'deadline' ? 'Ends ' + (tr.endDate ? fmtDay(tr.endDate) : '—')
+                     : tr.anchor === 'pace' ? tr.pace + '/day' : 'Forecast only';
+        const proj = st.projectedEnd ? 'projected ' + fmtDay(st.projectedEnd) : 'no date';
+        return `<li><button class="row-item" data-track="${tr.id}" aria-haspopup="dialog"
+          aria-label="Edit track ${esc(tr.name)}. ${st.pct} percent done, ${st.remaining} left, ${proj}">
+          <span class="g" aria-hidden="true">${st.strained ? '⚠️' : '◎'}</span>
+          <span class="t"><b>${esc(tr.name)}</b>
+            <small>${st.done} of ${tr.total}${tr.mode === 'percent' ? '%' : ''} · ${anchor} · ${proj}${st.strained ? ' · needs a look' : ''}</small>
+            <span class="bar" role="progressbar" aria-valuenow="${st.pct}" aria-valuemin="0" aria-valuemax="100"
+              aria-label="${esc(tr.name)} progress"><i style="width:${st.pct}%"></i></span></span>
+          <span aria-hidden="true" style="color:var(--muted)">›</span></button></li>`;
+      }).join('')}
+    </ul>
+  </section>`;
+}
+
+/* The honest warning: when a deadline-anchored track starts demanding more
+   per day than you said was comfortable, say so and offer the three ways out. */
+function strainCard() {
+  const tr = (W.tracks || []).find(t => trackStatus(W, t).strained);
+  if (!tr) return '';
+  const st = trackStatus(W, tr);
+  const needDays = Math.ceil(st.remaining / Math.max(0.5, st.comfort));
+  const newEnd = addDays(today(), Math.max(0, needDays - 1));
+  return `<section class="sec" aria-labelledby="strainH">
+    <div class="card" style="border-color:var(--bloom-ink)">
+      <p class="eyebrow">Worth knowing</p>
+      <h2 id="strainH" style="margin:6px 0">${esc(tr.name)} now needs ${st.perSlot.toFixed(1)} a day</h2>
+      <p style="margin:0 0 14px;color:var(--muted);font-size:14px">That's above the ${st.comfort.toFixed(1)} a day you called comfortable. Nothing is broken and nothing is late — but a plan that quietly demands more than you can do is how a plan turns into something you avoid. Three ways out:</p>
+      <button class="btn ghost" data-strain="date" data-track-id="${tr.id}" data-new-end="${newEnd}">Move the finish to ${fmtDay(newEnd)}</button>
+      <button class="btn ghost" data-strain="trim" data-track-id="${tr.id}">Trim the scope to what fits</button>
+      <button class="btn line" data-strain="keep" data-track-id="${tr.id}">Leave it — I want the pressure</button>
+    </div>
+  </section>`;
+}
+
+function trackEditor(id) {
+  const isNew = id === 'new';
+  const tr = isNew ? newTrack({ endDate: addDays(today(), 30), categories: [] })
+                   : (W.tracks || []).find(x => x.id === id);
+  if (!tr) return '<h2>Track not found</h2>';
+  window._trackDraft = JSON.parse(JSON.stringify(tr));
+  const cats = taskCategories(W);
+  const st = isNew ? null : trackStatus(W, tr);
+  return `<h2>${isNew ? 'New track' : esc(tr.name)}</h2>
+    <p class="sub">A track decides what happens to everything else when you log a result.</p>
+    <p class="err" id="formErr" role="alert"></p>
+    <input type="hidden" id="kf_id" value="${tr.id}">
+    ${st ? `<p class="stat" style="margin-bottom:14px"><b>${st.done} of ${tr.total}</b>
+      <small>${st.remaining} left · ${st.slots} sessions open · ${st.perSlot.toFixed(1)} a day from here</small></p>` : ''}
+
+    <label class="f" for="kf_name"><span>Name</span></label>
+    <input id="kf_name" value="${esc(tr.name)}"><div style="height:14px"></div>
+
+    ${cats.length ? `<fieldset style="border:0;padding:0;margin:0 0 14px">
+      <legend class="f"><span>Categories it covers <span class="hint">— empty means all</span></span></legend>
+      <div class="meta" style="margin-top:0">${cats.map(c => `<button class="chip" data-trackcat="${esc(c)}"
+        aria-pressed="${tr.categories.includes(c)}">${esc(c)}</button>`).join('')}</div></fieldset>` : ''}
+
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><label class="f" for="kf_total"><span>Total to finish</span></label>
+        <input id="kf_total" type="number" inputmode="numeric" min="1" value="${tr.total}"></div>
+      <div style="flex:1"><label class="f" for="kf_mode"><span>Counted as</span></label>
+        <select id="kf_mode"><option value="count"${tr.mode==='count'?' selected':''}>A number</option>
+          <option value="percent"${tr.mode==='percent'?' selected':''}>Per cent</option></select></div>
+    </div>
+    <div style="height:14px"></div>
+
+    <fieldset style="border:0;padding:0;margin:0 0 14px">
+      <legend class="f"><span>What's pinned down</span></legend>
+      <div class="shelf">${ANCHORS.map(a => `<button class="row-item" data-anchor="${a.k}" aria-pressed="${tr.anchor===a.k}">
+        <span class="g" aria-hidden="true">${a.k === 'deadline' ? '📅' : a.k === 'pace' ? '⏱️' : '👁️'}</span>
+        <span class="t"><b>${a.label}</b><small>${a.hint}</small></span></button>`).join('')}</div>
+    </fieldset>
+
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><label class="f" for="kf_end"><span>Finish by</span></label>
+        <input id="kf_end" type="date" value="${esc(tr.endDate || '')}"></div>
+      <div style="flex:1"><label class="f" for="kf_pace"><span>Amount per day</span></label>
+        <input id="kf_pace" type="number" inputmode="numeric" min="1" value="${tr.pace || 1}"></div>
+    </div>
+    <p class="sub" style="margin:6px 0 14px">Whichever one your anchor doesn't pin gets recalculated for you.</p>
+
+    <fieldset style="border:0;padding:0;margin:0 0 14px">
+      <legend class="f"><span>How a result ripples</span></legend>
+      <div class="shelf">${RIPPLES.map(r => `<button class="row-item" data-ripple="${r.k}" aria-pressed="${tr.ripple===r.k}">
+        <span class="g" aria-hidden="true">${r.k === 'smooth' ? '〜' : r.k === 'consume' ? '⇥' : '⊙'}</span>
+        <span class="t"><b>${r.label}</b><small>${r.hint}</small></span></button>`).join('')}</div>
+    </fieldset>
+
+    <label class="f" for="kf_comfort"><span>Comfortable maximum per day <span class="hint">— blank uses 1.6× your starting pace</span></span></label>
+    <input id="kf_comfort" type="number" inputmode="decimal" min="0" step="0.5" value="${tr.comfort || ''}"><div style="height:14px"></div>
+
+    <button class="btn" id="kf_save">${isNew ? 'Create track' : 'Save track'}</button>
+    ${isNew ? '' : '<button class="btn line" id="kf_delete">Delete this track</button>'}`;
+}
+
+/* ------------------------------ handlers ---------------------------------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-track],[data-trackcat],[data-anchor],[data-ripple],[data-strain],[data-type],[data-repeat],#kf_save,#kf_delete');
+  if (!el) return;
+
+  if (el.dataset.track !== undefined) { openSheet(trackEditor(el.dataset.track), el); return; }
+
+  if (el.dataset.trackcat !== undefined) {
+    toggleIn(window._trackDraft.categories, el.dataset.trackcat);
+    el.setAttribute('aria-pressed', String(window._trackDraft.categories.includes(el.dataset.trackcat))); return;
+  }
+  if (el.dataset.anchor) {
+    window._trackDraft.anchor = el.dataset.anchor;
+    [...document.querySelectorAll('[data-anchor]')].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.anchor === el.dataset.anchor)));
+    return;
+  }
+  if (el.dataset.ripple) {
+    window._trackDraft.ripple = el.dataset.ripple;
+    [...document.querySelectorAll('[data-ripple]')].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.ripple === el.dataset.ripple)));
+    return;
+  }
+  if (el.id === 'kf_save') {
+    const d = window._trackDraft;
+    d.name = $('kf_name').value.trim() || 'Track';
+    d.total = Math.max(1, parseFloat($('kf_total').value) || 1);
+    d.mode = $('kf_mode').value;
+    d.endDate = $('kf_end').value;
+    d.pace = Math.max(1, parseFloat($('kf_pace').value) || 1);
+    const c = $('kf_comfort').value.trim();
+    d.comfort = c === '' ? null : Math.max(0.5, parseFloat(c));
+    if (d.anchor === 'deadline' && !d.endDate) { setErr('A deadline-anchored track needs a finish date.'); return; }
+    if (!d.basePace) d.basePace = d.pace;
+    W.tracks = W.tracks || [];
+    const i = W.tracks.findIndex(x => x.id === d.id);
+    if (i >= 0) W.tracks[i] = d; else W.tracks.push(d);
+    if (d.anchor === 'deadline') fitSlotsToDeadline(W, d);
+    recomputeTrack(W, d);
+    save(); closeSheet(); paint(); toast(d.name + ' saved');
+    return;
+  }
+  if (el.id === 'kf_delete') {
+    if (el.dataset.armed !== '1') { el.dataset.armed = '1'; el.textContent = 'Tap again to delete'; toast('Tap delete again to confirm'); return; }
+    W.tracks = (W.tracks || []).filter(x => x.id !== $('kf_id').value);
+    save(); closeSheet(); paint(); toast('Track deleted — tasks kept'); return;
+  }
+
+  /* the three ways out of a strained plan */
+  if (el.dataset.strain) {
+    const tr = (W.tracks || []).find(x => x.id === el.dataset.trackId);
+    if (!tr) return;
+    const st = trackStatus(W, tr);
+    if (el.dataset.strain === 'date') {
+      tr.endDate = el.dataset.newEnd;
+      fitSlotsToDeadline(W, tr);
+      recomputeTrack(W, tr);
+      toast('Finish moved to ' + fmtDay(tr.endDate));
+    } else if (el.dataset.strain === 'trim') {
+      tr.total = Math.round(st.done + st.comfort * st.slots);
+      recomputeTrack(W, tr);
+      toast('Scope trimmed to ' + tr.total + ' — still a finish');
+    } else {
+      tr.comfort = Math.ceil(st.perSlot) + 1;
+      toast('Left as is. No more warnings at this pace.');
+    }
+    save(); paint(); return;
+  }
+
+  /* task types + repeat rule, inside the task editor */
+  if (el.dataset.type) {
+    const on = el.getAttribute('aria-pressed') !== 'true';
+    el.setAttribute('aria-pressed', String(on));
+    const box = $('repeatBox');
+    if (box) box.hidden = !document.querySelector('[data-type="repeating"][aria-pressed="true"]');
+    return;
+  }
+});
+/* ============================================================
+   BACKUPS — three layers, because one is not a backup.
+
+   1. This device   every change, immediately (browser storage)
+   2. On-device history  a rolling few days, to undo a bad edit
+   3. The cloud     a dated snapshot per day, kept for a month,
+                    only if sync is on
+   Plus a file you can download and put anywhere you like.
+   ============================================================ */
+
+const LOCAL_SNAPS = 'onwego.snaps';
+const LEGACY_SNAPS = 'questline.snaps';
+const UNDO_KEY = 'onwego.undo';
+const KEEP_LOCAL = 5;
+
+/* Does storage actually work here? Private browsing and a full disk both
+   fail silently otherwise, and a tracker that forgets is worse than none. */
+function storageHealth() {
+  try {
+    localStorage.setItem('onwego.probe', '1');
+    localStorage.removeItem('onwego.probe');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, why: 'This browser is blocking local storage — private browsing usually does. Nothing will be remembered after you close the tab.' };
+  }
+}
+
+function localSnaps() {
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_SNAPS))
+        || JSON.parse(localStorage.getItem(LEGACY_SNAPS))
+        || {};
+  } catch (e) { return {}; }
+}
+function writeLocalSnap(state) {
+  try {
+    const snaps = localSnaps();
+    const stamp = today();
+    snaps[stamp] = state;
+    Object.keys(snaps).sort().slice(0, Math.max(0, Object.keys(snaps).length - KEEP_LOCAL))
+      .forEach(k => delete snaps[k]);
+    localStorage.setItem(LOCAL_SNAPS, JSON.stringify(snaps));
+  } catch (e) { /* out of room — the live save still matters more */ }
+}
+function stashUndo() {
+  try { localStorage.setItem(UNDO_KEY, JSON.stringify(S)); } catch (e) {}
+}
+function hasUndo() {
+  try { return !!localStorage.getItem(UNDO_KEY); } catch (e) { return false; }
+}
+
+function applyState(data, note) {
+  if (!data || !Array.isArray(data.worlds)) { setErr('That backup is not readable.'); return false; }
+  stashUndo();
+  S = data;
+  W = S.worlds.find(w => w.id === S.activeId) || S.worlds[0];
+  S.worlds.forEach(w => {
+    if (!w.days || !w.days[0] || w.days[0].fromGlobal === undefined) { if (w.days) indexDays(w); }
+    linkMilestones(w); migrateTasks(w); migrateTracks(w);
+  });
+  save(); closeSheet(); view = 'tonight'; paint();
+  toast(note || 'Restored');
+  return true;
+}
+
+Sync.listSnapshots = async function () {
+  if (!this.ready()) return [];
+  const res = await fetch(this.endpoint() + '?snapshots=1', { headers: { 'x-onwego-key': this.cfg.key } });
+  if (!res.ok) throw new Error('list failed');
+  return (await res.json()).snapshots || [];
+};
+Sync.getSnapshot = async function (stamp) {
+  const res = await fetch(this.endpoint() + '?snapshot=' + encodeURIComponent(stamp), { headers: { 'x-onwego-key': this.cfg.key } });
+  if (!res.ok) throw new Error('fetch failed');
+  return (await res.json()).data;
+};
+
+SHEETS.backups = function () {
+  const health = storageHealth();
+  const snaps = localSnaps();
+  const localList = Object.keys(snaps).sort().reverse();
+  const lastSaved = S.updatedAt ? new Date(S.updatedAt).toLocaleString() : 'not yet';
+  const syncing = Sync.ready();
+  return `<h2>Backups</h2>
+    <p class="sub">Where your data is, and how to get it back.</p>
+    <p class="err" id="formErr" role="alert">${health.ok ? '' : esc(health.why)}</p>
+
+    <ul class="shelf" role="list">
+      <li class="row-item"><span class="g" aria-hidden="true">📱</span>
+        <span class="t"><b>This device</b><small>Saved automatically on every change. Last save: ${esc(lastSaved)}.</small></span></li>
+      <li class="row-item"><span class="g" aria-hidden="true">🕓</span>
+        <span class="t"><b>On-device history</b><small>${localList.length ? localList.length + ' day' + (localList.length === 1 ? '' : 's') + ' kept: ' + localList.map(fmtDay).join(', ') : 'Starts building from today'}</small></span></li>
+      <li class="row-item ${syncing ? '' : 'locked'}"><span class="g" aria-hidden="true">☁️</span>
+        <span class="t"><b>Cloud snapshots</b><small>${syncing ? 'One per day, kept for 30 days' : 'Off — sign in to get these'}</small></span></li>
+    </ul>
+
+    <button class="btn" style="margin-top:16px" id="bk_export">Download a copy now</button>
+    ${syncing ? '<button class="btn ghost" id="bk_push">Back up to the cloud now</button>' : '<button class="btn ghost" data-sheet="account" aria-haspopup="dialog">Sign in for cloud backups</button>'}
+    <button class="btn line" data-sheet="import" aria-haspopup="dialog">Restore from a downloaded file</button>
+    ${hasUndo() ? '<button class="btn line" id="bk_undo">Undo the last restore</button>' : ''}
+
+    ${localList.length ? `<h3 style="font-size:17px;margin:22px 0 8px">Restore from this device</h3>
+      <ul class="shelf" role="list">${localList.map(k => `<li><button class="row-item" data-localsnap="${k}">
+        <span class="g" aria-hidden="true">↩︎</span>
+        <span class="t"><b>${fmtDay(k)}</b><small>Saved on this device</small></span></button></li>`).join('')}</ul>` : ''}
+
+    ${syncing ? `<h3 style="font-size:17px;margin:22px 0 8px">Restore from the cloud</h3>
+      <div id="cloudSnaps"><button class="btn line" id="bk_list">Show cloud snapshots</button></div>` : ''}
+
+    <p class="sub" style="margin-top:20px">A restore never deletes anything straight away — the version you had is kept so you can undo it once.</p>`;
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('#bk_export,#bk_push,#bk_list,#bk_undo,[data-localsnap],[data-cloudsnap]');
+  if (!el) return;
+
+  if (el.id === 'bk_export') {
+    try {
+      const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `onwego-${today()}.json`;
+      a.click();
+      toast('Copy downloaded — keep it in Files or Drive');
+    } catch (err) { setErr('Could not create the file here. Try from the web version.'); }
+    return;
+  }
+  if (el.id === 'bk_push') {
+    toast('Backing up…');
+    Sync.push(S).then(() => toast('Backed up to the cloud'))
+                .catch(() => setErr("Couldn't reach the server. Your device copy is untouched."));
+    return;
+  }
+  if (el.id === 'bk_list') {
+    const box = $('cloudSnaps');
+    box.textContent = 'Loading…';
+    Sync.listSnapshots().then(list => {
+      box.innerHTML = list.length
+        ? `<ul class="shelf" role="list">${list.map(s => `<li><button class="row-item" data-cloudsnap="${esc(s)}">
+            <span class="g" aria-hidden="true">☁️</span>
+            <span class="t"><b>${fmtDay(s)}</b><small>Cloud snapshot</small></span></button></li>`).join('')}</ul>`
+        : '<p class="empty"><b>No snapshots yet</b>One is written the first time this device syncs.</p>';
+      normalizeA11y(box);
+    }).catch(() => { box.innerHTML = '<p class="err">Could not reach the server.</p>'; });
+    return;
+  }
+  if (el.dataset.localsnap) {
+    if (el.dataset.armed !== '1') {
+      el.dataset.armed = '1';
+      el.querySelector('.t small').textContent = 'Tap again to restore this version';
+      toast('Tap again to confirm the restore');
+      return;
+    }
+    applyState(localSnaps()[el.dataset.localsnap], 'Restored from ' + fmtDay(el.dataset.localsnap));
+    return;
+  }
+  if (el.dataset.cloudsnap) {
+    if (el.dataset.armed !== '1') {
+      el.dataset.armed = '1';
+      el.querySelector('.t small').textContent = 'Tap again to restore this version';
+      toast('Tap again to confirm the restore');
+      return;
+    }
+    const stamp = el.dataset.cloudsnap;
+    toast('Fetching…');
+    Sync.getSnapshot(stamp)
+      .then(data => applyState(data, 'Restored from ' + fmtDay(stamp)))
+      .catch(() => setErr('Could not fetch that snapshot.'));
+    return;
+  }
+  if (el.id === 'bk_undo') {
+    let prev = null;
+    try { prev = JSON.parse(localStorage.getItem(UNDO_KEY)); } catch (err) {}
+    if (!prev) { setErr('Nothing to undo.'); return; }
+    try { localStorage.removeItem(UNDO_KEY); } catch (err) {}
+    applyState(prev, 'Restore undone');
+    return;
+  }
+});
+/* ============================================================
+   ACCOUNT — sign in, stay signed in, sync what's yours.
+
+   Auth is handled by Managed Better Auth on Neon. The SDK is loaded as a
+   browser module the first time it's needed, so this file stays buildless
+   like the rest of the app. Everything below is offline-tolerant: if the
+   network or the auth service is unreachable, the app still runs on the
+   device's own copy and simply doesn't sync.
+   ============================================================ */
+
+const AUTH_CONFIG = {
+  /* Set at deploy time by www/config.js, or in Settings → Account. */
+  authUrl: (window.ONWEGO_CONFIG && window.ONWEGO_CONFIG.authUrl) || '',
+  apiBase: (window.ONWEGO_CONFIG && window.ONWEGO_CONFIG.apiBase) || '',
+  sdk: 'https://esm.sh/@neondatabase/neon-js@0.7.0-beta/auth'
+};
+
+const Account = {
+  client: null,
+  user: null,          // { id, email, name }
+  token: null,
+  status: 'unknown',   // unknown | signedOut | signedIn | offline | unconfigured
+
+  cfgKey: 'onwego.account',
+  loadCfg() {
+    try {
+      const c = JSON.parse(localStorage.getItem(this.cfgKey)) || {};
+      if (c.authUrl) AUTH_CONFIG.authUrl = c.authUrl;
+      if (c.apiBase) AUTH_CONFIG.apiBase = c.apiBase;
+    } catch (e) {}
+    return AUTH_CONFIG;
+  },
+  saveCfg(authUrl, apiBase) {
+    AUTH_CONFIG.authUrl = (authUrl || '').trim().replace(/\/$/, '');
+    AUTH_CONFIG.apiBase = (apiBase || '').trim().replace(/\/$/, '');
+    try { localStorage.setItem(this.cfgKey, JSON.stringify({ authUrl: AUTH_CONFIG.authUrl, apiBase: AUTH_CONFIG.apiBase })); } catch (e) {}
+    this.client = null;
+  },
+
+  async sdk() {
+    if (this.client) return this.client;
+    if (!AUTH_CONFIG.authUrl) { this.status = 'unconfigured'; throw new Error('No auth URL set'); }
+    const mod = await import(AUTH_CONFIG.sdk);
+    const make = mod.createAuthClient || (mod.default && mod.default.createAuthClient);
+    this.client = make(AUTH_CONFIG.authUrl);
+    return this.client;
+  },
+
+  /* Where the app lives — used for OAuth redirects and API calls. In the iOS
+     shell the page is served locally, so both need the deployed site URL. */
+  origin() {
+    if (AUTH_CONFIG.apiBase) return AUTH_CONFIG.apiBase;
+    if (location.protocol === 'http:' || location.protocol === 'https:') return location.origin;
+    return '';
+  },
+  apiUrl() { return this.origin() + '/api/sync'; },
+
+  async refresh() {
+    if (!AUTH_CONFIG.authUrl) { this.status = 'unconfigured'; return null; }
+    try {
+      const client = await this.sdk();
+      const res = await client.getSession();
+      const session = (res && res.data) || res || null;
+      if (session && session.user) {
+        this.user = session.user;
+        this.token = session.session && (session.session.token || session.session.accessToken)
+                  || session.token || null;
+        this.status = 'signedIn';
+        return this.user;
+      }
+      this.user = null; this.token = null; this.status = 'signedOut';
+      return null;
+    } catch (e) {
+      /* No network, or the auth service is down — keep working locally. */
+      this.status = this.token ? 'signedIn' : 'offline';
+      return this.user;
+    }
+  },
+
+  async signInGoogle() {
+    const client = await this.sdk();
+    return client.signIn.social({ provider: 'google', callbackURL: this.origin() || location.href });
+  },
+  async emailStart(email) {
+    const client = await this.sdk();
+    if (client.emailOtp && client.emailOtp.sendVerificationOtp) {
+      return client.emailOtp.sendVerificationOtp({ email, type: 'sign-in' });
+    }
+    return client.signIn.magicLink({ email, callbackURL: this.origin() || location.href });
+  },
+  async emailVerify(email, code) {
+    const client = await this.sdk();
+    const res = await client.signIn.emailOtp({ email, otp: code });
+    await this.refresh();
+    return res;
+  },
+  async signOut() {
+    try { const client = await this.sdk(); await client.signOut(); } catch (e) {}
+    this.user = null; this.token = null; this.status = 'signedOut';
+  },
+  headers() {
+    return this.token
+      ? { 'content-type': 'application/json', authorization: 'Bearer ' + this.token }
+      : { 'content-type': 'application/json' };
+  }
+};
+
+/* ------------------------------------------------------------------
+   Sync now rides on the account. The interface is unchanged, so the
+   Backups sheet and the boot sequence keep working as they did.
+   ------------------------------------------------------------------ */
+Sync.ready = function () { return Account.status === 'signedIn' && !!Account.token && !!Account.origin(); };
+Sync.endpoint = function () { return Account.apiUrl(); };
+
+Sync.pull = async function () {
+  if (!this.ready()) return null;
+  const res = await fetch(this.endpoint(), { headers: Account.headers() });
+  if (res.status === 401) { await Account.refresh(); throw new Error('signed out'); }
+  if (!res.ok) throw new Error('pull failed');
+  const body = await res.json();
+  return body.data || null;
+};
+
+Sync.push = async function (state) {
+  if (!this.ready()) return;
+  const res = await fetch(this.endpoint(), {
+    method: 'POST', headers: Account.headers(), body: JSON.stringify(state)
+  });
+  if (res.status === 401) { await Account.refresh(); throw new Error('signed out'); }
+  if (!res.ok) throw new Error('push failed');
+  const body = await res.json();
+  /* The server had something newer — take it rather than fight over it. */
+  if (body.stale && body.data) {
+    S = body.data;
+    W = S.worlds.find(w => w.id === S.activeId) || S.worlds[0];
+    await Store.save(S);
+    paint();
+    toast('Picked up newer work from another device');
+  }
+  this.lastAt = Date.now();
+};
+
+Sync.listSnapshots = async function () {
+  if (!this.ready()) return [];
+  const res = await fetch(this.endpoint() + '?snapshots=1', { headers: Account.headers() });
+  if (!res.ok) throw new Error('list failed');
+  return (await res.json()).snapshots || [];
+};
+Sync.getSnapshot = async function (stamp) {
+  const res = await fetch(this.endpoint() + '?snapshot=' + encodeURIComponent(stamp), { headers: Account.headers() });
+  if (!res.ok) throw new Error('fetch failed');
+  return (await res.json()).data;
+};
+
+/* First sign-in on a device that already has progress: the local copy wins,
+   because it is the one with the reading in it. */
+Sync.reconcile = async function () {
+  if (!this.ready()) return false;
+  try {
+    this.status = 'syncing';
+    const remote = await this.pull();
+    const localTouched = Object.keys((W && W.progress && W.progress.log) || {}).length > 0;
+
+    if (remote && (remote.updatedAt || 0) > (S.updatedAt || 0)) {
+      S = remote;
+      W = S.worlds.find(w => w.id === S.activeId) || S.worlds[0];
+      await Store.save(S);
+      this.status = 'idle';
+      return true;
+    }
+    if (!remote && localTouched) {
+      await this.push(S);
+      toast('Your progress is now on your account');
+    } else if (!remote || (S.updatedAt || 0) > (remote.updatedAt || 0)) {
+      await this.push(S);
+    }
+    this.status = 'idle';
+  } catch (e) {
+    this.status = 'error';
+  }
+  return false;
+};
+
+/* -------------------------------- sheet ---------------------------------- */
+SHEETS.account = function () {
+  Account.loadCfg();
+  const configured = !!AUTH_CONFIG.authUrl;
+  const signedIn = Account.status === 'signedIn';
+  const state = { unknown:'Checking…', signedOut:'Not signed in', signedIn:'Signed in',
+                  offline:'Offline — working from this device', unconfigured:'Not set up yet' }[Account.status];
+
+  return `<h2>Account</h2>
+    <p class="sub">Signing in keeps your worlds on every device you use. The app works signed out too — it just stays on this device.</p>
+    <p class="err" id="formErr" role="alert"></p>
+    <p class="stat" style="margin-bottom:16px"><b style="font-size:19px">${state}</b>
+      <small>${signedIn && Account.user ? esc(Account.user.email || Account.user.name || 'signed in') : 'no account on this device'}</small></p>
+
+    ${!configured ? `
+      <label class="f" for="ac_url"><span>Auth URL <span class="hint">— from the Neon Console, Auth → Configuration</span></span></label>
+      <input id="ac_url" placeholder="https://ep-….neonauth.….aws.neon.tech/neondb/auth" autocapitalize="off" spellcheck="false">
+      <div style="height:10px"></div>
+      <label class="f" for="ac_api"><span>Site address <span class="hint">— only needed inside the iOS app</span></span></label>
+      <input id="ac_api" placeholder="https://onwego.netlify.app" autocapitalize="off" spellcheck="false">
+      <div style="height:14px"></div>
+      <button class="btn" id="ac_save">Save and continue</button>`
+    : signedIn ? `
+      <button class="btn line" id="ac_signout">Sign out of this device</button>
+      <p class="sub" style="margin-top:14px">Signing out leaves everything on this device untouched. Sign back in and the two merge again.</p>`
+    : `
+      <button class="btn" id="ac_google"><span aria-hidden="true">🔑</span> Continue with Google</button>
+      <p class="sub" style="text-align:center;margin:14px 0">or</p>
+      <label class="f" for="ac_email"><span>Email</span></label>
+      <input id="ac_email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" autocapitalize="off" spellcheck="false">
+      <div style="height:10px"></div>
+      <button class="btn ghost" id="ac_email_start">Email me a sign-in code</button>
+      <div id="ac_code_box" hidden style="margin-top:14px">
+        <label class="f" for="ac_code"><span>The code from your inbox</span></label>
+        <input id="ac_code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456">
+        <div style="height:10px"></div>
+        <button class="btn" id="ac_code_go">Sign in</button>
+      </div>
+      <p class="sub" style="margin-top:16px">No password to remember. Codes expire quickly, so ask for a fresh one if it lapses.</p>`}`;
+};
+
+document.addEventListener('click', async e => {
+  const el = e.target.closest('#ac_save,#ac_google,#ac_email_start,#ac_code_go,#ac_signout');
+  if (!el) return;
+
+  if (el.id === 'ac_save') {
+    const url = $('ac_url').value.trim();
+    if (!/^https:\/\/.+/.test(url)) { setErr('Paste the full Auth URL, starting with https://'); return; }
+    Account.saveCfg(url, $('ac_api').value);
+    await Account.refresh();
+    closeSheet(); paint(); openSheet(SHEETS.account());
+    return;
+  }
+  if (el.id === 'ac_google') {
+    toast('Opening Google…');
+    try { await Account.signInGoogle(); }
+    catch (err) { setErr("Couldn't reach the sign-in service. Check the Auth URL and your connection."); }
+    return;
+  }
+  if (el.id === 'ac_email_start') {
+    const email = $('ac_email').value.trim();
+    if (!/.+@.+\..+/.test(email)) { setErr('That email address looks incomplete.'); return; }
+    try {
+      await Account.emailStart(email);
+      $('ac_code_box').hidden = false;
+      $('ac_code').focus();
+      toast('Code sent — check your inbox');
+    } catch (err) { setErr("Couldn't send the code. Check the Auth URL and your connection."); }
+    return;
+  }
+  if (el.id === 'ac_code_go') {
+    const email = $('ac_email').value.trim(), code = $('ac_code').value.trim();
+    if (!code) { setErr('Enter the code from your inbox.'); return; }
+    try {
+      await Account.emailVerify(email, code);
+      if (Account.status === 'signedIn') {
+        await Sync.reconcile();
+        closeSheet(); paint(); toast('Signed in');
+      } else { setErr('That code did not work. Ask for a fresh one.'); }
+    } catch (err) { setErr('That code did not work. Ask for a fresh one.'); }
+    return;
+  }
+  if (el.id === 'ac_signout') {
+    await Account.signOut();
+    closeSheet(); paint(); toast('Signed out. Everything stays on this device.');
+    return;
+  }
+});
+
+/* Pick up the session on load, and after returning from Google. */
+(async function accountBoot() {
+  Account.loadCfg();
+  if (!AUTH_CONFIG.authUrl) { Account.status = 'unconfigured'; return; }
+  await Account.refresh();
+  if (Account.status === 'signedIn') {
+    await Sync.reconcile();
+    if (typeof paint === 'function' && typeof W !== 'undefined' && W) paint();
+  }
+})();
+
+</script>
+</body>
+</html>
