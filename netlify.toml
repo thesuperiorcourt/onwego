@@ -1,4 +1,4 @@
-# Questline — static site in /www, one function for cross-device sync.
+# OnWeGo — static site in /www, one function for cross-device sync.
 
 [build]
   publish = "www"
