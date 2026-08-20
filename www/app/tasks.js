@@ -270,6 +270,12 @@ export function taskEditor(id) {
       <input id="tf_repeatN" type="number" inputmode="numeric" min="1" value="${(t.repeat && t.repeat.n) || 2}">
     </div>
     <button class="btn" id="tf_save">${id === 'new' ? 'Add task' : 'Save changes'}</button>
+    ${(() => {
+      const log = App.W.progress.log[t.id];
+      if (!log) return '';
+      const label = log.result === 'skip' ? 'Rested' : (PAYOUT[log.result] || {}).label || log.result;
+      return `<button class="btn line" id="tf_unlog">Undo this log — logged ${esc(fmtDay(log.date))} as ${esc(label)}</button>`;
+    })()}
     ${id === 'new' ? '' : `<button class="btn line" id="tf_delete">Delete this task</button>`}`;
 }
 /* --------------------------- home layout config --------------------------- */
@@ -351,17 +357,38 @@ export function resolveMissed(w, task, choice) {
   if (tr) recomputeTrack(w, tr);
 }
 
+/* Reverses one task's logged result — the units/xp/coins it granted and the
+   flora it planted — without touching anything else. Shared by re-logging
+   (log something else instead) and unlogging (log nothing instead). Clamped
+   at zero, same as everywhere else reward math runs backward: it can't
+   claw back coins already spent on a reward, which is a real, unsolved
+   edge case — see BRAINSTORM.md's economy section. */
+function reverseLog(taskId) {
+  const prev = App.W.progress.log[taskId];
+  if (!prev) return;
+  App.W.progress.unitsDone = Math.max(0, App.W.progress.unitsDone - (prev.units || 0));
+  App.W.progress.xp = Math.max(0, App.W.progress.xp - prev.xp);
+  App.W.progress.coins = Math.max(0, App.W.progress.coins - prev.coins);
+  App.W.progress.flora = App.W.progress.flora.filter(f => f.task !== taskId || f.milestone);
+}
+
+/* Clears a task back to unlogged — the opposite of logTask(). Used when a
+   result was recorded in error, for any date, not just today. */
+export function unlogTask(taskId) {
+  if (!App.W.progress.log[taskId]) return;
+  reverseLog(taskId);
+  delete App.W.progress.log[taskId];
+  const task = (App.W.tasks || []).find(x => x.id === taskId);
+  const tr = task ? trackFor(App.W, task) : null;
+  if (tr) recomputeTrack(App.W, tr);
+  save(); paint();
+}
+
 export function logTask(taskId, kind, units) {
   const task = (App.W.tasks || []).find(x => x.id === taskId);
   if (!task) return;
   const when = task.date || today();
-  const prev = App.W.progress.log[taskId];
-  if (prev) {  /* re-logging replaces the earlier result, never punishes */
-    App.W.progress.unitsDone = Math.max(0, App.W.progress.unitsDone - (prev.units || 0));
-    App.W.progress.xp = Math.max(0, App.W.progress.xp - prev.xp);
-    App.W.progress.coins = Math.max(0, App.W.progress.coins - prev.coins);
-    App.W.progress.flora = App.W.progress.flora.filter(f => f.task !== taskId || f.milestone);
-  }
+  reverseLog(taskId);  /* re-logging replaces the earlier result, never punishes */
   const p = PAYOUT[kind];
   /* Target tasks move their track forward; everything else is XP only. */
   units = hasType(task, 'target') ? Math.max(0, units) : 0;
@@ -433,7 +460,7 @@ document.addEventListener('change', e => {
   if (id === 'taskScope') { App.taskUI.scope = e.target.value; refreshTaskList(); }
 });
 document.addEventListener('click', e => {
-  const el = e.target.closest('[data-task],[data-section],[data-filtercat],[data-filtertag],[data-seccat],[data-sectag],[data-secfield],#filterStreak,#clearFilters,#tf_save,#tf_delete,#tf_streak,#sf_save,#sf_delete');
+  const el = e.target.closest('[data-task],[data-section],[data-filtercat],[data-filtertag],[data-seccat],[data-sectag],[data-secfield],#filterStreak,#clearFilters,#tf_save,#tf_delete,#tf_unlog,#tf_streak,#sf_save,#sf_delete');
   if (!el) return;
 
   /* ---- filters on the Tasks tab ---- */
@@ -483,6 +510,12 @@ document.addEventListener('click', e => {
     }
     recomputeAll(App.W);
     save(); closeSheet(); paint(); return;
+  }
+  if (el.id === 'tf_unlog') {
+    unlogTask($('tf_id').value);
+    closeSheet();
+    toast('Log undone — back to unlogged');
+    return;
   }
   if (el.id === 'tf_delete') {
     if (el.dataset.armed !== '1') {

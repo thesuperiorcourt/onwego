@@ -95,28 +95,38 @@ export function renderTonight() {
   let body = '';
 
   home.sections.forEach((sec, si) => {
-    const list = filterTasks(App.W, {
+    const isMissedSection = sec.scope === 'missed';
+    const fullList = filterTasks(App.W, {
       categories: sec.categories, tags: sec.tags, scope: sec.scope,
       sort: sec.sort, dir: sec.dir
-    }).slice(0, Math.max(1, sec.limit || 1));
+    });
+    /* Nothing missed is good news, not an empty state to apologize for —
+       say nothing rather than "Nothing here right now". */
+    if (isMissedSection && !fullList.length) return;
+    const list = isMissedSection ? fullList.slice(0, 1) : fullList.slice(0, Math.max(1, sec.limit || 1));
     if (!list.length) {
       body += `<section class="sec" aria-labelledby="sec${si}">
         <div class="sec-head"><h2 id="sec${si}">${esc(sec.name)}</h2></div>
         <p class="empty"><b>Nothing here right now</b>Add a task, or widen this section in Today's layout.</p></section>`;
       return;
     }
+    /* More than one missed task: show only the one, with a way to the rest
+       instead of stacking every missed card on the screen you open most. */
+    const viewAll = isMissedSection && fullList.length > 1
+      ? `<button class="link" data-gotoall="missed">View all missed tasks</button>` : '';
+    const secHead = `<div class="sec-head"><h2 id="sec${si}">${esc(sec.name)}</h2>${viewAll}</div>`;
     if (!heroUsed) {
       heroUsed = true;
       body += taskCard(list[0], sec, true);
       const rest = list.slice(1);
-      if (rest.length) {
+      if (rest.length || viewAll) {
         body += `<section class="sec" aria-labelledby="sec${si}">
-          <div class="sec-head"><h2 id="sec${si}">${esc(sec.name)}</h2></div>
+          ${secHead}
           ${rest.map(t => taskCard(t, sec, false)).join('')}</section>`;
       }
     } else {
       body += `<section class="sec" aria-labelledby="sec${si}">
-        <div class="sec-head"><h2 id="sec${si}">${esc(sec.name)}</h2></div>
+        ${secHead}
         ${list.map(t => taskCard(t, sec, false)).join('')}</section>`;
     }
   });

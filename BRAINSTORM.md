@@ -124,6 +124,17 @@ Customization should create ownership and personality without turning into a bla
 - The reward layer must introduce itself. Four unexplained currencies is worse than one explained one.
 - Nothing punishes. Difficulty is opt-in; failure is never humiliating.
 
+### Undoing a reward, after the fact
+
+The straightforward case is fixed: `unlogTask()` (PARTS T5) clears a mis-logged task for any date and reverses the units/XP/coins/flora it granted, reachable from the task editor. That's enough for "I said I did Aug 19 but I didn't."
+
+What's still genuinely unsolved is the harder version: **rewards are cumulative and can cascade**, so "undo" doesn't cleanly mean "subtract what this one log granted."
+- Currency already spent on a reward-shop item can't be clawed back — `unlogTask()` clamps at zero rather than going negative, so the coins just disappear from the ledger while the purchased reward stays purchased. The reward and the currency that paid for it silently decouple.
+- A log that crossed a milestone (unlocked a biome, planted a legendary tree) doesn't currently un-cross it on undo — the world-state change from `checkMilestones()` isn't part of what `reverseLog()` reverses.
+- Loot already granted and possibly already used/equipped has the same problem as spent currency.
+
+This is a project-management-and-game-both problem: VISION.md §11 (the core economy) and §11F–G (reward choices, "never create money with nothing to buy") don't yet address take-backs at all — they're written for the forward direction only. Worth treating as its own design pass once the economy is otherwise settled, not something to patch incrementally: decide whether undo should ever reach past the immediate log (probably not — "undo the log, live with what it produced" may be the right, simpler answer), and if it should, what "already spent" means for each reward type before writing the reversal logic.
+
 ---
 
 ## 3. Project model
@@ -144,6 +155,20 @@ Currently the new-project flow assumes you're counting your way through a book. 
 
 **Worth studying:** what Asana, Monday and Notion expose at project level — templates, phases, dependencies, custom fields, views, statuses, owners. Take what fits a single-player game; leave the enterprise ceremony.
 
+### Tracks are really Projects, and the tab structure should say so
+
+Right now "Tracks" is a sub-concept living inside the Tasks tab (`trackBlock()` renders at the top of the Tasks screen) — but a Track already *is* what VISION.md calls a Project: it owns categories, a total, an anchor, dates. The naming should follow: **Tasks → Tracks** (Tracks becomes its own top-level tab, framed as "your projects"), and **New → Portfolios** if that's the right word for "the set of tracks/projects you're running" (worth testing against VISION §2B's project-container language before committing). Tasks themselves would move to living inside Timeline's view rather than a separate screen.
+
+This is a real navigation change, not a rename in place — deliberately not done as part of this note. It's flagged here because it's the same fragmentation problem as the Tasks/Timeline overlap below, and the two should be designed together, not solved separately and then discovered to conflict.
+
+### Track fields are underspecified and probably premature
+
+Several Track fields don't have satisfying answers yet:
+- **Categories** — where do they come from? Right now they seem to just be whatever string a task's `category` field happens to hold, with no dedicated add/remove/rename UI. Should categories work more like tags the user attaches per-track, rather than a fixed vocabulary the engine assumes exists?
+- **"Total to finish" and "counted as"** — these are asking the user to configure counting-track internals before the app has decided what a project *type* even is (see "What are you counting" above, and VISION §2C's progress-model taxonomy: binary, counting, duration, checklist, milestone, etc.). Type should be chosen first; these fields should only appear, worded correctly, once type is known — not the other way around.
+
+None of this is worth fixing piecemeal. It's real, necessary work, but it's downstream of deciding the project/task type taxonomy in VISION.md first — trying to patch individual Track fields now would mean re-doing them once that's settled. Noted here so it isn't lost, not scheduled.
+
 ---
 
 ## 4. UI and navigation
@@ -154,6 +179,16 @@ Overall structure is unclear. Full customisation is the goal, but the *default* 
 - Garden merged into Rewards, so growth, biomes, loot, the shop and milestones all now live on one screen. That's the opposite of "give rewards their own screen" — worth watching whether it's too much in one place once there's real use to judge by, rather than assuming either direction is right ahead of that.
 - Things that are tappable should look tappable (PARTS T2, T3).
 - Configuration is buried; discovery is poor.
+
+### Tasks and Timeline overlap, and neither one is clearly right
+
+The same tasks render on both the Tasks tab and Timeline, and the difference between the two screens isn't obvious — this is the concrete version of "Timeline especially" above, not a separate complaint.
+
+Direct preference from using it: **Timeline's presentation is the one worth keeping**, but Tasks currently owns two things Timeline doesn't have — the filter/search/sort tools, and the ability to actually edit a task (`taskEditor()`). Those two capabilities matter regardless of which screen they end up living on. Ties directly into "Tracks are really Projects" above: if Tasks becomes Tracks (a projects tab) and moves out of the way, Timeline is free to become the one task-list view, carrying the filtering and editing Tasks currently owns alone.
+
+Also missing on task cards, wherever they end up: a visual way to tell what *kind* of task something is at a glance — milestone, bonus, target, streak, repeating, anytime, etc. (VISION §2C's modifiers list). Right now that information exists in the data (`t.types`) but isn't surfaced anywhere in the card UI.
+
+None of this is scheduled — it's real navigation surgery that should happen once the Tracks-as-Projects question above is actually decided, not before.
 - Fewer concepts, better explained, beats more concepts.
 
 ---

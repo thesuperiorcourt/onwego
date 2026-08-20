@@ -1,7 +1,7 @@
 import { App } from './state.js';
 import { THEMES } from './themes.js';
 import { bookAt, checkMilestones, fmtDay, grantLoot, indexDays, linkMilestones, makeWorld, showDrop, today, totalUnits, unitLabel } from './engine.js';
-import { homeConfigSheet, logTask, migrateTasks, renderTasks, resolveMissed } from './tasks.js';
+import { homeConfigSheet, logTask, migrateTasks, renderTasks, resolveMissed, unlogTask } from './tasks.js';
 import { migrateTracks, missedTasks, openSlots, recomputeAll, trackStatus } from './tracks.js';
 import { renderTonight } from './screens/tonight.js';
 import { renderTrail } from './screens/trail.js';
@@ -295,10 +295,16 @@ export function sprintFace(mins) {
 }
 /* -------------------------------- events ---------------------------------- */
 document.addEventListener('click', e => {
-  const el = e.target.closest('[data-view],[data-sheet],[data-log],[data-missed],[data-theme],[data-world],[data-buy],[data-nudge],[data-sprint],[data-bait],#escapeBtn,#sprintBtn,#do_replan,#nw_go,#ar_go,#imp_go,#clearToday,#doExport,#stopSprint,#pauseSprint,#calmToggle,[data-close]');
+  const el = e.target.closest('[data-view],[data-gotoall],[data-sheet],[data-log],[data-missed],[data-theme],[data-world],[data-buy],[data-nudge],[data-sprint],[data-bait],#escapeBtn,#sprintBtn,#do_replan,#nw_go,#ar_go,#imp_go,#clearToday,#doExport,#stopSprint,#pauseSprint,#calmToggle,[data-close]');
   if (!el) return;
 
   if (el.dataset.close) { closeSheet(); return; }
+  if (el.dataset.gotoall) {
+    App.view = 'tasks'; App.taskUI.scope = el.dataset.gotoall; paint();
+    try { window.scrollTo(0,0); } catch (err) {}
+    const h = document.querySelector('#screenTitle'); if (h) { h.setAttribute('tabindex','-1'); h.focus(); }
+    return;
+  }
   if (el.dataset.view) {
     App.view = el.dataset.view; paint();
     try { window.scrollTo(0,0); } catch (err) {}
@@ -398,15 +404,8 @@ document.addEventListener('click', e => {
     const t = today();
     const ids = Object.keys(App.W.progress.log).filter(k => (App.W.progress.log[k].date || k) === t);
     if (!ids.length) { toast('Nothing logged today'); return; }
-    ids.forEach(id => {
-      const prev = App.W.progress.log[id];
-      App.W.progress.unitsDone = Math.max(0, App.W.progress.unitsDone - (prev.units || 0));
-      App.W.progress.xp = Math.max(0, App.W.progress.xp - prev.xp);
-      App.W.progress.coins = Math.max(0, App.W.progress.coins - prev.coins);
-      App.W.progress.flora = App.W.progress.flora.filter(f => f.task !== id || f.milestone);
-      delete App.W.progress.log[id];
-    });
-    save(); closeSheet(); paint(); toast('Today cleared.'); return;
+    ids.forEach(id => unlogTask(id));
+    closeSheet(); toast('Today cleared.'); return;
   }
   if (el.id === 'doExport') {
     const blob = new Blob([JSON.stringify(App.S, null, 2)], { type:'application/json' });
