@@ -69,7 +69,7 @@ The owner's priority, in her words: **get the core app functional first, then go
 2. **Fix what's broken in the engine** — start with `PARTS.md` defect K1, missed days not visibly redistributing.
 3. **QA the whole feature set against real use** — the method is at the bottom of `PARTS.md`. The question is never "does it render", it's "what's the why, and does it hold when the user misses a day."
 4. **Then** the interface and product changes in `BRAINSTORM.md`.
-5. **Before TestFlight**, the short list at the end of `PRODUCTION.md` — account deletion, error monitoring, arming row-level security, and self-hosting the fonts and auth SDK.
+5. **Before TestFlight**, the short list at the end of `PRODUCTION.md` — ~~account deletion~~, ~~error monitoring~~, arming row-level security, and ~~self-hosting the fonts and auth SDK~~. Only row-level security is still open.
 
 Expect all of this to be iterative. Set the work up so step 4 is cheap to repeat — which is what the next section is about.
 
@@ -80,7 +80,7 @@ Expect all of this to be iterative. Set the work up so step 4 is cheap to repeat
 2. **Local-first.** Every action saves to device storage immediately and works offline. Sync is how other devices find out, never a prerequisite. Signed out, the whole app must still work.
 3. **WCAG 2.1 AA.** Already met and tested. Any new UI keeps it: one `h1` per screen, headings that don't skip, named controls, `aria-hidden` on decorative emoji, `role="list"` on unbulleted lists, 44px targets, colour never the only signal, dialogs with focus trap and Escape.
 4. **Nothing punishes the user.** No red, no overdue, no streak reset on a missed day. Falling behind redistributes; it never scolds.
-5. **Run the tests before saying something works.** `test/` has twelve suites, no framework.
+5. **Run the tests before saying something works.** `test/` has thirteen suites, no framework.
 6. **No AI or agent language anywhere in the project.** Code comments, UI copy, docs and commit messages read as a team's work. That AI was used gets disclosed honestly elsewhere; it doesn't belong in the product's voice. Address whoever picks up a task as a colleague — a developer or designer on this team — not as a tool.
 7. **`PARTS.md` updates in the same commit as the part it describes.** Every feature or functionality change — new, altered, or removed, BRAINSTORM work included — updates that part's row before the commit lands, not after. Cover what it does, where it lives, why it exists, when it changed, who asked for it (if that's not obvious), and how it works. See the taxonomy-before-features principle above: this is how that principle stays true instead of becoming a slogan.
 
@@ -91,7 +91,11 @@ Expect all of this to be iterative. Set the work up so step 4 is cheap to repeat
 ```
 www/index.html               the whole app (~165 KB, one file)
 www/config.js                authUrl + apiBase, edited per deployment
-netlify/functions/sync.mjs   authenticated sync + cloud snapshots
+www/fonts/                   self-hosted Figtree + Fraunces — see its README
+www/vendor/                  self-hosted auth SDK — see its README
+netlify/functions/sync.mjs   authenticated sync + cloud snapshots + deletion
+netlify/functions/error.mjs  client-side error reports → Sentry or logs
+netlify/functions/lib/       shared helpers (report.mjs), not routes
 netlify.toml                 publish=www, functions dir, NODE_VERSION=22
 package.json                 @neondatabase/serverless, jose — both pinned exactly
 db/schema.sql                app_state, app_snapshot, RLS policies (already run)
@@ -200,7 +204,7 @@ The owner has signed in with Google successfully but nothing has confirmed the a
 The full register lives in `PARTS.md` (with status per part) and `BRAINSTORM.md` (with direction). The items below are the ones that block or constrain other work.
 
 - **Account deletion — built, three env vars from finished.** Settings → Account → Delete account erases the cloud copy always, and the login itself once `NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID` are set in Netlify. See `PRODUCTION.md`.
-- **No error monitoring.** Nothing reports a failed deploy or an erroring function.
+- **Error monitoring — built.** Client and function errors both funnel to Sentry via `netlify/functions/lib/report.mjs`, once `SENTRY_DSN` is set; until then they land in Netlify's function logs instead of nowhere. See `PRODUCTION.md` §2.
 - **RLS isn't armed.** `DATABASE_URL` connects as `neondb_owner`, which has `rolbypassrls = t`, so the policies in `db/schema.sql` aren't enforced. Isolation currently rests entirely on the function filtering by the verified `sub`. Fix by creating a non-owner role, granting it table access, and repointing `DATABASE_URL`. Deliberately deferred until sign-in works.
 - **Sign in with Apple** isn't offered by Neon (Google, GitHub, Vercel only). Only becomes a blocker for a public App Store release that also offers Google sign-in. TestFlight internal testing is unaffected.
 - **TestFlight** is scaffolded but never run: `npx cap add ios && npx cap sync ios && npx cap open ios`. Before the first archive, set a real bundle ID in `capacitor.config.json`, register it in App Store Connect, and set `apiBase` in `www/config.js` to the deployed site URL — the native shell serves pages locally and can't resolve a same-origin API. Google's OAuth redirect will need a custom URL scheme registered in the iOS project.

@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { reportError } from './lib/report.mjs';
 
 /* On We Go — sync + backups, per account.
 
@@ -23,10 +24,11 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
      NEON_API_KEY     optional — a Neon Console personal or org API key
      NEON_PROJECT_ID  optional — this project's id, from Neon Console
      NEON_BRANCH_ID   optional — this branch's id, from Neon Console
-   The last three are only needed for DELETE to also remove the login itself
-   (not just its data) via Neon's project API. Without them, DELETE still
-   erases every row for the account — it just leaves the login behind, and
-   says so in the response rather than pretending otherwise.
+     SENTRY_DSN       optional — see netlify/functions/lib/report.mjs
+   The Neon API key trio is only needed for DELETE to also remove the login
+   itself (not just its data) via Neon's project API. Without them, DELETE
+   still erases every row for the account — it just leaves the login
+   behind, and says so in the response rather than pretending otherwise.
 */
 
 const CORS = {
@@ -177,6 +179,7 @@ export default async (req) => {
       return json({ ok: true, account: auth.removed, detail: auth.removed ? undefined : auth.reason });
     }
   } catch (err) {
+    await reportError({ message: String(err && err.message || err), stack: err && err.stack, source: 'function:sync' });
     return json({ error: 'Storage error', detail: String(err && err.message || err) }, 500);
   }
 

@@ -149,4 +149,18 @@ process.env.DATABASE_URL = 'postgres://stub';
 
   delete process.env.NEON_API_KEY; delete process.env.NEON_PROJECT_ID; delete process.env.NEON_BRANCH_ID;
   delete globalThis.__onwegoAuthDelete;
+
+  console.log('\nUNEXPECTED FAILURES ARE REPORTED, NOT JUST 500ED');
+  const realSql = globalThis.__onwegoSql;
+  globalThis.__onwegoSql = () => { throw new Error('connection reset'); };
+  let reportedTo = null;
+  const origFetch = globalThis.fetch;
+  process.env.SENTRY_DSN = 'https://examplekey@o123.ingest.sentry.io/456';
+  globalThis.fetch = async (url) => { reportedTo = url; return { ok: true }; };
+  r = await call('GET', '/api/sync', null, A);
+  globalThis.fetch = origFetch;
+  delete process.env.SENTRY_DSN;
+  globalThis.__onwegoSql = realSql;
+  P(r.status === 500, 'the client still gets a clean 500');
+  P(reportedTo === 'https://o123.ingest.sentry.io/api/456/envelope/', 'and the failure was reported, not just swallowed');
 })();

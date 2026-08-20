@@ -85,10 +85,9 @@ Required by every serious privacy policy, and useful for spotting hidden depende
 | Neon Managed Better Auth | Accounts, sessions | Yes — email, name | No | Yes |
 | Google OAuth | Sign-in option | Yes | No | No, optional path |
 | Apple | Distribution, in-app purchase | Yes, at their end | No | Yes, for iOS |
-| **esm.sh** | Serves the auth SDK to browsers | Users' IPs, on every load | No | **Yes, at runtime** |
-| **Google Fonts** | Serves fonts to browsers | Users' IPs, on every load | No | Effectively yes |
+| Sentry | Error monitoring (errors and stack traces only) | IP addresses, if not scrubbed at the Sentry project level | No | No — degrades to function logs if unset |
 
-**Two of these deserve attention.** `esm.sh` and Google Fonts are third parties that every user's browser contacts on every visit. That means a privacy disclosure, and — more practically — two external points of failure for an app that otherwise has none. Both are trivially fixable: vendor the auth SDK into `www/`, and self-host the two font families. Worth doing before launch, and it also improves load time in the native shell.
+**esm.sh and Google Fonts are gone from this list — fixed.** Both used to be contacted by every user's browser on every visit. The auth SDK is vendored into `www/vendor/` (see its README there for how it was pulled and how to update the pinned version) and the two font families are self-hosted from `www/fonts/`. Neither is contacted anymore; nothing in this table needs updating for either.
 
 ---
 
@@ -103,7 +102,7 @@ Required by every serious privacy policy, and useful for spotting hidden depende
 | **Row-level security actually enforced** | **No** — the database role bypasses RLS. The policies exist but don't apply. Fix by creating a non-owner role and repointing `DATABASE_URL` |
 | Rate limiting | None. The sync endpoint is open to anyone with a valid token, and sign-up is open to anyone at all |
 | Abuse controls on signup | None. `ALLOW_EMAILS` is the current blunt instrument |
-| Error monitoring | **None.** Nothing reports a broken deploy or a failing function. This is the biggest operational gap |
+| Error monitoring | **Built.** Client-side JS errors and the sync function's own failures both funnel to Sentry, if `SENTRY_DSN` is set — see "How to fix the five gaps" §2 |
 | Optional passcode or biometric lock | Not applicable yet; worth considering once the app holds proof-of-work photos |
 
 ---
@@ -166,21 +165,23 @@ Concrete enough to hand to whoever picks up the work. None of these is built yet
 
 **Test:** `test/sync_server_test.cjs` — two-account isolation (delete one, the other's rows survive), the honest "not configured" path, and a stubbed `__onwegoAuthDelete` proving the right Neon endpoint and API key get used once configured. `test/account_test.cjs` covers the client-side two-tap flow. Not yet verified against the real Neon API — deliberately, since testing delete against a live account is destructive; do that with a throwaway account once the env vars are set.
 
-### 2. Error monitoring
+### 2. Error monitoring *(built)*
 
-**What's needed:** know when a deploy fails, when the sync function throws, and when a client-side error breaks a screen.
+**What shipped:** `netlify/functions/error.mjs` — an unauthenticated `POST /api/error` endpoint the client posts a JS error's `message`/`stack` to (deliberately unauthenticated, since a signed-out session can break too). A global `window.onerror`/`unhandledrejection` handler in `www/index.html` calls it, capped at 20 reports per page load and de-duplicated so a looping failure can't spam it. `netlify/functions/sync.mjs`'s own catch-all does the same for server-side failures. Both funnel through the shared `netlify/functions/lib/report.mjs`, which forwards a minimal Sentry envelope if `SENTRY_DSN` is set, or falls back to `console.error` (visible in Netlify's function logs) if it isn't — so there's a record either way.
 
-**Cheapest useful version:** a free-tier error reporter (Sentry is the obvious one) with two integrations — one in the function's catch blocks, one global handler in the client. Netlify already emails on failed deploys; turn that on if it isn't.
+**Still needed to reach Sentry specifically:** a `SENTRY_DSN` env var in Netlify — sign up for Sentry's free tier, create a project, copy its DSN. Until then, reports land in Netlify's function logs, which is a real (if less convenient) monitoring path on its own.
 
-**Care needed:** never send user content to a monitoring service. Error messages and stack traces only — no task titles, no journal-style fields, no email addresses. This is a privacy commitment the policy will have to describe.
+**Deploy failures:** Netlify already emails on failed deploys — confirm that's turned on in the site's notification settings; not something a function can wire up.
 
-### 3. Self-host the fonts and the auth SDK
+**Care taken:** the payload is capped (message 500 chars, stack 2000) and is never anything but the error's own message/stack/location — no task titles, no journal-style fields, no email addresses, no app state. `test/error_report_test.cjs` asserts the Sentry payload has exactly four fields and nothing else.
 
-**Fonts:** download the two families, put the woff2 files in `www/fonts/`, replace the Google Fonts link with `@font-face` rules. Faster, works offline in the native shell, and removes a third party from every page load.
+### 3. Self-host the fonts and the auth SDK *(built)*
 
-**Auth SDK:** currently imported from `esm.sh` at runtime. Vendor the module into `www/vendor/` and import it relatively. Pin the version — a CDN that resolves "latest" is how the earlier dependency outage happened.
+**Fonts:** the exact woff2 files Google was serving for this app's font query, downloaded byte-identical into `www/fonts/`, with `@font-face` rules replacing the Google Fonts `<link>` tags — same variable-font axes (`SOFT`, `WONK`, `opsz`) the CSS already uses via `font-variation-settings`, so nothing about how the type renders changed. See `www/fonts/README.md` for the source and how to pick up a new Google Fonts version later.
 
-**Bonus:** both changes make the iOS build genuinely offline-capable, which it currently isn't on first run.
+**Auth SDK:** vendored into `www/vendor/` from esm.sh's bundled build (`?bundle`, which collapses the whole dependency graph into one file plus four small Node-shim polyfills the library references even in browser code). Each shim's absolute `/node/...` import was rewritten to a relative `./...` path so they resolve locally instead of against esm.sh's domain. Pinned at `@neondatabase/neon-js@0.7.0-beta` — see `www/vendor/README.md` for the exact fetch and how to move to a newer version deliberately, rather than a CDN resolving "latest" out from under a pin.
+
+**Bonus, confirmed:** both changes were verified in a real browser, not just the test suite — zero requests to `esm.sh` or Google on page load, fonts render identically, and the vendored SDK produces a fully working auth client (`getSession`, `signIn.social`, `emailOtp.sendVerificationOtp` all present). The iOS build is now genuinely offline-capable on first run, which it wasn't before.
 
 ### 4. The data model
 
@@ -211,6 +212,6 @@ Under a few hundred kilobytes, the document model is fine and simpler than the a
 ## Suggested sequence
 
 1. **Now:** finish sign-in, fix the engine bugs, QA the feature set.
-2. **Before TestFlight:** ~~account deletion~~ (built, needs three env vars to finish), error monitoring, arm row-level security, self-host the fonts and SDK.
+2. **Before TestFlight:** ~~account deletion~~ (built, needs three env vars to finish), ~~error monitoring~~ (built, needs `SENTRY_DSN` to reach Sentry specifically), arm row-level security, ~~self-host the fonts and SDK~~ (done).
 3. **Before public launch:** legal documents and URLs, business and support contacts, third-party inventory published in the privacy policy, entitlement matrix and paywall flags, onboarding, responsive and Dynamic Type QA.
 4. **Decide deliberately, not by drift:** the data model, whether proof is stored, and the bundle identifier.
