@@ -49,12 +49,24 @@ const P = (c, m) => console.log((c ? 'PASS' : 'FAIL') + ' — ' + m);
   P(lines.length === 3, 'envelope has a header, an item header, and a payload line');
   const envHeader = JSON.parse(lines[0]);
   P(envHeader.dsn === process.env.SENTRY_DSN, 'envelope header carries the DSN for auth');
+  P(/^[0-9a-f]{32}$/.test(envHeader.event_id), 'envelope header carries a well-formed event_id — Sentry drops events without one');
   const itemHeader = JSON.parse(lines[1]);
   P(itemHeader.type === 'event' && itemHeader.length === Buffer.byteLength(lines[2]), 'item header declares the right type and byte length');
   const payload = JSON.parse(lines[2]);
   P(payload.exception.values[0].value.includes('Storage error') && payload.exception.values[0].value.includes('sync.mjs:70:3'),
     'the payload carries the message and stack, nothing else');
-  P(Object.keys(payload).sort().join(',') === 'environment,exception,level,platform', 'no extra fields — no user content smuggled in');
+  P(payload.event_id === envHeader.event_id, 'the payload event_id matches the envelope header');
+  P(Object.keys(payload).sort().join(',') === ['environment', 'event_id', 'exception', 'level', 'platform', 'timestamp'].sort().join(','),
+    'no extra fields — no user content smuggled in');
+
+  console.log('\nSENTRY REJECTS THE EVENT — logged instead of silently swallowed');
+  globalThis.fetch = async () => ({ ok: false, status: 400, text: async () => '{"detail":"invalid api key"}' });
+  logged = [];
+  console.error = (...args) => logged.push(args.join(' '));
+  await reportError({ message: 'Storage error', stack: '', source: 'function' });
+  console.error = origError;
+  globalThis.fetch = origFetch;
+  P(logged.some(l => l.includes('Sentry rejected') && l.includes('400')), 'a non-2xx response from Sentry is logged, not silently dropped');
 
   console.log('\nMALFORMED DSN — degrades to logging instead of throwing');
   process.env.SENTRY_DSN = 'not-a-real-dsn';
