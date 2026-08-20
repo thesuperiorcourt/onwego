@@ -99,7 +99,7 @@ Required by every serious privacy policy, and useful for spotting hidden depende
 | Encryption at rest | Yes, provider-managed |
 | Secure authentication | Yes — token verified against published keys on every request |
 | Per-user isolation in the API | Yes, and tested |
-| **Row-level security actually enforced** | **No** — the database role bypasses RLS. The policies exist but don't apply. Fix by creating a non-owner role and repointing `DATABASE_URL` |
+| **Row-level security actually enforced** | **Half done** — the code now scopes every query to `app.user_id` inside a transaction (`netlify/functions/sync.mjs`), which is what the policies need to fire. `DATABASE_URL` still connects as the owner role, which bypasses RLS regardless, so it still doesn't apply yet. `db/rls_role.sql` has the restricted role ready to run; see HANDOFF.md's RLS item for the remaining steps |
 | Rate limiting | None. The sync endpoint is open to anyone with a valid token, and sign-up is open to anyone at all |
 | Abuse controls on signup | None. `ALLOW_EMAILS` is the current blunt instrument |
 | Error monitoring | **Built.** Client-side JS errors and the sync function's own failures both funnel to Sentry, if `SENTRY_DSN` is set — see "How to fix the five gaps" §2 |
