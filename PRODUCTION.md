@@ -121,7 +121,7 @@ For a gamified productivity app specifically, there's a third principle worth ad
 |---|---|
 | Unlimited worlds, tasks and tracks | Full theme library and cosmetic unlocks |
 | The whole logging loop, streaks, XP, levels | Proof-of-work media storage, if proof is stored |
-| Grove, milestones, biomes | Advanced automation and quality-of-life |
+| Garden, milestones, biomes | Advanced automation and quality-of-life |
 | Cloud sync and backups | Recaps, history views, deeper stats |
 | Export | |
 | A small set of themes | |
@@ -145,7 +145,7 @@ Sync belongs on the free side. An app that forgets your work unless you pay is n
 
 - **Responsive QA at small widths and large text.** Contrast and structure are verified; real-device testing at 320px and 200% Dynamic Type is not.
 - **Localization.** Every user-facing string is currently inline. Separating strings from logic is nearly free during the module split described in `HANDOFF.md`, and expensive afterwards. English-only at launch is fine; making it *impossible* to translate is not.
-- **Performance with years of history.** The Trail renders every task in the campaign. At seventy that's fine; at two thousand it isn't. Needs virtualisation or paging eventually.
+- **Performance with years of history.** Timeline renders every task in the campaign. At seventy that's fine; at two thousand it isn't. Needs virtualisation or paging eventually.
 - **Onboarding.** Still the largest product gap for anyone who isn't the owner.
 
 

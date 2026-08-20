@@ -9,9 +9,11 @@ setTimeout(()=>{
   P(d.querySelector('.quest h1')!==null,'hero card renders: '+d.querySelector('.quest h1').textContent);
   P(!!d.querySelector('#screenTitle'),'hero is the h1');
   P(d.querySelectorAll('h1').length===1,'still one h1');
-  P(!!d.querySelector('[data-sheet=home]'),'layout button on Tonight');
+  P(!!d.querySelector('[data-sheet=home]'),'layout button on Today');
   const secs=[...d.querySelectorAll('.sec-head h2')].map(h=>h.textContent);
-  P(secs.includes('Coming up'),'second section rendered: '+secs.join('|'));
+  P(secs.includes('Missed'),'missed section rendered, ahead of Up next: '+secs.join('|'));
+  P(secs.includes('Up next'),'up-next section rendered: '+secs.join('|'));
+  P(secs.indexOf('Missed')<secs.indexOf('Up next'),'missed comes before up next');
   // log via task id
   const tier=d.querySelector('.tier[data-log=full]');
   P(!!tier.dataset.taskId,'tier carries a task id');
@@ -69,7 +71,7 @@ setTimeout(()=>{
             // home layout
             d.querySelector('[data-view=tonight]').click();
             d.querySelector('[data-sheet=home]').click();
-            P(d.querySelectorAll('[data-section]').length===3,'layout sheet lists 2 sections + add');
+            P(d.querySelectorAll('[data-section]').length===4,'layout sheet lists 3 sections + add');
             d.querySelector('[data-section]').click();
             P(!!d.querySelector('#sf_limit')&&d.querySelectorAll('[data-secfield]').length===10,'section editor fields');
             d.querySelector('#sf_limit').value='2';

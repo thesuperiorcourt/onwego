@@ -9,9 +9,9 @@ setTimeout(()=>{
   P(!!d.querySelector('main#main'),'main landmark');
   P(!!d.querySelector('nav[aria-label]'),'labelled nav');
   P(!!d.querySelector('a.skip'),'skip link');
-  P(d.title.startsWith('Tonight'),'page title: '+d.title);
+  P(d.title.startsWith('Today'),'page title: '+d.title);
   P(!!d.querySelector('[role=status][aria-live]'),'live region');
-  P(d.querySelector('.dock [aria-current="page"]').textContent.includes('Tonight'),'dock marks current');
+  P(d.querySelector('.dock [aria-current="page"]').textContent.includes('Today'),'dock marks current');
   // headings never skip
   const hs=[...d.querySelectorAll('h1,h2,h3,h4')].map(h=>+h.tagName[1]);
   let ok=true,prev=hs[0]; hs.forEach(l=>{if(l>prev+1)ok=false;prev=l});

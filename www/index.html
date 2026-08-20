@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="On We Go">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="A reading campaign tracker that behaves like a world instead of a checklist.">
-<title>Tonight · On We Go</title>
+<title>Today · On We Go</title>
 <style>
 /* ============================================================
    ON WE GO
@@ -377,7 +377,7 @@ html.calm .mote{display:none}
 </head>
 <body>
 <script src="./config.js"></script>
-<a class="skip" href="#main">Skip to tonight's quest</a>
+<a class="skip" href="#main">Skip to today's quest</a>
 <div id="app">
   <main id="main" tabindex="-1"></main>
   <nav class="dock" id="dock" aria-label="Sections"></nav>
@@ -890,6 +890,7 @@ const SORTS = [
 
 const SCOPES = [
   { k:'today',    label:'Today only' },
+  { k:'missed',   label:'Missed — not logged, past its date' },
   { k:'upcoming', label:'Today and later' },
   { k:'open',     label:'Anything not logged' },
   { k:'all',      label:'Everything' }
@@ -907,16 +908,28 @@ function newTask(over) {
 
 function defaultHome() {
   return { sections: [
-    { id:'s1', name:'Tonight', categories:[], tags:[], scope:'today', limit:1,
+    { id:'s1', name:'Today', categories:[], tags:[], scope:'today', limit:1,
       sort:'date', dir:'asc', fields:['range','tiers','hook','how','momentum'] },
-    { id:'s2', name:'Coming up', categories:[], tags:[], scope:'upcoming', limit:3,
+    { id:'s2', name:'Missed', categories:[], tags:[], scope:'missed', limit:5,
+      sort:'date', dir:'asc', fields:['range','date'] },
+    { id:'s3', name:'Up next', categories:[], tags:[], scope:'upcoming', limit:3,
       sort:'date', dir:'asc', fields:['range','date'] }
   ]};
 }
 
 /* One-time move: the shipped campaign becomes editable task records. */
+/* An untouched shipped layout gets the current default transparently — a
+   customised one never does, so nobody's edits get overwritten underneath
+   them. Identified by shape, not a version flag: the exact two sections
+   defaultHome() used to hand out, nothing added or renamed. */
+function isUntouchedOldHome(home) {
+  const s = (home || {}).sections || [];
+  return s.length === 2 && s[0] && s[0].id === 's1' && s[1] && s[1].id === 's2'
+    && s[1].name === 'Coming up' && s[1].scope === 'upcoming';
+}
 function migrateTasks(w) {
   if (!w.home) w.home = defaultHome();
+  else if (isUntouchedOldHome(w.home)) w.home = defaultHome();
   if (w.tasks) return;
   w.tasks = (w.days || []).map(d => {
     const bait = baitFor(w, d.fromGlobal, d.toGlobal);
@@ -967,6 +980,7 @@ function filterTasks(w, o) {
   if (o.tags && o.tags.length) list = list.filter(t => (t.tags || []).some(x => o.tags.includes(x)));
   if (o.streakOnly) list = list.filter(t => t.streak);
   if (o.scope === 'today')    list = list.filter(t => t.date === t0);
+  if (o.scope === 'missed')   list = list.filter(t => isMissed(w, t));
   if (o.scope === 'upcoming') list = list.filter(t => !t.date || t.date >= t0);
   if (o.scope === 'open')     list = list.filter(t => !isLogged(w, t));
   if (o.scope === 'done')     list = list.filter(t => isLogged(w, t));
@@ -1104,7 +1118,7 @@ function taskEditor(id) {
 /* --------------------------- home layout config --------------------------- */
 function homeConfigSheet() {
   const secs = (W.home || defaultHome()).sections;
-  return `<h2>What shows on Tonight</h2>
+  return `<h2>What shows on Today</h2>
     <p class="sub">Build as many sections as you want. Each one picks its own categories, fields, count and order.</p>
     <ul class="shelf">
       ${secs.map((s,i) => `<li><button class="row-item" data-section="${s.id}" aria-haspopup="dialog"
@@ -1243,15 +1257,15 @@ function openSlots(w, tr) {
 /* Past-dated, unlogged, not yet acknowledged — openSlots() has already
    excluded these from the future, silently. This is what makes them visible
    again so a missed day gets a decision instead of disappearing. */
-function missedTasks(w, tr) {
+function isMissed(w, t) {
   const t0 = today();
-  return trackTasks(w, tr)
-    .filter(t => !w.progress.log[t.id] && !t.missedAck)
-    .filter(t => t.date && t.date < t0)
-    .sort((a,b) => (a.date < b.date ? -1 : 1));
+  return !w.progress.log[t.id] && !t.missedAck && !!t.date && t.date < t0;
+}
+function missedTasks(w, tr) {
+  return trackTasks(w, tr).filter(t => isMissed(w, t)).sort((a,b) => (a.date < b.date ? -1 : 1));
 }
 
-/* Everything the Tonight screen and the Tracks list need to say out loud. */
+/* Everything the Today screen and the Tracks list need to say out loud. */
 function trackStatus(w, tr) {
   const done = trackDone(w, tr);
   const remaining = Math.max(0, tr.total - done);
@@ -1505,7 +1519,7 @@ function taskCard(t, sec, hero) {
   }
   if (hero) {
     out += `<button class="escape" id="escapeBtn" aria-haspopup="dialog">
-      <b><span aria-hidden="true">🧠</span> Attention is garbage tonight</b>
+      <b><span aria-hidden="true">🧠</span> Attention is garbage right now</b>
       <small>Ten minutes, whatever format works, and you may quit at ten. It still counts, and the streak holds.</small>
     </button>`;
   }
@@ -1528,7 +1542,7 @@ function renderTonight() {
     if (!list.length) {
       body += `<section class="sec" aria-labelledby="sec${si}">
         <div class="sec-head"><h2 id="sec${si}">${esc(sec.name)}</h2></div>
-        <p class="empty"><b>Nothing here right now</b>Add a task, or widen this section in Tonight's layout.</p></section>`;
+        <p class="empty"><b>Nothing here right now</b>Add a task, or widen this section in Today's layout.</p></section>`;
       return;
     }
     if (!heroUsed) {
@@ -1611,7 +1625,7 @@ function renderGrove() {
     </div>
     <div class="wrap">
       <div class="card quest">
-        <p class="eyebrow">The grove</p>
+        <p class="eyebrow">The garden</p>
         <h1 id="screenTitle" style="font-size:30px">${flora.length} ${flora.length === 1 ? 'thing' : 'things'} growing</h1>
         <p style="margin:0;color:var(--muted);font-size:14.5px">Every logged night plants something. Nothing here wilts, dies, or gets taken away — including on the nights you skip.</p>
         <p class="meta">
@@ -1673,7 +1687,7 @@ function renderTrail() {
   });
   return `<div class="wrap" style="padding-top:calc(20px + var(--safe-t))">
     <div class="sec-head" style="margin-bottom:14px">
-      <h1 class="page-title" id="screenTitle">The trail</h1>
+      <h1 class="page-title" id="screenTitle">The timeline</h1>
       <button class="link" data-sheet="pace" aria-haspopup="dialog">Catch up</button>
     </div>
     ${W.launch ? `<div class="card" style="margin-bottom:6px;border-color:var(--edge-strong)">
@@ -1695,7 +1709,7 @@ function renderHoard() {
   const achieved = W.progress.achieved || [];
   return `<div class="wrap" style="padding-top:calc(20px + var(--safe-t))">
     <div class="sec-head" style="margin-bottom:14px">
-      <h1 class="page-title" id="screenTitle">The hoard</h1>
+      <h1 class="page-title" id="screenTitle">The rewards</h1>
       <button class="link" data-sheet="settings" aria-haspopup="dialog">Settings</button>
     </div>
     <section class="card" aria-labelledby="lvH">
@@ -1755,11 +1769,11 @@ function renderHoard() {
 
 /* --------------------------------- shell ---------------------------------- */
 const DOCK = [
-  { id:'tonight', g:'🌙', label:'Tonight' },
-  { id:'grove',   g:'🌿', label:'Grove' },
-  { id:'trail',   g:'🗺️', label:'Trail' },
+  { id:'tonight', g:'🌙', label:'Today' },
+  { id:'grove',   g:'🌿', label:'Garden' },
+  { id:'trail',   g:'🗺️', label:'Timeline' },
   { id:'tasks',   g:'▤',  label:'Tasks' },
-  { id:'hoard',   g:'✨', label:'Hoard' }
+  { id:'hoard',   g:'✨', label:'Rewards' }
 ];
 
 /* Lists with their bullets removed lose list semantics in Safari + VoiceOver,
@@ -1968,7 +1982,7 @@ function showDrop(item) {
   openDrop(`<span class="g" aria-hidden="true">${item.g}</span>
     <p class="rarity">${RARITY_LABEL[item.r]} loot</p>
     <h2>${esc(item.n)}</h2>
-    <p>Dropped into the hoard.</p>
+    <p>Dropped into your rewards.</p>
     <button class="btn" data-close="1">Take it</button>`);
 }
 
@@ -1993,8 +2007,8 @@ function checkMilestones() {
     <h2>${esc(last.name)}</h2>
     <p>${esc(last.blurb)}</p>
     <p style="color:var(--glow-ink);font-size:13.5px;margin:-6px 0 18px">
-      ${last.reward === 'biome' ? biomeName(last.biome) + ' unlocked' : 'A legendary tree takes root'} · +25 ${esc(W.currency)} · ${esc(item.n)} added to the hoard</p>
-    <button class="btn" data-close="1">See the grove</button>`), 260);
+      ${last.reward === 'biome' ? biomeName(last.biome) + ' unlocked' : 'A legendary tree takes root'} · +25 ${esc(W.currency)} · ${esc(item.n)} added to your rewards</p>
+    <button class="btn" data-close="1">See the garden</button>`), 260);
   return last;
 }
 
@@ -2107,7 +2121,7 @@ const SHEETS = {
         <button class="row-item" data-sheet="themes" aria-haspopup="dialog"><span class="g" aria-hidden="true">🎨</span><span class="t"><b>Theme pack</b><small>${THEMES[W.theme].name} — ${THEMES[W.theme].blurb}</small></span></button>
         <button class="row-item" data-sheet="worlds" aria-haspopup="dialog"><span class="g" aria-hidden="true">🌍</span><span class="t"><b>Switch world</b><small>${S.worlds.length} saved</small></span></button>
         <button class="row-item" data-sheet="pace" aria-haspopup="dialog"><span class="g" aria-hidden="true">↻</span><span class="t"><b>Redistribute the plan</b><small>Catch up without penalty</small></span></button>
-        <button class="row-item" id="clearToday"><span class="g" aria-hidden="true">↩︎</span><span class="t"><b>Undo today's log</b><small>Removes tonight's result only</small></span></button>
+        <button class="row-item" id="clearToday"><span class="g" aria-hidden="true">↩︎</span><span class="t"><b>Undo today's log</b><small>Removes today's result only</small></span></button>
         <button class="row-item" id="doExport"><span class="g" aria-hidden="true">⬇️</span><span class="t"><b>Export everything</b><small>Downloads a JSON backup</small></span></button>
         <button class="row-item" data-sheet="import" aria-haspopup="dialog"><span class="g" aria-hidden="true">⬆️</span><span class="t"><b>Import a backup</b><small>Paste a previous export</small></span></button>
         <button class="row-item" data-sheet="backups" aria-haspopup="dialog"><span class="g" aria-hidden="true">🗄️</span>
@@ -2350,7 +2364,7 @@ function seedMaasverse() {
 })();
 /* ============================================================
    TASK INTERACTIONS
-   Search, filters, the editor, and the Tonight layout builder.
+   Search, filters, the editor, and the Today layout builder.
    ============================================================ */
 
 function refreshTaskList(announce) {
@@ -2467,7 +2481,7 @@ document.addEventListener('click', e => {
     save(); closeSheet(); paint(); toast('Task deleted'); return;
   }
 
-  /* ---- Tonight layout sections ---- */
+  /* ---- Today layout sections ---- */
   if (el.dataset.section !== undefined) { openSheet(sectionEditor(el.dataset.section), el); return; }
 
   if (el.dataset.seccat !== undefined) {

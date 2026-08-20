@@ -10,17 +10,17 @@ The **Why** column matters more than the rest. If a part can't justify its why i
 
 ---
 
-## T — Tonight
+## T — Today
 
 The default screen. Should answer one question: *what am I doing right now, and why would I want to?*
 
 | ID | Part | What it does | Why it exists | Touches | Status |
 |---|---|---|---|---|---|
-| T1 | Illustrated scene | Renders the sky/ground/grove SVG (`sceneSVG`, `motes`), tinted by the active theme pack | Makes it a place, not a list. Moon tracks campaign progress; sun rises toward the finish | Themes, world progress, grove contents | ok |
+| T1 | Illustrated scene | Renders the sky/ground/grove SVG (`sceneSVG`, `motes`), tinted by the active theme pack | Makes it a place, not a list. Moon tracks campaign progress; sun rises toward the finish | Themes, world progress, garden contents | ok |
 | T2 | World switcher (top left) | A pill showing the active world's name; opens the Worlds sheet | Move between projects | Worlds, all screens | unclear — reads as a label, not a control |
 | T3 | Days-left counter (top right) | A pill; opens the Pace sheet on tap | Ambient time pressure; opens Pace | Tracks, dates | unclear — opens Pace but doesn't look tappable |
-| T4 | Hero card | Renders the first task of the first configured Tonight section, full-size, as the `h1` | The one thing to do now | Tasks, sections config | ok |
-| T5 | Win tiers (min / full / boss) | Three buttons call `logTask()` with a payout tier; each grants XP, currency, a loot chance, and plants something in the Grove | Three ways to succeed so a bad night still counts | Tasks, tracks, XP, currency, loot, grove, streak | ok |
+| T4 | Hero card | Renders the first task of the first configured Today section, full-size, as the `h1` | The one thing to do now | Tasks, sections config | ok |
+| T5 | Win tiers (min / full / boss) | Three buttons call `logTask()` with a payout tier; each grants XP, currency, a loot chance, and plants something in the Garden | Three ways to succeed so a bad session still counts | Tasks, tracks, XP, currency, loot, garden, streak | ok |
 | T6 | Tier impact captions | Each tier button shows `tierImpact()` — what logging it would do to the track: days left, or a projected finish date | Shows the consequence of each choice before choosing | Tracks | ok, but invisible when rounding hides the difference — see K1 |
 | T7 | Hook reveal | Collapsed reveal of the task's `hook` field, pulled from seed bait bands (`baitFor`) or a custom hook | Turns motivation into a small reward | Tasks (hook field), bait bands in seed data | ok — wording is literary, see BRAINSTORM |
 | T8 | Meta chips (how / position) | Small inline chips for whichever fields a section is configured to show | Context without clutter | Tasks | ok |
@@ -30,27 +30,28 @@ The default screen. Should answer one question: *what am I doing right now, and 
 | T12 | Standing stats (streak, currency) | Streak count (`streak()`) and currency total, shown ambiently | Ambient progress | Streak logic, currency | ok |
 | T13 | Level bar | XP progress toward the next level (`levelFor`) | Long arc progression | XP, levels | ok |
 | T14 | Next milestone card | The nearest milestone whose unit position hasn't been reached yet | Something to aim at | Milestones, biomes | ok |
-| T15 | Strain warning | `strainCard()` — appears when a deadline-anchored track's live per-day rate exceeds the comfort pace set on the track; offers three ways out | Says out loud when the plan stopped being possible, offers three real choices | Tracks, dates, tasks | ok, tested — now also fires on Trail (see K1). Still unconfirmed against real day-to-day use |
-| T16 | Section layout config | `homeConfigSheet`/`sectionEditor` — which categories, tags, scope and fields populate each Tonight section | User decides what this screen shows | Tasks, categories, tags | ok, buried |
-| T17 | Position fixer | The Position sheet — nudges `unitsDone` forward or back without touching XP or the grove | "The plan follows you, not the reverse" | Tracks, unit position | ok, buried |
+| T15 | Strain warning | `strainCard()` — appears when a deadline-anchored track's live per-day rate exceeds the comfort pace set on the track; offers three ways out | Says out loud when the plan stopped being possible, offers three real choices | Tracks, dates, tasks | ok, tested — now also fires on Timeline (see K1). Still unconfirmed against real day-to-day use |
+| T16 | Section layout config | `homeConfigSheet`/`sectionEditor` — which categories, tags, scope and fields populate each Today section | User decides what this screen shows | Tasks, categories, tags | ok, buried |
+| T17 | Position fixer | The Position sheet — nudges `unitsDone` forward or back without touching XP or the garden | "The plan follows you, not the reverse" | Tracks, unit position | ok, buried |
+| T18 | Missed section | A default section (`scope:'missed'`, built on the same `isMissed()` check Timeline and Pace use) listing every unresolved missed task, positioned ahead of Up next | Falling behind should be visible on the screen you actually open, not only on Timeline | Tasks, sections config, K1 | ok — added when the Missed/Up next sections were introduced; existing worlds with an untouched default layout pick it up automatically, customised layouts don't |
 
 ---
 
-## G — Grove
+## G — Garden
 
 The reward surface. Should answer: *what have I built?*
 
 | ID | Part | What it does | Why it exists | Touches | Status |
 |---|---|---|---|---|---|
-| G1 | Scene | Same `sceneSVG`/`motes` renderer as Tonight, taller, no cards over it | Visible accumulation | Themes, flora records | ok |
+| G1 | Scene | Same `sceneSVG`/`motes` renderer as Today, taller, no cards over it | Visible accumulation | Themes, flora records | ok |
 | G2 | Theme picker | Opens the Themes sheet; swaps the CSS variable set live, no reload | Personalisation; future reward/paywall hook | All screens | ok |
 | G3 | Growth counts | Counts `W.progress.flora` entries by kind (sprout / tree / legendary) — one is planted per logged night, win or rest | Legible summary of effort | Flora records | ok |
 | G4 | Biome list | Built from milestones whose `reward === 'biome'`; unlocked biomes come from `W.progress.biomes`, named by a hardcoded `biomeName()` lookup | Long-arc unlocks | Milestones | unclear — the word means nothing to a new user, and it isn't editable. Own screen wanted |
-| G5 | Rewards surface | — | — | missing — rewards live in Hoard, not here, and can't be meaningfully edited |
+| G5 | Rewards surface | — | — | missing — rewards live in Rewards, not here, and can't be meaningfully edited |
 
 ---
 
-## R — Trail
+## R — Timeline
 
 Currently the weakest tab. Intended as the campaign map: *where have I been, where am I going?* In practice users read it as a task list and expect it to behave like one.
 
@@ -61,7 +62,7 @@ Currently the weakest tab. Intended as the campaign map: *where have I been, whe
 | R3 | Day nodes | One list item per task, ordered by date: date, title, target range, and the result if logged | History and what's ahead | Tasks, logs | ok |
 | R4 | Missed-day handling | A past-dated, unlogged task now shows "Missed — needs a decision" (a link into Pace) or "Folded into the plan" once acknowledged, instead of rendering nothing | Should surface a decision when the plan no longer works | Tracks, tasks, dates | ok — fixed, see K1 |
 | R5 | Catch-up button | Opens the Pace sheet, now reading the live track engine (`trackStatus`, `openSlots`, `missedTasks`) instead of the dead legacy functions it used to | Redistribute what's left | Tracks | ok — fixed, see K1 |
-| R6 | The tab's purpose | — | — | unclear. Decide what Trail *is* before polishing it |
+| R6 | The tab's purpose | — | — | unclear. Decide what Timeline *is* before polishing it |
 
 ---
 
@@ -71,7 +72,7 @@ The data layer, exposed. Should answer: *what's in this project and let me chang
 
 | ID | Part | What it does | Why | Touches | Status |
 |---|---|---|---|---|---|
-| K1 | Track engine | `recomputeTrack()` — on every log and on Redistribute, rewrites future task `min`/`max` (smooth ripple) or future dates (consume / pace ripple) so `remaining` resolves to zero at the anchor. `missedTasks()`/`resolveMissed()` give a missed task an explicit outcome (move to today, fold in, let it go) instead of leaving it un-logged forever | What moves when you log: date holds and amounts move, or amounts hold and the date moves | Tasks, Tonight, Trail, milestones | ok — fixed, see Known defects |
+| K1 | Track engine | `recomputeTrack()` — on every log and on Redistribute, rewrites future task `min`/`max` (smooth ripple) or future dates (consume / pace ripple) so `remaining` resolves to zero at the anchor. `missedTasks()`/`resolveMissed()` give a missed task an explicit outcome (move to today, fold in, let it go) instead of leaving it un-logged forever | What moves when you log: date holds and amounts move, or amounts hold and the date moves | Tasks, Today, Timeline, milestones | ok — fixed, see Known defects |
 | K2 | Track editor | `trackEditor()` — anchor, ripple, categories, total and comfort pace, in one sheet | Configure anchor, ripple, total, comfort | Tracks | unverified |
 | K3 | Search | Filters tasks by title substring | Find anything | Tasks | ok |
 | K4 | Filters (category, tag, streak, scope) | Chips combined with AND, read by `filterTasks()` | Narrow a long list | Tasks | ok |
@@ -84,7 +85,7 @@ The data layer, exposed. Should answer: *what's in this project and let me chang
 
 ---
 
-## H — Hoard
+## H — Rewards
 
 The wallet and trophy case. Should answer: *what have I earned, and what can I spend it on?*
 
@@ -108,7 +109,7 @@ The wallet and trophy case. Should answer: *what have I earned, and what can I s
 | S2 | Backups | `SHEETS.backups()` — three layers: on-device daily snapshots (`localSnaps`/`writeLocalSnap`), one-tap undo (`stashUndo`), and cloud snapshots once signed in (`Sync.listSnapshots`/`getSnapshot`) | Three layers, restore, undo | Device storage, cloud snapshots | ok on device; cloud path unverified |
 | S3 | Import / export | Whole-state JSON: `applyState()` on the way in, a file download on the way out | Data portability | Whole state | ok |
 | S4 | Reduce motion | Toggles a `calm` class that the stylesheet reads to disable ambient animation | Accessibility preference | Animation | ok |
-| S5 | Theme packs | The same `themes()` sheet used by G2 and the Tonight scene cap | Look | All screens | ok |
+| S5 | Theme packs | The same `themes()` sheet used by G2 and the Today scene cap | Look | All screens | ok |
 | S6 | Worlds list | `SHEETS.worlds()` — switch the active world, or open New World | Switch and create | Worlds | ok |
 | S7 | Pace sheet | `SHEETS.pace()` — shows units/days left from the live track engine, lists every missed task with a resolution for each, and the before/after numbers a redistribute would actually produce | Diagnose and redistribute | Tracks | ok — fixed, see K1 |
 
@@ -139,25 +140,25 @@ These aren't screens. They break everything when they break.
 **What's actually happening — two separate bugs, not one:**
 
 1. The maths in the live track engine is correct and the effect is genuinely hard to see. `openSlots()` excludes past-dated unlogged tasks, so the missed day's units fold back into `remaining` and get spread across the days that are left. Spreading ~5 extra units across ~67 days changes the displayed rate by 0.07/day, which rounds to zero on screen.
-2. **The Pace sheet itself is wired to the wrong data.** `SHEETS.pace()` (opened by both "Catch up" on Trail and "Redistribute the plan" in Settings) computes what it shows from `daysLeft()`, `totalUnits(w)`, `w.progress.unitsDone` and `dayFor()` — all of which read `w.days`/`w.books`, a data structure that's frozen the moment a world is created and never touched again. The button's actual action (`do_replan`) correctly calls the live engine (`recomputeAll` → `recomputeTrack`), but the sheet's diagnostics and its "Plan redistributed. Nothing is overdue." toast are disconnected from that engine entirely — the toast is a fixed string regardless of what happened. The functions this sheet was presumably built against (`replan()`, `syncTasksFromPlan()`) are dead code, confirmed unreferenced anywhere in the app or the tests — see "Removed — dead code" below.
+2. **The Pace sheet itself is wired to the wrong data.** `SHEETS.pace()` (opened by both "Catch up" on Timeline and "Redistribute the plan" in Settings) computes what it shows from `daysLeft()`, `totalUnits(w)`, `w.progress.unitsDone` and `dayFor()` — all of which read `w.days`/`w.books`, a data structure that's frozen the moment a world is created and never touched again. The button's actual action (`do_replan`) correctly calls the live engine (`recomputeAll` → `recomputeTrack`), but the sheet's diagnostics and its "Plan redistributed. Nothing is overdue." toast are disconnected from that engine entirely — the toast is a fixed string regardless of what happened. The functions this sheet was presumably built against (`replan()`, `syncTasksFromPlan()`) are dead code, confirmed unreferenced anywhere in the app or the tests — see "Removed — dead code" below.
 
 **Why it matters more than the arithmetic.** The design promise is "nothing is ever overdue, the plan follows you." The implementation honours that so quietly — and, for the one screen meant to surface it, incorrectly — that the user can't tell whether the app noticed at all.
 
 **What needs deciding, not just fixing:**
 - A missed day should be *acknowledged*: "you missed Tuesday — those 5 chapters are now spread across the 67 days left" with the before/after numbers shown.
 - The missed task itself needs a resolution path: absorbed into the plan, moved to today, or explicitly abandoned. Right now it lingers as permanently un-logged.
-- When redistribution can't fix it — the required pace crosses what the user called comfortable — the strain warning should fire *here*, from Trail, not only on Tonight.
+- When redistribution can't fix it — the required pace crosses what the user called comfortable — the strain warning should fire *here*, from Timeline, not only on Today.
 - "Catch up" should report what changed, or say plainly that nothing needed to change.
 
 **What shipped:**
 - `missedTasks(w, tr)` finds every past-dated, unlogged, not-yet-acknowledged task on a track — the exact set `openSlots()` was already silently excluding.
-- Trail shows a real status per missed day: "Missed — needs a decision" (a link into Pace) until it's resolved, then "Folded into the plan" or the same "Rested" label a normal rest day gets.
+- Timeline shows a real status per missed day: "Missed — needs a decision" (a link into Pace) until it's resolved, then "Folded into the plan" or the same "Rested" label a normal rest day gets. The same missed task, and any others, also surface in a dedicated Missed section on Today, ahead of Up next — see T18.
 - The Pace sheet (`SHEETS.pace()`) now reads `trackStatus()` live instead of the dead legacy fields, lists every missed task with real before/after numbers, and offers three resolutions per task via `resolveMissed()`: **move to today** (re-enters the plan as an open task), **fold in** (acknowledges it, leaves the redistribution exactly as it already silently happens), **let it go** (logs it as rested — no reward, since nothing was done, and the campaign's unit labels move past it).
 - "Redistribute what's left" (`do_replan`) reports the real before/after for today's task, or says plainly that nothing needed to change, instead of the fixed "Plan redistributed. Nothing is overdue." string.
-- `strainCard()` now renders on Trail as well as Tonight, so T15 can fire from either screen as intended.
-- Test coverage: `test/missed_day_test.cjs`, 23 assertions — detection, all three resolutions, Trail's rendered status, the honest redistribute toast, and that the resolution buttons stay individually named and distinct when more than one day is missed at once.
+- `strainCard()` now renders on Timeline as well as Today, so T15 can fire from either screen as intended.
+- Test coverage: `test/missed_day_test.cjs` — detection, all three resolutions, Timeline's rendered status, the Today screen's Missed section, the honest redistribute toast, and that the resolution buttons stay individually named and distinct when more than one day is missed at once.
 
-**Left open, deliberately:** whether "let it go" should reduce the track's total (so the abandoned units stop being owed at all) or continue being silently redistributed like "fold in" does — right now the two are numerically identical and differ only in bookkeeping and labeling. That's a product decision, not a bug; revisit if it matters in practice. Also unaddressed: the Tonight header's "days left" counter (T3) still reads `daysLeft()`, the same kind of frozen-legacy-data pattern this fix removed from the Pace sheet — it hasn't drifted yet for the single-track seed world, but it's the same class of bug waiting to happen once a task's date moves independently of `w.days`.
+**Left open, deliberately:** whether "let it go" should reduce the track's total (so the abandoned units stop being owed at all) or continue being silently redistributed like "fold in" does — right now the two are numerically identical and differ only in bookkeeping and labeling. That's a product decision, not a bug; revisit if it matters in practice. Also unaddressed: the Today header's "days left" counter (T3) still reads `daysLeft()`, the same kind of frozen-legacy-data pattern this fix removed from the Pace sheet — it hasn't drifted yet for the single-track seed world, but it's the same class of bug waiting to happen once a task's date moves independently of `w.days`.
 
 **Touches:** R4, R5, K1, T15, S7, X5.
 

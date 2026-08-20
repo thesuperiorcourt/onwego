@@ -135,7 +135,7 @@ Currently the new-project flow assumes you're counting your way through a book. 
 - "Biome" means nothing to a new user. Needs a real word and a real explanation of what it does.
 
 **Fields to rethink**
-- *What are you counting* — assumes counting. Counting is one **project type** among several, not the only shape a project can take — offered with a hint that it suits books or a collection of things, alongside other types. A plain checklist with no running total is at least as common and needs to be first-class, not a workaround wedged into the counting type. This is a taxonomy decision before it's a feature: settle the full set of types and the boundary between them deliberately, because dates, the track engine (`anchor`/`ripple`) and Trail all key off whatever type a project is. Fixing the counting type is fixing *a* type, not *the* type.
+- *What are you counting* — assumes counting. Counting is one **project type** among several, not the only shape a project can take — offered with a hint that it suits books or a collection of things, alongside other types. A plain checklist with no running total is at least as common and needs to be first-class, not a workaround wedged into the counting type. This is a taxonomy decision before it's a feature: settle the full set of types and the boundary between them deliberately, because dates, the track engine (`anchor`/`ripple`) and Timeline all key off whatever type a project is. Fixing the counting type is fixing *a* type, not *the* type.
 - *Currency* — unclear what it is or does. Maybe a boolean first ("track a currency?") with an optional name second.
 - *Dates* — currently one start and one end. Real projects have no dates, or unknown dates, or phases, or repeats, or seasons. Needs a proper date model.
 - *Milestones* — nice, especially tied to unlocks. Optional.
@@ -148,8 +148,8 @@ Currently the new-project flow assumes you're counting your way through a book. 
 
 Overall structure is unclear. Full customisation is the goal, but the *default* has to be normalised and simple — a new user should understand the app before they configure it.
 
-- Decide what each tab is for in one sentence, then make the tab prove it. Trail especially (see PARTS R6).
-- Rewards and biomes deserve their own screen, not a corner of Hoard.
+- Decide what each tab is for in one sentence, then make the tab prove it. Timeline especially (see PARTS R6).
+- Rewards and biomes deserve their own screen, not a corner of Rewards.
 - Things that are tappable should look tappable (PARTS T2, T3).
 - Configuration is buried; discovery is poor.
 - Fewer concepts, better explained, beats more concepts.
@@ -185,4 +185,4 @@ The app will likely be renamed again before launch. See NAMING.md for every plac
 
 **Scrub AI and agent language from the project itself.** Not to hide that AI was used — that gets disclosed honestly — but because product copy, code comments and docs should read as a team's work, not as a transcript of tool use.
 
-**Voice in the UI:** deadpan, specific, never chirpy. "Attention is garbage tonight" is the register. Some existing copy leans literary ("the hook", "bait") and should be checked against a general audience.
+**Voice in the UI:** deadpan, specific, never chirpy. "Attention is garbage right now" is the register — time-neutral on purpose, since not everyone using this is doing it at night. Some existing copy leans literary ("the hook", "bait") and should be checked against a general audience.

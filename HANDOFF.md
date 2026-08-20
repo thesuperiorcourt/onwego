@@ -112,7 +112,7 @@ test/*.cjs                   the suites; test/a11y_contrast.py for colour
 | `THEMES` | five theme packs; every colour token per pack |
 | `LEVELS` `PAYOUT` `LOOT` `RARITY_W` `DEFAULT_SHOP` | progression and rewards |
 | world engine | `unitLabel` `baitFor` `levelFor` `rollLoot` |
-| `sceneSVG` `floraSVG` `motes` | the illustrated scene: sky, moon phase, sunrise, grove |
+| `sceneSVG` `floraSVG` `motes` | the illustrated scene: sky, moon phase, sunrise, garden |
 | tasks | `TASK_FIELDS` `SHOW_FIELDS` `newTask` `filterTasks` `renderTasks` `taskEditor` |
 | tracks | `TASK_TYPES` `newTrack` `recomputeTrack` `relabelLinked` `tierImpact` `spawnRepeat` |
 | screens | `renderTonight` `renderGrove` `renderTrail` `renderHoard` + `paint` |
@@ -124,9 +124,9 @@ test/*.cjs                   the suites; test/a11y_contrast.py for colour
 
 ## How the pieces fit
 
-**Tasks are the data layer.** Everything is a task record; only `title` is required. The shipped campaign was migrated into 69 task records on first run. Tonight, Trail and the Grove all read from tasks — edit a task and every screen follows.
+**Tasks are the data layer.** Everything is a task record; only `title` is required. The shipped campaign was migrated into 69 task records on first run. Today, Timeline and the Garden all read from tasks — edit a task and every screen follows.
 
-**Tonight is assembled from sections** the user defines: categories, tags, scope, count, sort, and which fields appear per card. The first card of the first section is the hero and carries the `h1`.
+**Today is assembled from sections** the user defines: categories, tags, scope, count, sort, and which fields appear per card. The first card of the first section is the hero and carries the `h1`. A Missed section sits ahead of Up next by default, surfacing anything unlogged and past its date — see PARTS.md T18.
 
 **Tracks decide what a result changes.** A track owns categories and a total, with one anchor pinned:
 
@@ -134,7 +134,7 @@ test/*.cjs                   the suites; test/a11y_contrast.py for colour
 - `anchor: 'pace'` → the amount holds, the finish date moves
 - `ripple: 'smooth' | 'consume' | 'fixed'` → how the difference lands
 
-The three win buttons show their own consequence (`5.06/day left`, or a projected date). When a deadline track demands more per day than the user called comfortable, Tonight surfaces an honest warning with three ways out: move the finish (which *creates* the extra sessions), trim the scope, or leave it.
+The three win buttons show their own consequence (`5.06/day left`, or a projected date). When a deadline track demands more per day than the user called comfortable, Today surfaces an honest warning with three ways out: move the finish (which *creates* the extra sessions), trim the scope, or leave it.
 
 **Auth and sync.** The browser signs in against Neon Managed Better Auth (Google, or an emailed code) and holds a session token. Every `/api/sync` call carries it as a bearer token; the function verifies it against the auth service's JWKS and uses the `sub` claim — never the body — to scope every query. Optional `ALLOW_EMAILS` env var acts as an invite list.
 
@@ -209,7 +209,7 @@ The full register lives in `PARTS.md` (with status per part) and `BRAINSTORM.md`
 - **Sign in with Apple** isn't offered by Neon (Google, GitHub, Vercel only). Only becomes a blocker for a public App Store release that also offers Google sign-in. TestFlight internal testing is unaffected.
 - **TestFlight** is scaffolded but never run: `npx cap add ios && npx cap sync ios && npx cap open ios`. Before the first archive, set a real bundle ID in `capacitor.config.json`, register it in App Store Connect, and set `apiBase` in `www/config.js` to the deployed site URL — the native shell serves pages locally and can't resolve a same-origin API. Google's OAuth redirect will need a custom URL scheme registered in the iOS project.
 - **Theme packs** were meant to match an app called Joie, which couldn't be found. The five shipped packs are stand-ins; the owner may want them re-coloured.
-- **Missed days now redistribute visibly — fixed.** `PARTS.md` defect K1. Trail acknowledges a miss and offers a real resolution (move to today, fold in, or let it go); the Pace sheet reads the live track engine instead of dead legacy fields it was disconnected from. See PARTS.md for what shipped and what's still an open product question.
+- **Missed days now redistribute visibly — fixed.** `PARTS.md` defect K1. Timeline acknowledges a miss and offers a real resolution (move to today, fold in, or let it go); so does a Missed section on Today itself; the Pace sheet reads the live track engine instead of dead legacy fields it was disconnected from. See PARTS.md for what shipped and what's still an open product question.
 - **Launch content swap.** Before the app is public, replace the Maas seed with generic starter content and a first-run flow that helps someone build their own world from scratch. The onboarding is currently the weakest part of the product for anyone who isn't the owner: a new account inherits a stranger's reading campaign, which makes no sense. Needs: a short "what are you working toward?" setup, one or two neutral example worlds, and a genuinely good empty state.
 - **Vocabulary pass.** Some user-facing copy still leans literary ("the hook", "bait", quest titles in the seed data). The mechanics are general; check the wording is too before launch.
 
@@ -221,4 +221,4 @@ The full register lives in `PARTS.md` (with status per part) and `BRAINSTORM.md`
 - `normalizeA11y()` runs after every render and every sheet mount — new markup inherits list and group semantics without remembering to add them.
 - Colour tokens are per-theme. Never hardcode a colour in a component; use `var(--glow-ink)` for accent *text* and `var(--glow)` for decorative fills. They differ deliberately — the light pack fails contrast otherwise.
 - `test/a11y_contrast.py` parses `THEMES` straight out of `index.html`, so it stays honest after edits.
-- Prose in the UI is deadpan and specific, never chirpy. "Attention is garbage tonight" is the register.
+- Prose in the UI is deadpan and specific, never chirpy. "Attention is garbage right now" is the register.

@@ -96,7 +96,7 @@ Rename it under **Site configuration → Change site name** — you'll be typing
 
 ## Step 7 — Turn on sync and backups
 
-1. In the app: **Hoard** → **Settings** → **Sync across devices**
+1. In the app: **Rewards** → **Settings** → **Sync across devices**
 2. Enter a passphrase — 8+ characters, treat it like a password. There's no account and no recovery, so put it in your password manager now.
 3. **Save and sync now**
 4. Leave **Site address** blank here. It's only needed inside the iOS app later.

@@ -32,7 +32,7 @@ Every push to `main` redeploys automatically. Rename the site under **Site confi
 
 ## 3. Turn on sync
 
-Open the site → **Hoard → Settings → Sync across devices** → enter a passphrase (8+ characters, treat it like a password) → **Save and sync now**.
+Open the site → **Rewards → Settings → Sync across devices** → enter a passphrase (8+ characters, treat it like a password) → **Save and sync now**.
 
 Enter the *same* passphrase on any other device and they stay in step.
 
@@ -66,9 +66,9 @@ After any change to the app: `git push` updates the web version, and `npx cap sy
 
 ## Making it yours
 
-**New worlds** — Tonight screen → tap the world name → *Build a new world*. Name, dates, and parts as `name, count` per line. It generates the day plan, bait bands, and milestones. Works for a series, a course, a season, a backlog.
+**New worlds** — Today screen → tap the world name → *Build a new world*. Name, dates, and parts as `name, count` per line. It generates the day plan, bait bands, and milestones. Works for a series, a course, a season, a backlog.
 
-**Theme packs** — Grove screen → the pack button, top left. Five ship: Midnight (moon phases, stars, a sun that rises as you approach the finish line), Meadow, Ember, Tidewater, Orchard.
+**Theme packs** — Garden screen → the pack button, top left. Five ship: Midnight (moon phases, stars, a sun that rises as you approach the finish line), Meadow, Ember, Tidewater, Orchard.
 
 **The code** — everything is in `www/index.html`:
 
@@ -104,7 +104,7 @@ Only **Title** is required. Every other field is optional:
 | Target | What you're aiming at — "Ch. 63–67", "3 miles", "Section 2" |
 | Minimum | The smallest amount that still counts |
 | Maximum | The full amount you planned |
-| Hook | Why you want to — the bait. Hidden behind a tap on Tonight |
+| Hook | Why you want to — the bait. Hidden behind a tap on Today |
 | How | The approach that works for this one |
 | Payoff | What you get out of finishing |
 | Notes | Anything else |
@@ -117,9 +117,9 @@ Search runs across title, hook, notes, target, category and tags. Filters stack:
 
 Renaming the four comment fields is a one-line change in `TASK_FIELDS`; the labels are used everywhere automatically.
 
-## Tonight — choose what shows
+## Today — choose what shows
 
-Tonight is assembled from **sections** you define (Tonight screen → *Choose what shows on this screen*). Each section independently picks:
+Today is assembled from **sections** you define (Today screen → *Choose what shows on this screen*). Each section independently picks:
 
 - which categories and tags to pull from (leave empty for all)
 - which tasks — today only, today and later, anything unlogged, or everything
@@ -127,7 +127,7 @@ Tonight is assembled from **sections** you define (Tonight screen → *Choose wh
 - sort field and direction
 - which fields appear on each card, including whether the minimum/maximum buttons show at all
 
-Two ship by default: **Tonight** (one card, today, with buttons and hook) and **Coming up** (the next three). Add as many as you want — a "Starred only" section, a "House chores, 5 at a time" section, a section per category.
+Three ship by default: **Today** (one card, now, with buttons and hook), **Missed** (anything unlogged and past its date, ahead of everything else), and **Up next** (the next three). Add as many as you want — a "Starred only" section, a "House chores, 5 at a time" section, a section per category.
 
 The first card of the first section is the hero, and gets the big treatment. Tasks with no minimum or maximum get a simple Done / Boss pair instead of three tiers.
 
@@ -153,7 +153,7 @@ The Maasverse campaign ships as one deadline-anchored, smooth track: 347 chapter
 
 ### The honest warning
 
-If a deadline-anchored track starts demanding more per day than you called comfortable (default: 1.6× your starting pace), Tonight says so plainly — "now needs 9.2 a day" — and offers three ways out:
+If a deadline-anchored track starts demanding more per day than you called comfortable (default: 1.6× your starting pace), Today says so plainly — "now needs 9.2 a day" — and offers three ways out:
 
 1. **Move the finish** to the date your comfortable pace actually reaches. This adds sessions, so every day genuinely gets lighter.
 2. **Trim the scope** to what fits in the days left. Still a finish.
@@ -229,7 +229,7 @@ Three layers, because one is not a backup.
 | **Cloud snapshots** | One per day, kept 30 days | Sync turned on |
 | **Downloaded file** | Whatever you keep, wherever you keep it | You tapping the button |
 
-**Hoard → Settings → Backups** shows all of it, with a restore button per snapshot. A restore always stashes the version you had first, so **Undo the last restore** is there if you grab the wrong one. Restores need two taps.
+**Rewards → Settings → Backups** shows all of it, with a restore button per snapshot. A restore always stashes the version you had first, so **Undo the last restore** is there if you grab the wrong one. Restores need two taps.
 
 **In the TestFlight build**, the app stores data in its own WebView storage, which survives app updates and device restarts but is deleted if you delete the app. So: turn sync on before you rely on it, and download a copy occasionally — on iOS that lands in Files, which iCloud backs up with everything else.
 
@@ -241,7 +241,7 @@ Built to WCAG 2.1 AA. What that means here:
 
 - **Contrast** — every text colour is checked against the surface it actually lands on, in all five theme packs. Text hits 4.5:1 or better; borders, focus rings, and progress fills hit 3:1 or better. Cards sit on a near-solid backdrop so text never floats over a bright patch of sky.
 - **Forms** — every field has a real label, the required field is marked, and errors appear in text next to the form as well as being announced.
-- **Colour is never the only signal** — loot rarity says "Legendary" as well as glowing, locked biomes say "Locked", today's node says "Tonight", the selected theme has a check mark.
+- **Colour is never the only signal** — loot rarity says "Legendary" as well as glowing, locked biomes say "Locked", today's node says "Today — not logged yet", the selected theme has a check mark.
 - **Keyboard** — everything is reachable and operable. Sheets are real modal dialogs: focus moves in, Tab stays inside, Escape closes, focus returns to the control that opened them.
 - **Screen readers** — one `h1` per screen with headings that never skip a level, a `main` landmark and skip link, named controls with emoji marked decorative, progress bars that expose their value, and XP and loot announced through a polite live region.
 - **Motion** — the drifting light respects `prefers-reduced-motion`, and there's a **Reduce motion** switch in Settings for when the system setting isn't what you want.

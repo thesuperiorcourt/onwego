@@ -12,7 +12,32 @@ function boot(fn){
    carry one naturally-missed task before this test manufactures any. Every
    count below is relative to that baseline, not assumed to start at zero. */
 boot((dom,d,G)=>{
-  console.log('MISSED DAY — acknowledgment and resolution (K1)');
+  console.log('TODAY SCREEN — a missed day shows there too, not just Trail');
+  d.querySelector('[data-view=tonight]').click();
+  let secs = [...d.querySelectorAll('.sec-head h2')].map(h => h.textContent);
+  P(secs.includes('Missed'), 'a Missed section exists on Today');
+  P(secs.indexOf('Missed') < secs.indexOf('Up next'), 'it sits ahead of Up next, not after');
+  P(d.body.textContent.includes('BACK IN THE SADDLE'), 'the actually-missed task is named, not just an empty section');
+
+  console.log('\nOLD LAYOUTS UPGRADE THEMSELVES; CUSTOMISED ONES DO NOT');
+  P(G("isUntouchedOldHome({sections:[{id:'s1'},{id:'s2',name:'Coming up',scope:'upcoming'}]})"), 'recognises the exact old shipped shape');
+  P(!G("isUntouchedOldHome({sections:[{id:'s1'},{id:'s2',name:'Coming up',scope:'upcoming'},{id:'s3',name:'Renamed by the user',scope:'open'}]})"),
+    'a layout with an extra section is left alone');
+  P(!G("isUntouchedOldHome({sections:[{id:'s1'},{id:'s2',name:'Something else',scope:'upcoming'}]})"),
+    'a renamed section is left alone');
+  G(`
+    window._w = {home:{sections:[{id:'s1',name:'Tonight'},{id:'s2',name:'Coming up',scope:'upcoming'}]}, tasks:[1], progress:{log:{}}};
+    migrateTasks(window._w);
+  `);
+  P(G("window._w.home.sections.length")===3 && G("window._w.home.sections[1].name")==='Missed',
+    'an untouched old layout is upgraded to the current default on boot');
+  G(`
+    window._w2 = {home:{sections:[{id:'s1'},{id:'s2',name:'My own name',scope:'upcoming'}]}, tasks:[1], progress:{log:{}}};
+    migrateTasks(window._w2);
+  `);
+  P(G("window._w2.home.sections.length")===2, "a customised layout keeps its own shape — migration didn't touch it");
+
+  console.log('\nMISSED DAY — acknowledgment and resolution (K1)');
   const base = G("missedTasks(W, W.tracks[0]).length");
 
   G("window._m1 = openSlots(W, W.tracks[0])[0].id; W.tasks.find(t=>t.id===window._m1).date = addDays(today(), -2);");
