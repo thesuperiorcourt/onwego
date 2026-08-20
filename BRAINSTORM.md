@@ -10,7 +10,7 @@ Sections are by **category**, not by tab, because most of these cut across scree
 
 **The pitch.** If Monday is your workweek project manager, On We Go is your Saturday morning cartoons. Video-game Asana. Fantasy Life IRL. The point is to make productivity *fun*, not to make a task list with a progress bar bolted on.
 
-**The core loop should be the same shape as an idle/incremental game**: almost no setup friction, immediate gratification, constant upgrades, visible transformation, very little dead time.
+**The core loop keeps the *qualities* an idle game gets right — almost no setup friction, immediate gratification, constant upgrades, visible transformation, very little dead time — without being shaped like one.** Idle-adjacent in mood, closer to something like *Spirit City: Lofi Sessions* than a clicker. But don't box this into one genre's rules: the ambition is *more* — pull in whatever mechanics, from wherever they come from, actually serve that feeling. Genre-breaking is the goal, not idle specifically.
 
 **What this is not.** Not a habit tracker with streak guilt. Not a decorating game where the burden is arranging furniture. Not a checklist.
 
