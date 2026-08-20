@@ -2,7 +2,7 @@ import { App } from '../state.js';
 import { PAYOUT, daysLeft, fmtDay, levelFor, nextMilestone, streak, today } from '../engine.js';
 import { motes, sceneSVG } from '../scene.js';
 import { defaultHome, filterTasks } from '../tasks.js';
-import { strainCard, tierImpact } from '../tracks.js';
+import { isMissed, strainCard, tierImpact } from '../tracks.js';
 import { esc } from '../ui.js';
 
 export function taskTiers(t, log) {
@@ -65,6 +65,16 @@ export function taskCard(t, sec, hero) {
     out += `<div class="momentum">
       <p class="row"><span id="msLabel_${t.id}">Progress to ${esc(ms.name)}</span><b>${pct}%</b></p>
       <div class="bar" role="progressbar" aria-labelledby="msLabel_${t.id}" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+    </div>`;
+  }
+  if (isMissed(App.W, t)) {
+    out += `<div style="margin-top:14px">
+      <p style="margin:0 0 8px;color:var(--muted);font-size:13.5px">This one fell into the past — move it, fold it in, or let it go.</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" data-missed="today" data-task-id="${t.id}" style="flex:1" aria-label="Move ${esc(t.title)} to today">Move to today</button>
+        <button class="btn ghost" data-missed="fold" data-task-id="${t.id}" style="flex:1" aria-label="Fold ${esc(t.title)} into the plan">Fold in</button>
+        <button class="btn ghost" data-missed="skip" data-task-id="${t.id}" style="flex:1" aria-label="Let ${esc(t.title)} go">Let it go</button>
+      </div>
     </div>`;
   }
   if (hero) {
