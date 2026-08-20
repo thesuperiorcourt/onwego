@@ -57,6 +57,7 @@ The generic-first test to apply to every change: *would this feature make sense 
 | File | What it holds |
 |---|---|
 | `PARTS.md` | Every part of the app, what it's for, what it touches, and its status. Use the part IDs when flagging or assigning work |
+| `CHANGELOG.md` | Resolved work, newest first. Things move here once they're done so this file doesn't accumulate stale checkmarks |
 | `BRAINSTORM.md` | Direction and ideas by category — gamification, project model, UI, production readiness, naming, platform. Nothing here is decided until it moves into this file |
 | `NAMING.md` | Every place the app name lives, and the checklist for renaming it safely |
 | `PRODUCTION.md` | What's missing before this can be a real product: legal, security, subscriptions, operations, the decisions that are expensive to reverse, and how to fix the five biggest gaps |
@@ -67,18 +68,18 @@ The generic-first test to apply to every change: *would this feature make sense 
 
 The owner's priority, in her words: **get the core app functional first, then go back and change the index.**
 
-1. **Make sign-in and sync provably work** (see "Do this first" below).
-2. **Fix what's broken in the engine** — start with `PARTS.md` defect K1, missed days not visibly redistributing.
-3. **QA the whole feature set against real use** — the method is at the bottom of `PARTS.md`. The question is never "does it render", it's "what's the why, and does it hold when the user misses a day."
-4. **Then** the interface and product changes in `BRAINSTORM.md`.
-5. **Before TestFlight**, the short list at the end of `PRODUCTION.md` — ~~account deletion~~, ~~error monitoring~~, arming row-level security, and ~~self-hosting the fonts and auth SDK~~. Only row-level security is still open.
+1. ~~Make sign-in and sync provably work~~ — done, see `CHANGELOG.md`.
+2. ~~Fix what's broken in the engine~~ — `PARTS.md` defect K1 (missed days not visibly redistributing) fixed, see `CHANGELOG.md`.
+3. **QA the whole feature set against real use** — the method is at the bottom of `PARTS.md`. The question is never "does it render", it's "what's the why, and does it hold when the user misses a day." Still open, ongoing.
+4. **Then** the interface and product changes in `BRAINSTORM.md` and `VISION.md`.
+5. ~~Before TestFlight, the short list at the end of `PRODUCTION.md`~~ — account deletion and error monitoring are built but waiting on env vars (Netlify: `NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID`, `SENTRY_DSN`); row-level security is armed. See "Known open items".
 
-Expect all of this to be iterative. Set the work up so step 4 is cheap to repeat — which is what the next section is about.
+Expect all of this to be iterative.
 
 ## Non-negotiables
 
 0. **Generic first.** The engine knows about worlds, tasks, units, tracks and dates — never about books, chapters or any other single domain. Domain flavour lives in data and in what the user types.
-1. **No build step.** The client is plain HTML, CSS and JS, loaded directly by the browser and bundled as-is into the iOS shell. No bundler, no framework, no JSX. If something seems to need a build, find another way (the auth SDK is loaded as a browser module from a CDN for exactly this reason). This does **not** mean one enormous file — see "Setting up www for iteration".
+1. **No build step.** The client is plain HTML, CSS and JS, loaded directly by the browser and bundled as-is into the iOS shell. No bundler, no framework, no JSX. If something seems to need a build, find another way — the auth SDK is vendored into `www/vendor/` for exactly this reason, not fetched from a CDN. This does **not** mean one enormous file — see "Layout".
 2. **Local-first.** Every action saves to device storage immediately and works offline. Sync is how other devices find out, never a prerequisite. Signed out, the whole app must still work.
 3. **WCAG 2.1 AA.** Already met and tested. Any new UI keeps it: one `h1` per screen, headings that don't skip, named controls, `aria-hidden` on decorative emoji, `role="list"` on unbulleted lists, 44px targets, colour never the only signal, dialogs with focus trap and Escape.
 4. **Nothing punishes the user.** No red, no overdue, no streak reset on a missed day. Falling behind redistributes; it never scolds.
@@ -90,37 +91,41 @@ Expect all of this to be iterative. Set the work up so step 4 is cheap to repeat
 
 ## Layout
 
+The client is ES modules under `www/app/` — no build step, browsers load `<script type="module">` with relative imports natively, and both Netlify and Capacitor's WebView serve them fine. `www/index.html` is just the page shell now; find code by module, not by searching one giant file. One caveat: ES modules don't work over `file://` — local dev needs `netlify dev` or any static server, already the recommended workflow.
+
 ```
-www/index.html               the whole app (~165 KB, one file)
+www/index.html               shell, meta, the <style> block
 www/config.js                authUrl + apiBase, edited per deployment
 www/fonts/                   self-hosted Figtree + Fraunces — see its README
 www/vendor/                  self-hosted auth SDK — see its README
+www/seed/campaign.js         MAASVERSE_CAMPAIGN — seed content only, deletable
+www/app/main.js              boot, paint, view router
+www/app/state.js             shared mutable App state (S, W, view, taskUI)
+www/app/store.js             device storage, legacy keys
+www/app/themes.js            THEMES — five theme packs, every colour token
+www/app/engine.js            units, labels, bait bands, levels, loot
+www/app/tasks.js             task model, filters, editor
+www/app/tracks.js            anchors, ripple, projections, repeats, strain
+www/app/scene.js             sceneSVG, floraSVG, motes
+www/app/screens/tonight.js   Today screen (function names kept: renderTonight)
+www/app/screens/trail.js     Timeline screen (renderTrail)
+www/app/screens/hoard.js     Rewards screen (renderHoard — carries what used
+                              to be the separate Garden screen)
+www/app/ui.js                dialogs, toast, normalizeA11y
+www/app/account.js           auth + sync (Account, Sync)
+www/app/backups.js           snapshots, restore
 netlify/functions/sync.mjs   authenticated sync + cloud snapshots + deletion
 netlify/functions/error.mjs  client-side error reports → Sentry or logs
 netlify/functions/lib/       shared helpers (report.mjs), not routes
 netlify.toml                 publish=www, functions dir, NODE_VERSION=22
 package.json                 @neondatabase/serverless, jose — both pinned exactly
-db/schema.sql                app_state, app_snapshot, RLS policies (already run)
+db/schema.sql                app_state, app_snapshot, RLS policies
+db/rls_role.sql              the restricted onwego_api role — already run
 capacitor.config.json        for the iOS build
 test/*.cjs                   the suites; test/a11y_contrast.py for colour
 ```
 
-### Inside index.html, in order
-
-| Region | Holds |
-|---|---|
-| `MAASVERSE_CAMPAIGN` | **seed content only** — the 69-day example campaign: days, bait bands, milestones. Removable; see "About the reading data" |
-| `Store` | device storage, with legacy-key fallback |
-| `THEMES` | five theme packs; every colour token per pack |
-| `LEVELS` `PAYOUT` `LOOT` `RARITY_W` `DEFAULT_SHOP` | progression and rewards |
-| world engine | `unitLabel` `baitFor` `levelFor` `rollLoot` |
-| `sceneSVG` `floraSVG` `motes` | the illustrated scene: sky, moon phase, sunrise, garden |
-| tasks | `TASK_FIELDS` `SHOW_FIELDS` `newTask` `filterTasks` `renderTasks` `taskEditor` |
-| tracks | `TASK_TYPES` `newTrack` `recomputeTrack` `relabelLinked` `tierImpact` `spawnRepeat` |
-| screens | `renderTonight` `renderTrail` `renderHoard` (carries what used to be `renderGrove`) + `paint` |
-| dialogs | `openSheet` `openDrop` `closeSheet` `normalizeA11y` `toast` `setErr` |
-| backups | `storageHealth` `writeLocalSnap` `applyState` + the Backups sheet |
-| `Account` | Neon sign-in, session, bearer token; `Sync.*` rides on it |
+Screen and internal function names (`renderTonight`, `renderTrail`, `renderHoard`) are unchanged from before the tab rename — only the user-facing labels changed (Tonight→Today, Trail→Timeline, Hoard→Rewards). Don't let that mismatch surprise you when grepping.
 
 ---
 
@@ -142,47 +147,13 @@ The three win buttons show their own consequence (`5.06/day left`, or a projecte
 
 ---
 
-## Setting up www for iteration — do this early
-
-`www/index.html` is currently ~165 KB in a single file. That was right for getting here; it is wrong for what comes next. The owner expects months of iteration on this app, and a single file makes every change riskier than it needs to be: no way to review a diff in isolation, no way to hand one area to one person, and a mistake anywhere breaks everything.
-
-**Split it into ES modules. No build step required** — browsers load `<script type="module">` with relative imports natively, Netlify serves them fine, and Capacitor's WebView serves them fine.
-
-Suggested shape, which follows the seams already in the code:
-
-```
-www/index.html          shell, meta, the <style> block (or extract to app.css)
-www/app/main.js         boot, paint, view router
-www/app/store.js        device storage, legacy keys
-www/app/themes.js       THEMES
-www/app/engine.js       units, labels, bait bands, levels, loot
-www/app/tasks.js        task model, filters, editor
-www/app/tracks.js       anchors, ripple, projections, repeats
-www/app/scene.js        sceneSVG, floraSVG, motes
-www/app/screens/*.js    tonight, trail, tasks, hoard — hoard includes what used to be grove
-www/app/ui.js           dialogs, toast, normalizeA11y
-www/app/account.js      auth + sync
-www/app/backups.js      snapshots, restore
-www/seed/campaign.js    the example campaign — one file, deletable
-```
-
-Rules for the split:
-- **Behaviour must not change.** Run the full test suite before and after; the suites load `www/index.html`, so update their entry point and expect identical results.
-- Do it as **one commit that only moves code**, no improvements mixed in. Anything else makes the diff unreviewable.
-- Keep the seed campaign in its own file so removing it before launch is a deletion, not surgery.
-- `test/a11y_contrast.py` parses `THEMES` out of `index.html` — point it at the new module.
-
-One caveat: ES modules don't work over `file://`. Local development needs `netlify dev` or any static server. That's already the recommended workflow.
-
-Do this **before** the interface work in `BRAINSTORM.md`, and **after** sign-in is confirmed working — it's a refactor, and refactoring on top of an unverified system means debugging two things at once.
-
 ## State of play
 
 **Verified by tests:** campaign maths, task CRUD/search/filter, layout sections, all track anchors and ripple modes, the strain warning, repeats, device storage and snapshots, restore and undo, accessibility across every screen and sheet, contrast in all five packs, and the sync function's account isolation, staleness handling, allowlist and rejection paths.
 
-**Verified live, 2026-08-19:** the full auth handshake, against the real deployed site, signed in as the owner. The session survived the Google redirect and persisted across visits (`Account` correctly reported "Signed in as [email]" on a fresh page load with no re-auth needed). `GET /api/sync` returned 200 repeatedly (token reaches the function and verifies; the database read succeeds). Toggling a preference and watching the debounced push confirmed `POST /api/sync` also returns 200, with a real body — `{"ok":true,"updatedAt":...,"snapshot":"..."}` — proving the write actually lands in Postgres, not just that the function returns success. No console errors. This closes out the "first thing to check" that stood here before; the specific unconfirmed details below (exact `getSession()` shape, cross-origin cookie behavior) turned out not to matter in practice — whatever `Account.refresh()` does with the session object, it produces a token that the sync function accepts.
+**Verified live:** the full auth handshake and the RLS cutover — see `CHANGELOG.md` for what was checked and how.
 
-Still not exercised: the email-code sign-in path (only Google has been tried live), and Safari specifically (this check was done in Chromium). Worth a pass before a public launch, not blocking.
+Still not exercised: the email-code sign-in path (only Google has been tried live), and Safari specifically (checked in Chromium). Worth a pass before a public launch, not blocking.
 
 ---
 
@@ -192,11 +163,9 @@ The full register lives in `PARTS.md` (with status per part) and `BRAINSTORM.md`
 
 - **Account deletion — built, three env vars from finished.** Settings → Account → Delete account erases the cloud copy always, and the login itself once `NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID` are set in Netlify. See `PRODUCTION.md`.
 - **Error monitoring — built.** Client and function errors both funnel to Sentry via `netlify/functions/lib/report.mjs`, once `SENTRY_DSN` is set; until then they land in Netlify's function logs instead of nowhere. See `PRODUCTION.md` §2.
-- **RLS is now armed — done 2026-08-19.** `DATABASE_URL` connects as `onwego_api` (created by `db/rls_role.sql`), a role that can't bypass RLS, so the `app_state_own`/`app_snapshot_own` policies in `db/schema.sql` are actually enforced now, not just present. `netlify/functions/sync.mjs` scopes every query inside a transaction that sets `app.user_id` first (a `scoped()` helper), which is what makes the policies apply instead of seeing an empty session setting. Verified live: a full write (insert + snapshot + `prune_snapshots`) succeeded after the cutover, which exercises every grant the new role has — a missing one would have 500'd the whole transaction. The owner role (`neondb_owner`) still exists in Neon if a rollback is ever needed; nothing about it changed.
 - **Sign in with Apple** isn't offered by Neon (Google, GitHub, Vercel only). Only becomes a blocker for a public App Store release that also offers Google sign-in. TestFlight internal testing is unaffected.
 - **TestFlight** is scaffolded but never run: `npx cap add ios && npx cap sync ios && npx cap open ios`. Before the first archive, set a real bundle ID in `capacitor.config.json`, register it in App Store Connect, and set `apiBase` in `www/config.js` to the deployed site URL — the native shell serves pages locally and can't resolve a same-origin API. Google's OAuth redirect will need a custom URL scheme registered in the iOS project.
 - **Theme packs** were meant to match an app called Joie, which couldn't be found. The five shipped packs are stand-ins; the owner may want them re-coloured.
-- **Missed days now redistribute visibly — fixed.** `PARTS.md` defect K1. Timeline acknowledges a miss and offers a real resolution (move to today, fold in, or let it go); so does a Missed section on Today itself; the Pace sheet reads the live track engine instead of dead legacy fields it was disconnected from. See PARTS.md for what shipped and what's still an open product question.
 - **Launch content swap.** Before the app is public, replace the Maas seed with generic starter content and a first-run flow that helps someone build their own world from scratch. The onboarding is currently the weakest part of the product for anyone who isn't the owner: a new account inherits a stranger's reading campaign, which makes no sense. Needs: a short "what are you working toward?" setup, one or two neutral example worlds, and a genuinely good empty state.
 - **Vocabulary pass.** Some user-facing copy still leans literary ("the hook", "bait", quest titles in the seed data). The mechanics are general; check the wording is too before launch.
 
@@ -204,7 +173,6 @@ The full register lives in `PARTS.md` (with status per part) and `BRAINSTORM.md`
 
 ## Working notes
 
-- The client is ES modules under `www/app/` (split from the old single-file `www/index.html` — see the module list earlier in this doc). `www/index.html` is now just the page shell; find code by module, not by searching one giant file.
 - `normalizeA11y()` runs after every render and every sheet mount — new markup inherits list and group semantics without remembering to add them.
 - Colour tokens are per-theme. Never hardcode a colour in a component; use `var(--glow-ink)` for accent *text* and `var(--glow)` for decorative fills. They differ deliberately — the light pack fails contrast otherwise.
 - `test/a11y_contrast.py` parses `THEMES` out of `www/app/themes.js`, so it stays honest after edits.
