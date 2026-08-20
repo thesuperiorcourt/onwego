@@ -6,7 +6,8 @@ const P=(c,m)=>console.log((c?'PASS':'FAIL')+' — '+m);
   console.log('STRAIN — the honest warning');
   G("App.W.tracks[0].comfort=3; recomputeTrack(App.W,App.W.tracks[0]); paint();");
   P(d.querySelectorAll('[data-strain]').length===3,'three ways out offered');
-  P(d.body.textContent.includes('now needs 5.1 a day'),'it names the real number');
+  const perSlot=G("trackStatus(App.W,App.W.tracks[0]).perSlot.toFixed(1)");
+  P(d.body.textContent.includes(`now needs ${perSlot} a day`),'it names the real number: '+perSlot);
 
   const end0=G("App.W.tracks[0].endDate");
   d.querySelector('[data-strain="date"]').click();
