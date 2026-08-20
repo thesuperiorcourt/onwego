@@ -162,7 +162,6 @@ Still not exercised: the email-code sign-in path (only Google has been tried liv
 The full register lives in `PARTS.md` (with status per part) and `BRAINSTORM.md` (with direction). The items below are the ones that block or constrain other work.
 
 - **Account deletion — built, three env vars from finished.** Settings → Account → Delete account erases the cloud copy always, and the login itself once `NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID` are set in Netlify. See `PRODUCTION.md`.
-- **Error monitoring — built.** Client and function errors both funnel to Sentry via `netlify/functions/lib/report.mjs`, once `SENTRY_DSN` is set; until then they land in Netlify's function logs instead of nowhere. See `PRODUCTION.md` §2.
 - **Sign in with Apple** isn't offered by Neon (Google, GitHub, Vercel only). Only becomes a blocker for a public App Store release that also offers Google sign-in. TestFlight internal testing is unaffected.
 - **TestFlight** is scaffolded but never run: `npx cap add ios && npx cap sync ios && npx cap open ios`. Before the first archive, set a real bundle ID in `capacitor.config.json`, register it in App Store Connect, and set `apiBase` in `www/config.js` to the deployed site URL — the native shell serves pages locally and can't resolve a same-origin API. Google's OAuth redirect will need a custom URL scheme registered in the iOS project.
 - **Theme packs** were meant to match an app called Joie, which couldn't be found. The five shipped packs are stand-ins; the owner may want them re-coloured.

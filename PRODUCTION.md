@@ -85,7 +85,7 @@ Required by every serious privacy policy, and useful for spotting hidden depende
 | Neon Managed Better Auth | Accounts, sessions | Yes — email, name | No | Yes |
 | Google OAuth | Sign-in option | Yes | No | No, optional path |
 | Apple | Distribution, in-app purchase | Yes, at their end | No | Yes, for iOS |
-| Sentry | Error monitoring (errors and stack traces only) | IP addresses, if not scrubbed at the Sentry project level | No | No — degrades to function logs if unset |
+| Sentry | Error monitoring (errors and stack traces only) | IP addresses, if not scrubbed at the Sentry project level | No | No — live, see "How to fix the five gaps" §2 |
 
 **esm.sh and Google Fonts are gone from this list — fixed.** Both used to be contacted by every user's browser on every visit. The auth SDK is vendored into `www/vendor/` (see its README there for how it was pulled and how to update the pinned version) and the two font families are self-hosted from `www/fonts/`. Neither is contacted anymore; nothing in this table needs updating for either.
 
@@ -102,7 +102,7 @@ Required by every serious privacy policy, and useful for spotting hidden depende
 | **Row-level security actually enforced** | **Yes**, as of 2026-08-19. `DATABASE_URL` connects as `onwego_api`, a restricted role created by `db/rls_role.sql`; `netlify/functions/sync.mjs` scopes every query to `app.user_id` inside a transaction, which is what lets the policies in `db/schema.sql` actually fire. Verified live against production. See HANDOFF.md's RLS item |
 | Rate limiting | None. The sync endpoint is open to anyone with a valid token, and sign-up is open to anyone at all |
 | Abuse controls on signup | None. `ALLOW_EMAILS` is the current blunt instrument |
-| Error monitoring | **Built.** Client-side JS errors and the sync function's own failures both funnel to Sentry, if `SENTRY_DSN` is set — see "How to fix the five gaps" §2 |
+| Error monitoring | **Done**, as of 2026-08-19. Client-side JS errors and the sync function's own failures both funnel to Sentry, verified live with a real test event — see "How to fix the five gaps" §2 |
 | Optional passcode or biometric lock | Not applicable yet; worth considering once the app holds proof-of-work photos |
 
 ---
@@ -165,15 +165,15 @@ Concrete enough to hand to whoever picks up the work. None of these is built yet
 
 **Test:** `test/sync_server_test.cjs` — two-account isolation (delete one, the other's rows survive), the honest "not configured" path, and a stubbed `__onwegoAuthDelete` proving the right Neon endpoint and API key get used once configured. `test/account_test.cjs` covers the client-side two-tap flow. Not yet verified against the real Neon API — deliberately, since testing delete against a live account is destructive; do that with a throwaway account once the env vars are set.
 
-### 2. Error monitoring *(built)*
+### 2. Error monitoring *(done, 2026-08-19)*
 
-**What shipped:** `netlify/functions/error.mjs` — an unauthenticated `POST /api/error` endpoint the client posts a JS error's `message`/`stack` to (deliberately unauthenticated, since a signed-out session can break too). A global `window.onerror`/`unhandledrejection` handler in `www/index.html` calls it, capped at 20 reports per page load and de-duplicated so a looping failure can't spam it. `netlify/functions/sync.mjs`'s own catch-all does the same for server-side failures. Both funnel through the shared `netlify/functions/lib/report.mjs`, which forwards a minimal Sentry envelope if `SENTRY_DSN` is set, or falls back to `console.error` (visible in Netlify's function logs) if it isn't — so there's a record either way.
+**What shipped:** `netlify/functions/error.mjs` — an unauthenticated `POST /api/error` endpoint the client posts a JS error's `message`/`stack` to (deliberately unauthenticated, since a signed-out session can break too). A global `unhandledrejection`/error handler in `www/app/main.js` calls it, capped at 20 reports per page load and de-duplicated so a looping failure can't spam it. `netlify/functions/sync.mjs`'s own catch-all does the same for server-side failures. Both funnel through the shared `netlify/functions/lib/report.mjs`, which forwards a Sentry envelope if `SENTRY_DSN` is set, or falls back to `console.error` (visible in Netlify's function logs) if it isn't — so there's a record either way.
 
-**Still needed to reach Sentry specifically:** a `SENTRY_DSN` env var in Netlify — sign up for Sentry's free tier, create a project, copy its DSN. Until then, reports land in Netlify's function logs, which is a real (if less convenient) monitoring path on its own.
+**Verified live:** `SENTRY_DSN` is set. A real test probe surfaced and fixed a genuine bug — the hand-built envelope had no `event_id`, which Sentry's ingest API requires; without one it returns 200 and silently drops the event, indistinguishable from success unless the response is actually checked. Fixed by generating a real `event_id` and checking the response for a non-2xx status. Confirmed end to end: the test event showed up in Sentry's Issues view with full context.
 
 **Deploy failures:** Netlify already emails on failed deploys — confirm that's turned on in the site's notification settings; not something a function can wire up.
 
-**Care taken:** the payload is capped (message 500 chars, stack 2000) and is never anything but the error's own message/stack/location — no task titles, no journal-style fields, no email addresses, no app state. `test/error_report_test.cjs` asserts the Sentry payload has exactly four fields and nothing else.
+**Care taken:** the payload is capped (message 500 chars, stack 2000) and is never anything but the error's own message/stack/location/id/timestamp — no task titles, no journal-style fields, no email addresses, no app state. `test/error_report_test.cjs` asserts the Sentry payload has exactly six fields and nothing else.
 
 ### 3. Self-host the fonts and the auth SDK *(built)*
 
