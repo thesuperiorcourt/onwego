@@ -1,9 +1,9 @@
-const {JSDOM}=require('jsdom');const fs=require('fs');
-const dom=new JSDOM(fs.readFileSync(require('path').join(__dirname,'..','www','index.html'),'utf8'),{runScripts:'dangerously',pretendToBeVisual:true,url:'https://x.test/'});
-const {window}=dom; const d=window.document;
-window.addEventListener('error',e=>console.log('PAGE ERROR:',e.message));
+const { bootApp } = require('./_lib/boot.cjs');
 const P=(c,m)=>console.log((c?'PASS':'FAIL')+' — '+m);
-setTimeout(()=>{
+
+(async () => {
+  const { dom, document: d } = await bootApp();
+  const window = dom.window;
   // structure
   P(d.querySelectorAll('h1').length===1,'exactly one h1 ('+d.querySelectorAll('h1').length+')');
   P(!!d.querySelector('main#main'),'main landmark');
@@ -18,7 +18,7 @@ setTimeout(()=>{
   P(ok,'heading levels never skip: '+hs.join(','));
   // names on controls
   const unnamed=[...d.querySelectorAll('button')].filter(b=>{
-    const t=(b.getAttribute('aria-label')||b.textContent||'').replace(/[\s\u200b]/g,'');
+    const t=(b.getAttribute('aria-label')||b.textContent||'').replace(/[\s​]/g,'');
     return t.length<2;});
   P(unnamed.length===0,'every button has a name (unnamed: '+unnamed.length+')');
   // emoji hidden from AT
@@ -68,5 +68,6 @@ setTimeout(()=>{
     const today=d.querySelector('.node.today');
     P(today && /Today|Full clear|Minimum|Boss/.test(today.textContent),'today node states its status in words, not just a coloured dot');
     console.log('\n--- done ---');
+    process.exit(0);
   },80);
-},700);
+})();

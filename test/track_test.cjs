@@ -1,10 +1,11 @@
-const {JSDOM}=require('jsdom');const fs=require('fs');
-const dom=new JSDOM(fs.readFileSync(require('path').join(__dirname,'..','www','index.html'),'utf8'),{runScripts:'dangerously',pretendToBeVisual:true,url:'https://x.test/'});
-const {window}=dom,d=window.document;
-window.addEventListener('error',e=>console.log('PAGE ERROR:',e.message));
+const { bootApp } = require('./_lib/boot.cjs');
 const P=(c,m)=>console.log((c?'PASS':'FAIL')+' — '+m);
-setTimeout(()=>{
-  const G=s=>window.eval(s);const W=G('W');
+
+(async () => {
+  const { dom, document: d, G } = await bootApp();
+  const window = dom.window;
+
+  const W=G('App.W');
   P(!!W.tracks && W.tracks.length===1,'campaign migrated to one track');
   const tr=W.tracks[0];
   P(tr.anchor==='deadline'&&tr.ripple==='smooth','deadline-anchored, smooth ripple');
@@ -20,16 +21,16 @@ setTimeout(()=>{
   const before=W.tasks.filter(t=>t.date>G('today()')).slice(0,3).map(t=>t.max);
   d.querySelector('.tier.boss').click();
   setTimeout(()=>{
-    const after=G('W').tasks.filter(t=>t.date>G('today()')).slice(0,3).map(t=>t.max);
-    const rem=G("trackStatus(W,W.tracks[0]).remaining");
-    const sum=G("(W.tasks||[]).filter(t=>t.date>=today()&&!W.progress.log[t.id]).reduce((s,t)=>s+(t.max||0),0)");
+    const after=G('App.W').tasks.filter(t=>t.date>G('today()')).slice(0,3).map(t=>t.max);
+    const rem=G("trackStatus(App.W,App.W.tracks[0]).remaining");
+    const sum=G("(App.W.tasks||[]).filter(t=>t.date>=today()&&!App.W.progress.log[t.id]).reduce((s,t)=>s+(t.max||0),0)");
     P(sum===rem,`what's left is fully rescheduled (${sum} scheduled = ${rem} remaining)`);
     P(after[0]<=before[0],'future got lighter after boss mode');
-    const st=G('trackStatus')(G('W'),G('W').tracks[0]);
+    const st=G('trackStatus')(G('App.W'),G('App.W').tracks[0]);
     P(st.done===8,'track done = '+st.done);
     P(st.remaining===339,'remaining = '+st.remaining);
     // ranges relabelled
-    const nxt=G('W').tasks.filter(t=>t.date>G('today()'))[0];
+    const nxt=G('App.W').tasks.filter(t=>t.date>G('today()'))[0];
     P(/Ch\. \d+/.test(nxt.range),'next task relabelled: '+nxt.range);
     // switch to pace anchor -> date moves instead
     d.querySelector('.drop [data-close]') && d.querySelector('.drop [data-close]').click();
@@ -41,8 +42,8 @@ setTimeout(()=>{
     d.querySelector('#kf_pace').value='10';
     d.querySelector('#kf_save').click();
     setTimeout(()=>{
-      const tr2=G('W').tracks[0];
-      const st2=G('trackStatus')(G('W'),tr2);
+      const tr2=G('App.W').tracks[0];
+      const st2=G('trackStatus')(G('App.W'),tr2);
       P(tr2.anchor==='pace','anchor switched to pace');
       P(st2.projectedEnd>'2026-08-19','projected finish now computed: '+st2.projectedEnd);
       const imp2=[...d.querySelectorAll('.tier .impact')].map(e=>e.textContent);
@@ -51,4 +52,4 @@ setTimeout(()=>{
       process.exit(0);
     },300);
   },300);
-},900);
+})();

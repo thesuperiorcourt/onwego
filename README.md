@@ -79,19 +79,19 @@ After any change to the app: `git push` updates the web version, and `npx cap sy
 
 **Theme packs** — Today or Rewards screen → the pack button, top left of the illustrated scene. Five ship: Midnight (moon phases, stars, a sun that rises as you approach the finish line), Meadow, Ember, Tidewater, Orchard.
 
-**The code** — everything is in `www/index.html`:
+**The code** — `www/index.html` is just the page shell; the app itself is ES modules under `www/app/`:
 
 | What | Where |
 |---|---|
-| Theme packs | `const THEMES` |
-| Loot table and drop rates | `const LOOT`, `RARITY_W` |
-| XP per result, loot chances | `const PAYOUT` |
-| Level names | `const LEVELS` |
-| Default reward shop | `const DEFAULT_SHOP` |
-| Maasverse campaign | `const MAASVERSE_CAMPAIGN` |
-| Trees, sprouts, flowers | `floraSVG()` |
-| Sky, moon phase, sunrise | `sceneSVG()` |
-| Sign-in and sync | `const Account`, `const Sync` |
+| Theme packs | `export const THEMES` in `www/app/themes.js` |
+| Loot table and drop rates | `LOOT`, `RARITY_W` in `www/app/engine.js` |
+| XP per result, loot chances | `PAYOUT` in `www/app/engine.js` |
+| Level names | `LEVELS` in `www/app/engine.js` |
+| Default reward shop | `DEFAULT_SHOP` in `www/app/engine.js` |
+| Maasverse campaign | `export const MAASVERSE_CAMPAIGN` in `www/seed/campaign.js` — one file, deletable |
+| Trees, sprouts, flowers | `floraSVG()` in `www/app/scene.js` |
+| Sky, moon phase, sunrise | `sceneSVG()` in `www/app/scene.js` |
+| Sign-in and sync | `Account`, `Sync` in `www/app/account.js` |
 
 ## Rules the app follows
 
@@ -193,7 +193,7 @@ One string has to keep agreeing with itself over time:
 
 | What | Where | Must match |
 |---|---|---|
-| Device storage key | `www/index.html` (`Store.key = 'onwego.v1'`) | itself, release to release |
+| Device storage key | `www/app/store.js` (`Store.key = 'onwego.v1'`) | itself, release to release |
 
 Renaming the GitHub repo or the Netlify site changes nothing here — accounts and sync live in Neon, keyed by the signed-in user, not by any string in this repo. Change `Store.key` without a fallback and the app looks freshly wiped on every device, even though the data is still there.
 

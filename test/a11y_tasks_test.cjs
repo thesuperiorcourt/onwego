@@ -1,9 +1,6 @@
-const {JSDOM}=require('jsdom');const fs=require('fs');
-const dom=new JSDOM(fs.readFileSync(require('path').join(__dirname,'..','www','index.html'),'utf8'),{runScripts:'dangerously',pretendToBeVisual:true,url:'https://x.test/'});
-const {window}=dom,d=window.document;
-window.addEventListener('error',e=>console.log('PAGE ERROR:',e.message));
+const { bootApp } = require('./_lib/boot.cjs');
 const P=(c,m)=>console.log((c?'PASS':'FAIL')+' — '+m);
-const audit=(where)=>{
+const audit=(d,where)=>{
   const hs=[...d.querySelectorAll('h1,h2,h3,h4')].map(h=>+h.tagName[1]);
   let ok=true,prev=hs[0];hs.forEach(l=>{if(l>prev+1)ok=false;prev=l});
   P(d.querySelectorAll('h1').length===1,where+': one h1');
@@ -18,16 +15,18 @@ const audit=(where)=>{
   const toggles=[...d.querySelectorAll('[data-filtercat],[data-filtertag],[data-secfield],[data-seccat]')];
   P(toggles.every(t=>t.hasAttribute('aria-pressed')),where+': toggle chips expose pressed state');
 };
-setTimeout(()=>{
-  d.querySelector('[data-view=tasks]').click(); audit('Tasks');
+
+(async () => {
+  const { document: d } = await bootApp();
+  d.querySelector('[data-view=tasks]').click(); audit(d,'Tasks');
   d.querySelector('[data-filtercat]').click();
   P(d.querySelector('#live').textContent.match(/tasks? shown|No tasks/),'filtering announces the count, not the whole list: "'+d.querySelector('#live').textContent+'"');
   d.querySelector('[data-filtercat]').click();
-  d.querySelector('#taskList [data-task]').click(); audit('Task editor');
+  d.querySelector('#taskList [data-task]').click(); audit(d,'Task editor');
   P(d.querySelector('#tf_title').getAttribute('aria-required')==='true','title marked required');
   d.querySelector('[data-close]').click();
   d.querySelector('[data-view=tonight]').click();
   d.querySelector('[data-sheet=home]').click();
-  d.querySelector('[data-section]').click(); audit('Section editor');
+  d.querySelector('[data-section]').click(); audit(d,'Section editor');
   process.exit(0);
-},900);
+})();

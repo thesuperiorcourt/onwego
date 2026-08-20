@@ -1,0 +1,6 @@
+{
+  "name": "onwego-client",
+  "private": true,
+  "type": "module",
+  "description": "Marks www/app and www/seed as ES modules for Node (tests) and for clarity. Has no effect on the browser, which only reads the <script type=\"module\"> attribute in index.html — nothing here is fetched or shipped as a dependency tree."
+}

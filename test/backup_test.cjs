@@ -1,9 +1,10 @@
-const {JSDOM}=require('jsdom');const fs=require('fs');
-const dom=new JSDOM(fs.readFileSync(require('path').join(__dirname,'..','www','index.html'),'utf8'),{runScripts:'dangerously',pretendToBeVisual:true,url:'https://x.test/'});
-const {window}=dom,d=window.document;const G=s=>window.eval(s);
-window.addEventListener('error',e=>console.log('PAGE ERROR:',e.message));
+const { bootApp } = require('./_lib/boot.cjs');
 const P=(c,m)=>console.log((c?'PASS':'FAIL')+' — '+m);
-setTimeout(()=>{
+
+(async () => {
+  const { dom, document: d, G } = await bootApp();
+  const window = dom.window;
+
   P(G("storageHealth().ok")===true,'storage health check passes in a normal browser');
   P(!!window.localStorage.getItem('onwego.v1'),'state written to device storage');
   // a change should persist
@@ -23,20 +24,20 @@ setTimeout(()=>{
     P(!!d.querySelector('[data-localsnap]'),'device snapshot offered for restore');
     P(txt.includes('Sign in for cloud backups'),'cloud layer points at signing in');
     // restore round trip
-    const xpNow=G("W.progress.xp");
-    G("W.progress.xp=999; save();");
+    const xpNow=G("App.W.progress.xp");
+    G("App.W.progress.xp=999; save();");
     const snapBtn=d.querySelector('[data-localsnap]');
     snapBtn.click();                       // arms
     P(snapBtn.textContent.includes('Tap again'),'restore needs a second tap');
     snapBtn.click();                       // confirms
     setTimeout(()=>{
-      P(G("W.progress.xp")!==999,'restore replaced the live state (xp now '+G("W.progress.xp")+')');
+      P(G("App.W.progress.xp")!==999,'restore replaced the live state (xp now '+G("App.W.progress.xp")+')');
       P(!!window.localStorage.getItem('onwego.undo'),'previous version stashed for undo');
       G("openSheet(SHEETS.backups())");
       P(!!d.querySelector('#bk_undo'),'undo button appears after a restore');
       d.querySelector('#bk_undo').click();
       setTimeout(()=>{
-        P(G("W.progress.xp")===999,'undo brought back the pre-restore state');
+        P(G("App.W.progress.xp")===999,'undo brought back the pre-restore state');
         // a11y of the new sheet
         G("openSheet(SHEETS.backups())");
         const dlg=d.querySelector('.sheet');
@@ -47,4 +48,4 @@ setTimeout(()=>{
       },200);
     },200);
   },250);
-},900);
+})();

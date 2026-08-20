@@ -1,19 +1,17 @@
 /* Client-side: the app must run perfectly signed out, must not sync without a
    token, and must show the right account state. The Neon SDK is stubbed. */
-const { JSDOM } = require('jsdom'); const fs = require('fs'); const path = require('path');
-const html = fs.readFileSync(path.join(__dirname, '..', 'www', 'index.html'), 'utf8')
-  .replace('<script src="./config.js"></script>', '<script>window.ONWEGO_CONFIG={authUrl:"",apiBase:""}</script>');
-const dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, url: 'https://onwego.test/' });
-const { window } = dom, d = window.document; const G = s => window.eval(s);
-window.addEventListener('error', e => console.log('PAGE ERROR:', e.message));
+const { bootApp } = require('./_lib/boot.cjs');
 const P = (c, m) => console.log((c ? 'PASS' : 'FAIL') + ' — ' + m);
 
-setTimeout(() => {
+(async () => {
+  const { dom, document: d, G } = await bootApp({ configOverride: { authUrl:"", apiBase:"" }, url: 'https://onwego.test/' });
+  const window = dom.window;
+
   P(!!d.querySelector('.quest h1'), 'app boots fully with no account: ' + d.querySelector('.quest h1').textContent);
   d.querySelector('.tier.boss').click();
   setTimeout(() => {
     d.querySelector('.drop [data-close]') && d.querySelector('.drop [data-close]').click();
-    P(G('W.progress.xp') === 30, 'logging works signed out');
+    P(G('App.W.progress.xp') === 30, 'logging works signed out');
     P(!!window.localStorage.getItem('onwego.v1'), 'still saved to the device');
     P(G('Sync.ready()') === false, 'sync stays off without a session');
     P(G('Account.status') === 'unconfigured' || G('Account.status') === 'signedOut', 'account status: ' + G('Account.status'));
@@ -50,24 +48,28 @@ setTimeout(() => {
     P(!!d.querySelector('#ac_export'), 'offers a copy before you go');
     P(d.querySelector('.sheet').textContent.includes('offline'), 'is honest that an offline device is untouched');
 
-    let deleteCalled = 0;
+    /* The SDK's own signOut() (called right after a successful delete) makes
+       its own request too — track every call and check the delete-shaped
+       one specifically, rather than assuming delete is the only fetch. */
+    let calls = [];
     window.fetch = async (url, opts) => {
-      deleteCalled++;
-      P(url === 'https://onwego.test/api/sync' && opts.method === 'DELETE', 'DELETE goes to the sync endpoint');
-      P(opts.headers.authorization === 'Bearer tok', 'carries the bearer token, same as any other request');
+      calls.push({ url, opts });
       return { ok: true, json: async () => ({ ok: true, account: true }) };
     };
 
     d.querySelector('#ac_delete').click();
-    P(deleteCalled === 0, 'first tap only arms it — nothing sent yet');
+    P(calls.length === 0, 'first tap only arms it — nothing sent yet');
     P(d.querySelector('#ac_delete').textContent.includes('Tap again'), 'button says a second tap is needed');
 
     d.querySelector('#ac_delete').click();
     setTimeout(() => {
-      P(deleteCalled === 1, 'second tap actually calls delete');
+      const del = calls.find(c => c.opts && c.opts.method === 'DELETE');
+      P(!!del, 'second tap actually calls delete');
+      P(!!del && del.url === 'https://onwego.test/api/sync', 'DELETE goes to the sync endpoint');
+      P(!!del && del.opts.headers.authorization === 'Bearer tok', 'carries the bearer token, same as any other request');
       P(G('Account.status') === 'signedOut', 'signs out locally once the account is gone');
       P(!d.querySelector('.sheet'), 'sheet closes on success');
       process.exit(0);
     }, 250);
   }, 300);
-}, 900);
+})();

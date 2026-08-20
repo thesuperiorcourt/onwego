@@ -1,9 +1,10 @@
-const {JSDOM}=require('jsdom');const fs=require('fs');
-const dom=new JSDOM(fs.readFileSync(require('path').join(__dirname,'..','www','index.html'),'utf8'),{runScripts:'dangerously',pretendToBeVisual:true,url:'https://x.test/'});
-const {window}=dom, d=window.document;
-window.addEventListener('error',e=>console.log('PAGE ERROR:',e.message));
+const { bootApp } = require('./_lib/boot.cjs');
 const P=(c,m)=>console.log((c?'PASS':'FAIL')+' — '+m);
-setTimeout(()=>{
+
+(async () => {
+  const { dom, document: d } = await bootApp();
+  const window = dom.window;
+
   P(d.querySelectorAll('.dock button').length===4,'four tabs — Garden merged into Rewards');
   P(!!d.querySelector('[data-view=tasks]'),'Tasks tab exists');
   P(d.querySelector('.quest h1')!==null,'hero card renders: '+d.querySelector('.quest h1').textContent);
@@ -88,4 +89,4 @@ setTimeout(()=>{
       },700);
     },700);
   },250);
-},900);
+})();

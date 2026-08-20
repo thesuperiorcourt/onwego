@@ -2,7 +2,7 @@
 Run from the repo root:  python3 test/a11y_contrast.py"""
 import re, sys, json, pathlib
 
-HTML = pathlib.Path(__file__).resolve().parent.parent / 'www' / 'index.html'
+THEMES_JS = pathlib.Path(__file__).resolve().parent.parent / 'www' / 'app' / 'themes.js'
 
 def hexrgb(h):
     h = h.lstrip('#')
@@ -22,7 +22,7 @@ def over(fg, alpha, bg):
     f, b = hexrgb(fg), hexrgb(bg)
     return '#%02X%02X%02X' % tuple(round(alpha*f[i] + (1-alpha)*b[i]) for i in range(3))
 
-src = HTML.read_text()
+src = THEMES_JS.read_text()
 themes = {}
 for name, block in re.findall(r"(\w+): \{\s*\n\s*name: '[^']+', blurb: '[^']*',\s*\n\s*vars: \{(.*?)\}", src, re.S):
     themes[name] = dict(re.findall(r"'(--[\w-]+)':'([^']+)'", block))
