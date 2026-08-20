@@ -33,7 +33,7 @@ function audit(where){
 }
 
 setTimeout(()=>{
-  const views=['tonight','grove','trail','tasks','hoard'];
+  const views=['tonight','trail','tasks','hoard'];
   views.forEach(v=>{
     d.querySelector('[data-view='+v+']').click();
     audit(v);

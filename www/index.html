@@ -1611,40 +1611,6 @@ function renderTonight() {
     </div>`;
 }
 
-function renderGrove() {
-  const flora = W.progress.flora || [];
-  const biomes = [{ id:'home', name:'The Starting Wood', unlocked:true, by:'' }].concat(
-    (W.milestones || []).filter(m => m.reward === 'biome').map(m => ({
-      id: m.biome, name: biomeName(m.biome), unlocked: (W.progress.biomes||[]).includes(m.biome), by: m.name
-    })));
-  const open = biomes.filter(b => b.unlocked).length;
-  return `
-    <div class="scene" style="height:38vh">${sceneSVG({max:24})}${motes()}<div class="veil"></div>
-      <div class="scene-cap"><button class="worldbtn" data-sheet="themes" aria-haspopup="dialog">
-        <span aria-hidden="true">🎨</span><span class="sr-only">Change theme pack. Current pack:</span><b>${THEMES[W.theme].name}</b><span aria-hidden="true">▾</span></button></div>
-    </div>
-    <div class="wrap">
-      <div class="card quest">
-        <p class="eyebrow">The garden</p>
-        <h1 id="screenTitle" style="font-size:30px">${flora.length} ${flora.length === 1 ? 'thing' : 'things'} growing</h1>
-        <p style="margin:0;color:var(--muted);font-size:14.5px">Every logged night plants something. Nothing here wilts, dies, or gets taken away — including on the nights you skip.</p>
-        <p class="meta">
-          <span class="chip"><span aria-hidden="true">🌱</span> <b>${flora.filter(f=>f.kind==='sprout').length}</b> sprouts</span>
-          <span class="chip"><span aria-hidden="true">🌳</span> <b>${flora.filter(f=>f.kind==='tree'||f.kind==='bloom').length}</b> trees</span>
-          <span class="chip"><span aria-hidden="true">✨</span> <b>${flora.filter(f=>f.kind==='legendary').length}</b> legendary</span>
-        </p>
-      </div>
-      <section class="sec" aria-labelledby="biomeH">
-        <div class="sec-head"><h2 id="biomeH">Biomes</h2><span class="eyebrow">${open} of ${biomes.length} open</span></div>
-        <ul class="shelf">
-          ${biomes.map(b => `<li class="row-item ${b.unlocked ? '' : 'locked'}">
-            <span class="g" aria-hidden="true">${b.unlocked ? '🏞️' : '🌫️'}</span>
-            <span class="t"><b>${esc(b.name)}</b><small>${b.unlocked ? 'Open' : 'Locked — unlocks at ' + esc(b.by || 'a milestone')}</small></span>
-          </li>`).join('')}
-        </ul>
-      </section>
-    </div>`;
-}
 function biomeName(id) {
   return ({ gatefield:'The Gate Field', lunathion:'Neon Quarter', eternal:'The Eternal Terrace',
             beneath:'Beneath', grove:'The Deep Grove' })[id] || 'New ground';
@@ -1707,7 +1673,18 @@ function renderHoard() {
   loot.forEach(l => { counts[l.n] = counts[l.n] || { ...l, c:0 }; counts[l.n].c++; });
   const items = Object.values(counts);
   const achieved = W.progress.achieved || [];
-  return `<div class="wrap" style="padding-top:calc(20px + var(--safe-t))">
+  const flora = W.progress.flora || [];
+  const biomes = [{ id:'home', name:'The Starting Wood', unlocked:true, by:'' }].concat(
+    (W.milestones || []).filter(m => m.reward === 'biome').map(m => ({
+      id: m.biome, name: biomeName(m.biome), unlocked: (W.progress.biomes||[]).includes(m.biome), by: m.name
+    })));
+  const open = biomes.filter(b => b.unlocked).length;
+  return `
+    <div class="scene" style="height:38vh">${sceneSVG({max:24})}${motes()}<div class="veil"></div>
+      <div class="scene-cap"><button class="worldbtn" data-sheet="themes" aria-haspopup="dialog">
+        <span aria-hidden="true">🎨</span><span class="sr-only">Change theme pack. Current pack:</span><b>${THEMES[W.theme].name}</b><span aria-hidden="true">▾</span></button></div>
+    </div>
+    <div class="wrap" style="padding-top:14px">
     <div class="sec-head" style="margin-bottom:14px">
       <h1 class="page-title" id="screenTitle">The rewards</h1>
       <button class="link" data-sheet="settings" aria-haspopup="dialog">Settings</button>
@@ -1723,6 +1700,24 @@ function renderHoard() {
         <p class="stat"><b>${W.progress.coins}</b><small>${esc(W.currency)}</small></p>
         <p class="stat"><b>${W.progress.unitsDone}</b><small>${esc(W.unitPlural)} read</small></p>
       </div>
+    </section>
+    <section class="sec" aria-labelledby="growH">
+      <div class="sec-head"><h2 id="growH">Garden</h2><span class="eyebrow">${flora.length} ${flora.length === 1 ? 'thing' : 'things'} growing</span></div>
+      <p style="margin:0 0 10px;color:var(--muted);font-size:14.5px">Every logged day plants something. Nothing here wilts, dies, or gets taken away — including on the days you skip.</p>
+      <p class="meta">
+        <span class="chip"><span aria-hidden="true">🌱</span> <b>${flora.filter(f=>f.kind==='sprout').length}</b> sprouts</span>
+        <span class="chip"><span aria-hidden="true">🌳</span> <b>${flora.filter(f=>f.kind==='tree'||f.kind==='bloom').length}</b> trees</span>
+        <span class="chip"><span aria-hidden="true">✨</span> <b>${flora.filter(f=>f.kind==='legendary').length}</b> legendary</span>
+      </p>
+    </section>
+    <section class="sec" aria-labelledby="biomeH">
+      <div class="sec-head"><h2 id="biomeH">Biomes</h2><span class="eyebrow">${open} of ${biomes.length} open</span></div>
+      <ul class="shelf">
+        ${biomes.map(b => `<li class="row-item ${b.unlocked ? '' : 'locked'}">
+          <span class="g" aria-hidden="true">${b.unlocked ? '🏞️' : '🌫️'}</span>
+          <span class="t"><b>${esc(b.name)}</b><small>${b.unlocked ? 'Open' : 'Locked — unlocks at ' + esc(b.by || 'a milestone')}</small></span>
+        </li>`).join('')}
+      </ul>
     </section>
     <section class="sec" aria-labelledby="lootH">
       <div class="sec-head"><h2 id="lootH">Loot</h2><span class="eyebrow">${loot.length} items</span></div>
@@ -1770,7 +1765,6 @@ function renderHoard() {
 /* --------------------------------- shell ---------------------------------- */
 const DOCK = [
   { id:'tonight', g:'🌙', label:'Today' },
-  { id:'grove',   g:'🌿', label:'Garden' },
   { id:'trail',   g:'🗺️', label:'Timeline' },
   { id:'tasks',   g:'▤',  label:'Tasks' },
   { id:'hoard',   g:'✨', label:'Rewards' }
@@ -1796,7 +1790,7 @@ function paint() {
   document.documentElement.classList.toggle('calm', !!(S.prefs && S.prefs.calm));
   document.querySelector('meta[name=theme-color]').setAttribute('content', th.vars['--sky-1']);
 
-  const html = { tonight:renderTonight, grove:renderGrove, trail:renderTrail, tasks:renderTasks, hoard:renderHoard }[view]();
+  const html = { tonight:renderTonight, trail:renderTrail, tasks:renderTasks, hoard:renderHoard }[view]();
   const label = (DOCK.find(d => d.id === view) || {}).label || 'On We Go';
   document.title = label + ' · On We Go';
   $('main').innerHTML = `<section class="screen" aria-labelledby="screenTitle">${html}</section>`;
@@ -2008,7 +2002,7 @@ function checkMilestones() {
     <p>${esc(last.blurb)}</p>
     <p style="color:var(--glow-ink);font-size:13.5px;margin:-6px 0 18px">
       ${last.reward === 'biome' ? biomeName(last.biome) + ' unlocked' : 'A legendary tree takes root'} · +25 ${esc(W.currency)} · ${esc(item.n)} added to your rewards</p>
-    <button class="btn" data-close="1">See the garden</button>`), 260);
+    <button class="btn" data-close="1">See the rewards</button>`), 260);
   return last;
 }
 

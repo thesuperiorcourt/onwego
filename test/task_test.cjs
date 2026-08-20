@@ -4,7 +4,7 @@ const {window}=dom, d=window.document;
 window.addEventListener('error',e=>console.log('PAGE ERROR:',e.message));
 const P=(c,m)=>console.log((c?'PASS':'FAIL')+' — '+m);
 setTimeout(()=>{
-  P(d.querySelectorAll('.dock button').length===5,'five tabs');
+  P(d.querySelectorAll('.dock button').length===4,'four tabs — Garden merged into Rewards');
   P(!!d.querySelector('[data-view=tasks]'),'Tasks tab exists');
   P(d.querySelector('.quest h1')!==null,'hero card renders: '+d.querySelector('.quest h1').textContent);
   P(!!d.querySelector('#screenTitle'),'hero is the h1');

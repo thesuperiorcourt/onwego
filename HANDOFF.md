@@ -115,7 +115,7 @@ test/*.cjs                   the suites; test/a11y_contrast.py for colour
 | `sceneSVG` `floraSVG` `motes` | the illustrated scene: sky, moon phase, sunrise, garden |
 | tasks | `TASK_FIELDS` `SHOW_FIELDS` `newTask` `filterTasks` `renderTasks` `taskEditor` |
 | tracks | `TASK_TYPES` `newTrack` `recomputeTrack` `relabelLinked` `tierImpact` `spawnRepeat` |
-| screens | `renderTonight` `renderGrove` `renderTrail` `renderHoard` + `paint` |
+| screens | `renderTonight` `renderTrail` `renderHoard` (carries what used to be `renderGrove`) + `paint` |
 | dialogs | `openSheet` `openDrop` `closeSheet` `normalizeA11y` `toast` `setErr` |
 | backups | `storageHealth` `writeLocalSnap` `applyState` + the Backups sheet |
 | `Account` | Neon sign-in, session, bearer token; `Sync.*` rides on it |
@@ -124,7 +124,7 @@ test/*.cjs                   the suites; test/a11y_contrast.py for colour
 
 ## How the pieces fit
 
-**Tasks are the data layer.** Everything is a task record; only `title` is required. The shipped campaign was migrated into 69 task records on first run. Today, Timeline and the Garden all read from tasks — edit a task and every screen follows.
+**Tasks are the data layer.** Everything is a task record; only `title` is required. The shipped campaign was migrated into 69 task records on first run. Today, Timeline and Rewards (which also carries what used to be the separate Garden screen) all read from tasks — edit a task and every screen follows.
 
 **Today is assembled from sections** the user defines: categories, tags, scope, count, sort, and which fields appear per card. The first card of the first section is the hero and carries the `h1`. A Missed section sits ahead of Up next by default, surfacing anything unlogged and past its date — see PARTS.md T18.
 
@@ -157,7 +157,7 @@ www/app/engine.js       units, labels, bait bands, levels, loot
 www/app/tasks.js        task model, filters, editor
 www/app/tracks.js       anchors, ripple, projections, repeats
 www/app/scene.js        sceneSVG, floraSVG, motes
-www/app/screens/*.js    tonight, grove, trail, tasks, hoard
+www/app/screens/*.js    tonight, trail, tasks, hoard — hoard includes what used to be grove
 www/app/ui.js           dialogs, toast, normalizeA11y
 www/app/account.js      auth + sync
 www/app/backups.js      snapshots, restore

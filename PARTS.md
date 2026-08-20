@@ -37,17 +37,9 @@ The default screen. Should answer one question: *what am I doing right now, and 
 
 ---
 
-## G — Garden
+## G — retired, merged into Rewards
 
-The reward surface. Should answer: *what have I built?*
-
-| ID | Part | What it does | Why it exists | Touches | Status |
-|---|---|---|---|---|---|
-| G1 | Scene | Same `sceneSVG`/`motes` renderer as Today, taller, no cards over it | Visible accumulation | Themes, flora records | ok |
-| G2 | Theme picker | Opens the Themes sheet; swaps the CSS variable set live, no reload | Personalisation; future reward/paywall hook | All screens | ok |
-| G3 | Growth counts | Counts `W.progress.flora` entries by kind (sprout / tree / legendary) — one is planted per logged night, win or rest | Legible summary of effort | Flora records | ok |
-| G4 | Biome list | Built from milestones whose `reward === 'biome'`; unlocked biomes come from `W.progress.biomes`, named by a hardcoded `biomeName()` lookup | Long-arc unlocks | Milestones | unclear — the word means nothing to a new user, and it isn't editable. Own screen wanted |
-| G5 | Rewards surface | — | — | missing — rewards live in Rewards, not here, and can't be meaningfully edited |
+Garden was its own tab (`renderGrove()`, dock entry `grove`). It no longer is — the scene, growth counts and biome list now render at the top of the Rewards screen instead, and `renderGrove()` no longer exists as a separate function. G1–G4 moved to H8–H11 below with the same content; G5 ("Rewards surface... missing, can't be meaningfully edited") is retired outright, since living on the same screen as the reward shop is the fix for exactly that gap. The G-ids are kept here, unused, so old notes and commit messages that say "G3" still resolve to something.
 
 ---
 
@@ -87,7 +79,7 @@ The data layer, exposed. Should answer: *what's in this project and let me chang
 
 ## H — Rewards
 
-The wallet and trophy case. Should answer: *what have I earned, and what can I spend it on?*
+The wallet, trophy case and garden in one screen — Garden merged in here (see the retired G section below). Should answer: *what have I built, what have I earned, and what can I spend it on?*
 
 | ID | Part | What it does | Why | Touches | Status |
 |---|---|---|---|---|---|
@@ -98,6 +90,10 @@ The wallet and trophy case. Should answer: *what have I earned, and what can I s
 | H5 | Milestones list | `checkMilestones()` fires when `unitsDone` crosses a milestone's `atIndex`; grants coins, sometimes a biome unlock and always legendary loot | Named achievements | Tracks, biomes | ok |
 | H6 | Sprint stats | Running totals of `W.progress.sprints`/`sprintMinutes`, incremented by `sprintFace()` | Focus history | Sprints | ok |
 | H7 | Settings entry | Opens `SHEETS.settings()` | Everything configurable | All sheets | ok |
+| H8 | Scene | Same `sceneSVG`/`motes` renderer that used to be Garden's own screen, now at the top of Rewards | Visible accumulation, makes it a place rather than a list of cards | Themes, flora records | ok |
+| H9 | Theme picker | Opens the Themes sheet from the scene cap; swaps the CSS variable set live, no reload | Personalisation; future reward/paywall hook | All screens | ok |
+| H10 | Growth counts | Counts `W.progress.flora` entries by kind (sprout / tree / legendary) — one is planted per logged day, win or rest | Legible summary of effort | Flora records | ok |
+| H11 | Biome list | Built from milestones whose `reward === 'biome'`; unlocked biomes come from `W.progress.biomes`, named by a hardcoded `biomeName()` lookup | Long-arc unlocks | Milestones | unclear — the word means nothing to a new user, and it isn't editable |
 
 ---
 
@@ -109,7 +105,7 @@ The wallet and trophy case. Should answer: *what have I earned, and what can I s
 | S2 | Backups | `SHEETS.backups()` — three layers: on-device daily snapshots (`localSnaps`/`writeLocalSnap`), one-tap undo (`stashUndo`), and cloud snapshots once signed in (`Sync.listSnapshots`/`getSnapshot`) | Three layers, restore, undo | Device storage, cloud snapshots | ok on device; cloud path unverified |
 | S3 | Import / export | Whole-state JSON: `applyState()` on the way in, a file download on the way out | Data portability | Whole state | ok |
 | S4 | Reduce motion | Toggles a `calm` class that the stylesheet reads to disable ambient animation | Accessibility preference | Animation | ok |
-| S5 | Theme packs | The same `themes()` sheet used by G2 and the Today scene cap | Look | All screens | ok |
+| S5 | Theme packs | The same `themes()` sheet used by H9 and the Today scene cap | Look | All screens | ok |
 | S6 | Worlds list | `SHEETS.worlds()` — switch the active world, or open New World | Switch and create | Worlds | ok |
 | S7 | Pace sheet | `SHEETS.pace()` — shows units/days left from the live track engine, lists every missed task with a resolution for each, and the before/after numbers a redistribute would actually produce | Diagnose and redistribute | Tracks | ok — fixed, see K1 |
 

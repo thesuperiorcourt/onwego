@@ -30,13 +30,22 @@ Netlify → **Add new site → Import an existing project → GitHub** → pick 
 
 Every push to `main` redeploys automatically. Rename the site under **Site configuration → Change site name**; note the URL, you'll need it in step 4.
 
-## 3. Turn on sync
+## 3. Set up Neon and turn on sync
 
-Open the site → **Rewards → Settings → Sync across devices** → enter a passphrase (8+ characters, treat it like a password) → **Save and sync now**.
+Sync runs on Neon Postgres plus Neon's Managed Better Auth — there's no passphrase and no separate user table to manage; signing in with Google or an emailed code is the whole account system.
 
-Enter the *same* passphrase on any other device and they stay in step.
+1. **Create a Neon project**, then turn on **Auth** for it (Neon Console → your project → Auth). This gives you an Auth URL that looks like `https://ep-....neonauth.....aws.neon.tech/neondb/auth`.
+2. **Run `db/schema.sql`** once, in the Neon Console's SQL Editor, against your main branch. It creates `app_state` and `app_snapshot` and nothing else — Neon Auth owns its own schema already.
+3. **Set environment variables in Netlify** (Site configuration → Environment variables):
+   - `DATABASE_URL` — the *pooled* connection string from Neon's Connection Details, not the direct one
+   - `NEON_AUTH_URL` — the Auth URL from step 1
+   - `ALLOW_EMAILS` — optional, comma-separated invite list; leave unset for open signup
+4. **Point the client at your Auth URL** — edit `authUrl` in `www/config.js` to the value from step 1 and push, or leave it blank and paste it into the app's own **Settings → Account** sheet the first time you open it (it's saved on the device from then on).
+5. Open the site → **Settings → Account** → sign in with Google or an emailed code. Sign in again on any other device and they stay in step.
 
-How it works: the app always writes locally first, so it's instant and works with no signal. A moment later it pushes to a Netlify Blobs store keyed by a hash of your passphrase. On open — and whenever you return to the app — it pulls, and whichever side was saved most recently wins. There's no login and no user table; the passphrase is the only key, which is why it should be long.
+How it works: the app always writes locally first, so it's instant and works offline or signed out. A moment later it pushes to Postgres over `/api/sync`, authenticated with the session token from step 5 — never a password, never the device's own claim about who it is. On open, and whenever you return to the app, it pulls, and whichever side saved most recently wins.
+
+**Account deletion and error monitoring** are both built in but need their own optional env vars (`NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID`, and `SENTRY_DSN`) to reach full effect — see `PRODUCTION.md` for what they unlock and where to get each value.
 
 ## 4. TestFlight
 
@@ -53,7 +62,7 @@ npx cap open ios
 Before the first build:
 
 1. In `capacitor.config.json`, change `appId` to your real bundle ID (`com.yourname.onwego`) and register that same ID in App Store Connect.
-2. In the app, set **Site address** in the sync sheet to your Netlify URL (`https://your-site.netlify.app`). The native shell serves the HTML locally, so it needs the full URL to reach the sync function — on the web version, leave it blank.
+2. In the app, set **Site address** in **Settings → Account** to your Netlify URL (`https://your-site.netlify.app`). The native shell serves the HTML locally, so it needs the full URL to reach the sync function — on the web version, leave it blank.
 3. In Xcode: pick your team under Signing & Capabilities, set the version and build number.
 
 Then **Product → Archive → Distribute App → TestFlight**.
@@ -68,7 +77,7 @@ After any change to the app: `git push` updates the web version, and `npx cap sy
 
 **New worlds** — Today screen → tap the world name → *Build a new world*. Name, dates, and parts as `name, count` per line. It generates the day plan, bait bands, and milestones. Works for a series, a course, a season, a backlog.
 
-**Theme packs** — Garden screen → the pack button, top left. Five ship: Midnight (moon phases, stars, a sun that rises as you approach the finish line), Meadow, Ember, Tidewater, Orchard.
+**Theme packs** — Today or Rewards screen → the pack button, top left of the illustrated scene. Five ship: Midnight (moon phases, stars, a sun that rises as you approach the finish line), Meadow, Ember, Tidewater, Orchard.
 
 **The code** — everything is in `www/index.html`:
 
@@ -82,7 +91,7 @@ After any change to the app: `git push` updates the web version, and `npx cap sy
 | Maasverse campaign | `const MAASVERSE_CAMPAIGN` |
 | Trees, sprouts, flowers | `floraSVG()` |
 | Sky, moon phase, sunrise | `sceneSVG()` |
-| Sync client | `const Sync` |
+| Sign-in and sync | `const Account`, `const Sync` |
 
 ## Rules the app follows
 
@@ -176,21 +185,19 @@ Types are a set — a task can be several at once, and the nightly reading quest
 
 ## Dependency and Node versions
 
-`package.json` pins `@netlify/blobs` to an exact version rather than a range, and `netlify.toml` pins `NODE_VERSION`. That is deliberate: a floating `latest` means your build resolves to whatever was published that morning, which is a bad way to find out a new major exists. If you bump the pin, check the new version's `engines` field against the pinned Node version.
+`package.json` pins `@neondatabase/serverless` and `jose` to exact versions rather than ranges, and `netlify.toml` pins `NODE_VERSION`. That is deliberate: a floating `latest` means your build resolves to whatever was published that morning, which is a bad way to find out a new major exists. If you bump a pin, check the new version's `engines` field against the pinned Node version.
 
 ## If you rename the project
 
-Three strings have to agree, and two of them live in different files:
+One string has to keep agreeing with itself over time:
 
 | What | Where | Must match |
 |---|---|---|
-| Passphrase header | `www/index.html` (`x-onwego-key`) and `netlify/functions/sync.mjs` | each other |
-| Blob store name | `netlify/functions/sync.mjs` (`getStore({ name: 'onwego' })`) | itself over time |
-| Device storage key | `www/index.html` (`Store.key = 'onwego.v1'`) | itself over time |
+| Device storage key | `www/index.html` (`Store.key = 'onwego.v1'`) | itself, release to release |
 
-Renaming the GitHub repo or the Netlify site changes none of these. Renaming the strings without care does two things: a mismatched header makes every sync call fail with a misleading "passphrase too short", and a changed storage key makes the app look freshly wiped even though the data is still there.
+Renaming the GitHub repo or the Netlify site changes nothing here — accounts and sync live in Neon, keyed by the signed-in user, not by any string in this repo. Change `Store.key` without a fallback and the app looks freshly wiped on every device, even though the data is still there.
 
-This build handles the questline → onwego rename for you: it reads the old device key and the old blob store if the new ones are empty, and the function still accepts the old header. Those fallbacks can be deleted once you've launched the app on every device you use.
+This build still carries the fallback from an earlier rename (questline → onwego): `Store.legacy` reads the old device key once and migrates it if the current one is empty. That's the pattern to repeat for any future rename — add the old key to `legacy`, never just swap the string. The old key can be dropped once you've opened the app on every device you use.
 
 ## Accounts and sync (Neon)
 
@@ -214,7 +221,7 @@ Sign-in is handled by **Managed Better Auth** on Neon; data lives in your Neon P
 
 **How a request is trusted.** The browser signs in against Neon and gets a session token. Every call to `/api/sync` carries that token, and the function verifies it against the auth service's published JWKS before touching the database. The user id inside the verified token is the only thing that selects rows — never the request body, never a query parameter. Two accounts cannot see each other's data even if one of them tries.
 
-**Signed out, the app still works.** Everything is local-first: logging a night, planting a tree, editing tasks all work with no account and no signal. Signing in adds sync and cloud backups. Sign out and the device keeps everything it had.
+**Signed out, the app still works.** Everything is local-first: logging a day, planting a tree, editing tasks all work with no account and no signal. Signing in adds sync and cloud backups. Sign out and the device keeps everything it had.
 
 **First sign-in with existing progress** pushes the device's copy up rather than pulling an empty account down — the reading you already did wins.
 

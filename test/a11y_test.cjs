@@ -57,7 +57,7 @@ setTimeout(()=>{
     P(d.querySelector('#live').textContent.length>0,'announcement written to live region');
     // theme swatches
     d.querySelector('[data-close]').click();
-    d.querySelector('[data-view=grove]').click();
+    d.querySelector('[data-view=hoard]').click();
     d.querySelector('[data-sheet=themes]').click();
     const sw=[...d.querySelectorAll('.sw')];
     P(sw.length===5&&sw.every(s=>s.hasAttribute('aria-pressed')&&s.getAttribute('aria-label')),'theme swatches labelled + pressed');

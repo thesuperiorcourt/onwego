@@ -149,7 +149,7 @@ Currently the new-project flow assumes you're counting your way through a book. 
 Overall structure is unclear. Full customisation is the goal, but the *default* has to be normalised and simple — a new user should understand the app before they configure it.
 
 - Decide what each tab is for in one sentence, then make the tab prove it. Timeline especially (see PARTS R6).
-- Rewards and biomes deserve their own screen, not a corner of Rewards.
+- Garden merged into Rewards, so growth, biomes, loot, the shop and milestones all now live on one screen. That's the opposite of "give rewards their own screen" — worth watching whether it's too much in one place once there's real use to judge by, rather than assuming either direction is right ahead of that.
 - Things that are tappable should look tappable (PARTS T2, T3).
 - Configuration is buried; discovery is poor.
 - Fewer concepts, better explained, beats more concepts.
