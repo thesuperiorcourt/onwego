@@ -3,6 +3,7 @@
 const rows = { state: {}, snaps: {} };
 globalThis.__onwegoSql = (strings, ...vals) => {
   const q = strings.join('?').replace(/\s+/g, ' ').trim();
+  if (q.startsWith('select set_config')) return Promise.resolve([{ set_config: vals[0] }]);
   if (q.startsWith('select to_char')) {
     const uid = vals[0];
     return Promise.resolve(Object.keys(rows.snaps[uid] || {}).sort().reverse().map(stamp => ({ stamp })));
@@ -40,6 +41,12 @@ globalThis.__onwegoSql = (strings, ...vals) => {
   }
   throw new Error('unexpected query: ' + q);
 };
+/* Each element is already a resolved Promise by the time this runs — the
+   stub's tagged-template function above executes synchronously against
+   `rows`, so building the array runs the queries in order already. This
+   only needs to mirror the real driver's shape (an array of results, same
+   order), not its actual transaction semantics. */
+globalThis.__onwegoSql.transaction = (queries) => Promise.all(queries);
 /* Stand-in for real JWT verification: "good:<id>:<email>" is a valid token. */
 globalThis.__onwegoVerify = async (token) => {
   if (!token.startsWith('good:')) throw new Error('bad token');

@@ -80,6 +80,17 @@ function db() {
   return neon(url);
 }
 
+/* RLS policies (db/schema.sql) check current_setting('app.user_id'). The
+   serverless driver's fetch-based sql() has no persistent session between
+   calls, so that setting has to be pushed inside the same transaction batch
+   as the query that needs it — set once per batch. Harmless, and currently
+   unused, while DATABASE_URL still connects as the owner role, which
+   bypasses RLS; it takes effect the moment that role is swapped for a
+   restricted one (see db/rls_role.sql). */
+function scoped(sql, uid, queries) {
+  return sql.transaction([sql`select set_config('app.user_id', ${uid}, true)`, ...queries]);
+}
+
 /* Removes the login itself from Neon's Auth user directory, via Neon's
    project API — separate from Better Auth's own client-side self-delete,
    which needs an email-verification round trip this app doesn't wire up.
@@ -118,24 +129,24 @@ export default async (req) => {
 
     if (req.method === 'GET') {
       if (url.searchParams.get('snapshots')) {
-        const rows = await sql`
+        const [, rows] = await scoped(sql, user.id, [sql`
           select to_char(stamp, 'YYYY-MM-DD') as stamp
             from app_snapshot
            where user_id = ${user.id}
-           order by stamp desc`;
+           order by stamp desc`]);
         return json({ ok: true, snapshots: rows.map(r => r.stamp) });
       }
 
       const stamp = url.searchParams.get('snapshot');
       if (stamp) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(stamp)) return json({ error: 'Bad snapshot name' }, 400);
-        const rows = await sql`
+        const [, rows] = await scoped(sql, user.id, [sql`
           select data from app_snapshot
-           where user_id = ${user.id} and stamp = ${stamp}::date`;
+           where user_id = ${user.id} and stamp = ${stamp}::date`]);
         return json({ ok: true, data: rows.length ? rows[0].data : null });
       }
 
-      const rows = await sql`select data from app_state where user_id = ${user.id}`;
+      const [, rows] = await scoped(sql, user.id, [sql`select data from app_state where user_id = ${user.id}`]);
       return json({ ok: true, data: rows.length ? rows[0].data : null, email: user.email });
     }
 
@@ -146,24 +157,25 @@ export default async (req) => {
 
       /* A device that has been offline must not overwrite newer work done
          elsewhere — hand the newer copy back instead. */
-      const current = await sql`select data, updated_at from app_state where user_id = ${user.id}`;
+      const [, current] = await scoped(sql, user.id, [sql`select data, updated_at from app_state where user_id = ${user.id}`]);
       if (current.length && Number(current[0].updated_at) > updatedAt) {
         return json({ ok: true, stale: true, data: current[0].data });
       }
 
-      await sql`
-        insert into app_state (user_id, data, updated_at, saved_at)
-        values (${user.id}, ${JSON.stringify(incoming)}::jsonb, ${updatedAt}, now())
-        on conflict (user_id) do update
-          set data = excluded.data, updated_at = excluded.updated_at, saved_at = now()`;
-
       const stamp = new Date().toISOString().slice(0, 10);
-      await sql`
-        insert into app_snapshot (user_id, stamp, data, saved_at)
-        values (${user.id}, ${stamp}::date, ${JSON.stringify(incoming)}::jsonb, now())
-        on conflict (user_id, stamp) do update
-          set data = excluded.data, saved_at = now()`;
-      await sql`select prune_snapshots(${user.id}, 30)`;
+      await scoped(sql, user.id, [
+        sql`
+          insert into app_state (user_id, data, updated_at, saved_at)
+          values (${user.id}, ${JSON.stringify(incoming)}::jsonb, ${updatedAt}, now())
+          on conflict (user_id) do update
+            set data = excluded.data, updated_at = excluded.updated_at, saved_at = now()`,
+        sql`
+          insert into app_snapshot (user_id, stamp, data, saved_at)
+          values (${user.id}, ${stamp}::date, ${JSON.stringify(incoming)}::jsonb, now())
+          on conflict (user_id, stamp) do update
+            set data = excluded.data, saved_at = now()`,
+        sql`select prune_snapshots(${user.id}, 30)`
+      ]);
 
       return json({ ok: true, updatedAt, snapshot: stamp });
     }
@@ -173,8 +185,10 @@ export default async (req) => {
          configured, the worst case is an empty account someone could still
          sign into — never data that outlives the only way left to ask for
          its removal. */
-      await sql`delete from app_snapshot where user_id = ${user.id}`;
-      await sql`delete from app_state where user_id = ${user.id}`;
+      await scoped(sql, user.id, [
+        sql`delete from app_snapshot where user_id = ${user.id}`,
+        sql`delete from app_state where user_id = ${user.id}`
+      ]);
       const auth = await deleteAuthUser(user.id);
       return json({ ok: true, account: auth.removed, detail: auth.removed ? undefined : auth.reason });
     }
