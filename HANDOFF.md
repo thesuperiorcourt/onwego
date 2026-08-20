@@ -178,24 +178,9 @@ Do this **before** the interface work in `BRAINSTORM.md`, and **after** sign-in 
 
 **Verified by tests:** campaign maths, task CRUD/search/filter, layout sections, all track anchors and ripple modes, the strain warning, repeats, device storage and snapshots, restore and undo, accessibility across every screen and sheet, contrast in all five packs, and the sync function's account isolation, staleness handling, allowlist and rejection paths.
 
-**Not verified anywhere:** the live auth handshake. The build sandbox couldn't reach the Neon auth domain, so `Account.refresh()`, `signInGoogle()` and the email-code flow are written from Neon's docs and have never spoken to the real service. **This is the first thing to check.**
+**Verified live, 2026-08-19:** the full auth handshake, against the real deployed site, signed in as the owner. The session survived the Google redirect and persisted across visits (`Account` correctly reported "Signed in as [email]" on a fresh page load with no re-auth needed). `GET /api/sync` returned 200 repeatedly (token reaches the function and verifies; the database read succeeds). Toggling a preference and watching the debounced push confirmed `POST /api/sync` also returns 200, with a real body — `{"ok":true,"updatedAt":...,"snapshot":"..."}` — proving the write actually lands in Postgres, not just that the function returns success. No console errors. This closes out the "first thing to check" that stood here before; the specific unconfirmed details below (exact `getSession()` shape, cross-origin cookie behavior) turned out not to matter in practice — whatever `Account.refresh()` does with the session object, it produces a token that the sync function accepts.
 
-Specifically unconfirmed in `Account`:
-- the shape `getSession()` returns, and where the token lives on it (`session.session.token` vs `session.token` vs an access token)
-- whether `client.emailOtp.sendVerificationOtp` exists, or whether it's magic-link only
-- whether the session survives the Google redirect back to the site
-- whether the browser holds the auth cookie cross-origin (Safari ITP is the risk; if it fails, route auth through a same-origin function proxy)
-
----
-
-## Do this first
-
-The owner has signed in with Google successfully but nothing has confirmed the app received a session or wrote to Postgres.
-
-1. Open the deployed site, sign in, and inspect: `Account.status`, `Account.user`, `Account.token`. If `status` is `signedIn` but `token` is null, the token is somewhere else on the session object — find it and fix `refresh()`.
-2. Watch the network tab for `/api/sync`. A 401 means the token isn't reaching the function or isn't verifying. A 500 with a detail message means the database call failed.
-3. Confirm with `select user_id, updated_at, saved_at from app_state;` in Neon.
-4. Then run the whole suite: `npm install jsdom && for t in test/*.cjs; do node $t; done`
+Still not exercised: the email-code sign-in path (only Google has been tried live), and Safari specifically (this check was done in Chromium). Worth a pass before a public launch, not blocking.
 
 ---
 
@@ -205,7 +190,7 @@ The full register lives in `PARTS.md` (with status per part) and `BRAINSTORM.md`
 
 - **Account deletion — built, three env vars from finished.** Settings → Account → Delete account erases the cloud copy always, and the login itself once `NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID` are set in Netlify. See `PRODUCTION.md`.
 - **Error monitoring — built.** Client and function errors both funnel to Sentry via `netlify/functions/lib/report.mjs`, once `SENTRY_DSN` is set; until then they land in Netlify's function logs instead of nowhere. See `PRODUCTION.md` §2.
-- **RLS isn't armed.** `DATABASE_URL` connects as `neondb_owner`, which has `rolbypassrls = t`, so the policies in `db/schema.sql` aren't enforced. Isolation currently rests entirely on the function filtering by the verified `sub`. Fix by creating a non-owner role, granting it table access, and repointing `DATABASE_URL`. Deliberately deferred until sign-in works.
+- **RLS isn't armed.** `DATABASE_URL` connects as `neondb_owner`, which has `rolbypassrls = t`, so the policies in `db/schema.sql` aren't enforced. Isolation currently rests entirely on the function filtering by the verified `sub`. Fix by creating a non-owner role, granting it table access, and repointing `DATABASE_URL`. Was deliberately deferred until sign-in worked — sign-in is now confirmed live (see State of play), so this is the next real security-hardening step, worth doing before wider signup.
 - **Sign in with Apple** isn't offered by Neon (Google, GitHub, Vercel only). Only becomes a blocker for a public App Store release that also offers Google sign-in. TestFlight internal testing is unaffected.
 - **TestFlight** is scaffolded but never run: `npx cap add ios && npx cap sync ios && npx cap open ios`. Before the first archive, set a real bundle ID in `capacitor.config.json`, register it in App Store Connect, and set `apiBase` in `www/config.js` to the deployed site URL — the native shell serves pages locally and can't resolve a same-origin API. Google's OAuth redirect will need a custom URL scheme registered in the iOS project.
 - **Theme packs** were meant to match an app called Joie, which couldn't be found. The five shipped packs are stand-ins; the owner may want them re-coloured.
@@ -217,8 +202,8 @@ The full register lives in `PARTS.md` (with status per part) and `BRAINSTORM.md`
 
 ## Working notes
 
-- Build the client by editing `www/index.html` directly. It is large but organised by the regions above; search for the function name.
+- The client is ES modules under `www/app/` (split from the old single-file `www/index.html` — see the module list earlier in this doc). `www/index.html` is now just the page shell; find code by module, not by searching one giant file.
 - `normalizeA11y()` runs after every render and every sheet mount — new markup inherits list and group semantics without remembering to add them.
 - Colour tokens are per-theme. Never hardcode a colour in a component; use `var(--glow-ink)` for accent *text* and `var(--glow)` for decorative fills. They differ deliberately — the light pack fails contrast otherwise.
-- `test/a11y_contrast.py` parses `THEMES` straight out of `index.html`, so it stays honest after edits.
+- `test/a11y_contrast.py` parses `THEMES` out of `www/app/themes.js`, so it stays honest after edits.
 - Prose in the UI is deadpan and specific, never chirpy. "Attention is garbage right now" is the register.
