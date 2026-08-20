@@ -104,7 +104,7 @@ The wallet and trophy case. Should answer: *what have I earned, and what can I s
 
 | ID | Part | What it does | Why | Touches | Status |
 |---|---|---|---|---|---|
-| S1 | Account | `SHEETS.account()` plus the `Account` object — sign in via Neon Managed Better Auth (Google, or an emailed code); holds the bearer token that `Sync.*` rides on | Sign in, sync, per-person data | Neon auth, sync function | verified end to end — see HANDOFF |
+| S1 | Account | `SHEETS.account()` plus the `Account` object — sign in via Neon Managed Better Auth (Google, or an emailed code); holds the bearer token that `Sync.*` rides on. Signed in also offers export-then-delete: two-tap `#ac_delete` calls `DELETE /api/sync`, which erases `app_state`/`app_snapshot` and, if `NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID` are set, removes the login itself via Neon's project API | Sign in, sync, per-person data, and the right to leave entirely | Neon auth, sync function | verified end to end — see HANDOFF. Deletion tested against a stub; the three auth-removal env vars aren't set yet, so live deletion currently erases data but leaves the login — see PRODUCTION.md |
 | S2 | Backups | `SHEETS.backups()` — three layers: on-device daily snapshots (`localSnaps`/`writeLocalSnap`), one-tap undo (`stashUndo`), and cloud snapshots once signed in (`Sync.listSnapshots`/`getSnapshot`) | Three layers, restore, undo | Device storage, cloud snapshots | ok on device; cloud path unverified |
 | S3 | Import / export | Whole-state JSON: `applyState()` on the way in, a file download on the way out | Data portability | Whole state | ok |
 | S4 | Reduce motion | Toggles a `calm` class that the stylesheet reads to disable ambient animation | Accessibility preference | Animation | ok |

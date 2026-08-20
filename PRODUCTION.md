@@ -68,7 +68,7 @@ None of this exists yet. All of it is required for a public App Store release.
 | Support email | missing | App Store requires a support URL or address |
 | Privacy request contact | missing | Required by GDPR/CCPA |
 | Data export | **exists** | Backups → download a copy |
-| **Data deletion** | **missing** | Required. There is currently no way for a user to delete their account and data. This is a real gap, not paperwork |
+| **Data deletion** | **built** | Settings → Account → Delete account. Erases the cloud copy always; erases the login itself once `NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID` are set — see "How to fix the five gaps" §1 |
 
 **The deletion gap is the one to fix soonest.** It's a legal requirement, it's an App Store review item, and it's also just correct: someone who signs up should be able to leave completely. It needs a Settings action, a function endpoint that deletes their rows, and a note in the privacy policy.
 
@@ -156,15 +156,15 @@ Sync belongs on the free side. An app that forgets your work unless you pay is n
 
 Concrete enough to hand to whoever picks up the work. None of these is built yet — this document and the others are the only things that changed in the repo so far.
 
-### 1. Account deletion *(smallest, do first)*
+### 1. Account deletion *(built)*
 
-**Server:** add `DELETE` handling to `netlify/functions/sync.mjs`. It already identifies the user from the verified token, so the work is two statements — delete from `app_snapshot`, delete from `app_state` — plus a call to the auth service to remove the account itself.
+**Server:** `DELETE /api/sync` in `netlify/functions/sync.mjs` erases `app_snapshot` then `app_state` for the verified user, then calls `deleteAuthUser()`, which removes the login itself via Neon's project API (`DELETE .../auth/users/{id}`, a Neon API key, project id and branch id — not Better Auth's own client-side self-delete, which needs an email-verification round trip this app doesn't wire up). Data is always erased; the login-removal step degrades honestly if unconfigured, reporting `account:false` with a reason instead of pretending success.
 
-**Client:** a row in Settings → Account, below sign-out. Two-tap confirm, matching the pattern already used for deleting tasks and restoring backups. Offer the export first: "download a copy before you go" is both kind and the thing regulators expect.
+**Still needed to finish this live:** three Netlify env vars — `NEON_API_KEY` (Neon Console → account/org → API Keys), `NEON_PROJECT_ID` and `NEON_BRANCH_ID` (Neon Console → project settings / branches). Without them, deletion still removes every row for the account; it just can't remove the login itself yet.
 
-**Copy to be honest about:** deleting the account removes the cloud copy and the account. It does not reach into a device that's offline. Say so.
+**Client:** Settings → Account, below sign-out. Two-tap `#ac_delete` (same arm-then-confirm pattern as task and track deletion), with `#ac_export` offered first. Copy is explicit that an offline device is untouched.
 
-**Test:** create a second account, write data, delete it, confirm the rows are gone and the first account is untouched. Extend `test/sync_server_test.cjs`, which already has the two-account fixture.
+**Test:** `test/sync_server_test.cjs` — two-account isolation (delete one, the other's rows survive), the honest "not configured" path, and a stubbed `__onwegoAuthDelete` proving the right Neon endpoint and API key get used once configured. `test/account_test.cjs` covers the client-side two-tap flow. Not yet verified against the real Neon API — deliberately, since testing delete against a live account is destructive; do that with a throwaway account once the env vars are set.
 
 ### 2. Error monitoring
 
@@ -211,6 +211,6 @@ Under a few hundred kilobytes, the document model is fine and simpler than the a
 ## Suggested sequence
 
 1. **Now:** finish sign-in, fix the engine bugs, QA the feature set.
-2. **Before TestFlight:** account deletion, error monitoring, arm row-level security, self-host the fonts and SDK.
+2. **Before TestFlight:** ~~account deletion~~ (built, needs three env vars to finish), error monitoring, arm row-level security, self-host the fonts and SDK.
 3. **Before public launch:** legal documents and URLs, business and support contacts, third-party inventory published in the privacy policy, entitlement matrix and paywall flags, onboarding, responsive and Dynamic Type QA.
 4. **Decide deliberately, not by drift:** the data model, whether proof is stored, and the bundle identifier.

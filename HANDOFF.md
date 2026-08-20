@@ -199,7 +199,7 @@ The owner has signed in with Google successfully but nothing has confirmed the a
 
 The full register lives in `PARTS.md` (with status per part) and `BRAINSTORM.md` (with direction). The items below are the ones that block or constrain other work.
 
-- **No way to delete an account.** Legally required, an App Store review item, and simply correct. See `PRODUCTION.md`.
+- **Account deletion — built, three env vars from finished.** Settings → Account → Delete account erases the cloud copy always, and the login itself once `NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID` are set in Netlify. See `PRODUCTION.md`.
 - **No error monitoring.** Nothing reports a failed deploy or an erroring function.
 - **RLS isn't armed.** `DATABASE_URL` connects as `neondb_owner`, which has `rolbypassrls = t`, so the policies in `db/schema.sql` aren't enforced. Isolation currently rests entirely on the function filtering by the verified `sub`. Fix by creating a non-owner role, granting it table access, and repointing `DATABASE_URL`. Deliberately deferred until sign-in works.
 - **Sign in with Apple** isn't offered by Neon (Google, GitHub, Vercel only). Only becomes a blocker for a public App Store release that also offers Google sign-in. TestFlight internal testing is unaffected.

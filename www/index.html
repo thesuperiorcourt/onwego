@@ -3015,7 +3015,13 @@ SHEETS.account = function () {
       <button class="btn" id="ac_save">Save and continue</button>`
     : signedIn ? `
       <button class="btn line" id="ac_signout">Sign out of this device</button>
-      <p class="sub" style="margin-top:14px">Signing out leaves everything on this device untouched. Sign back in and the two merge again.</p>`
+      <p class="sub" style="margin-top:14px">Signing out leaves everything on this device untouched. Sign back in and the two merge again.</p>
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--edge)">
+        <p class="sub" style="margin-bottom:14px">Deleting removes the account and everything synced to it — the cloud copy, and the login itself. It does not reach any device that's offline; what's saved locally there stays until that device deletes it too.</p>
+        <button class="btn ghost" id="ac_export">Download a copy first</button>
+        <div style="height:10px"></div>
+        <button class="btn line" id="ac_delete">Delete account</button>
+      </div>`
     : `
       <button class="btn" id="ac_google"><span aria-hidden="true">🔑</span> Continue with Google</button>
       <p class="sub" style="text-align:center;margin:14px 0">or</p>
@@ -3033,7 +3039,7 @@ SHEETS.account = function () {
 };
 
 document.addEventListener('click', async e => {
-  const el = e.target.closest('#ac_save,#ac_google,#ac_email_start,#ac_code_go,#ac_signout');
+  const el = e.target.closest('#ac_save,#ac_google,#ac_email_start,#ac_code_go,#ac_signout,#ac_export,#ac_delete');
   if (!el) return;
 
   if (el.id === 'ac_save') {
@@ -3076,6 +3082,34 @@ document.addEventListener('click', async e => {
   if (el.id === 'ac_signout') {
     await Account.signOut();
     closeSheet(); paint(); toast('Signed out. Everything stays on this device.');
+    return;
+  }
+  if (el.id === 'ac_export') {
+    const blob = new Blob([JSON.stringify(S, null, 2)], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `onwego-${today()}.json`; a.click();
+    toast('Backup downloaded');
+    return;
+  }
+  if (el.id === 'ac_delete') {
+    if (el.dataset.armed !== '1') {
+      el.dataset.armed = '1';
+      el.textContent = 'Tap again to delete for good';
+      toast('Tap delete again to confirm');
+      return;
+    }
+    try {
+      const res = await fetch(Account.apiUrl(), { method:'DELETE', headers: Account.headers() });
+      if (!res.ok) throw new Error('delete failed');
+      const body = await res.json();
+      await Account.signOut();
+      closeSheet(); paint();
+      toast(body.account
+        ? 'Account deleted'
+        : 'Data deleted. The login itself needs a human to finish removing it — contact support.');
+    } catch (err) {
+      setErr("Couldn't reach the server to delete the account. Try again once you're online.");
+    }
     return;
   }
 });

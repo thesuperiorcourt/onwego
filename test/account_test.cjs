@@ -42,6 +42,32 @@ setTimeout(() => {
 
     G("openSheet(SHEETS.backups())");
     P(d.querySelector('.sheet').textContent.includes('kept for 30 days'), 'backups sheet reflects the signed-in state');
-    process.exit(0);
+
+    console.log('\nACCOUNT DELETION — client side');
+    G("Account.saveCfg('https://auth.test/neondb/auth','')");
+    G("openSheet(SHEETS.account())");
+    P(!!d.querySelector('#ac_delete'), 'delete account is offered once signed in');
+    P(!!d.querySelector('#ac_export'), 'offers a copy before you go');
+    P(d.querySelector('.sheet').textContent.includes('offline'), 'is honest that an offline device is untouched');
+
+    let deleteCalled = 0;
+    window.fetch = async (url, opts) => {
+      deleteCalled++;
+      P(url === 'https://onwego.test/api/sync' && opts.method === 'DELETE', 'DELETE goes to the sync endpoint');
+      P(opts.headers.authorization === 'Bearer tok', 'carries the bearer token, same as any other request');
+      return { ok: true, json: async () => ({ ok: true, account: true }) };
+    };
+
+    d.querySelector('#ac_delete').click();
+    P(deleteCalled === 0, 'first tap only arms it — nothing sent yet');
+    P(d.querySelector('#ac_delete').textContent.includes('Tap again'), 'button says a second tap is needed');
+
+    d.querySelector('#ac_delete').click();
+    setTimeout(() => {
+      P(deleteCalled === 1, 'second tap actually calls delete');
+      P(G('Account.status') === 'signedOut', 'signs out locally once the account is gone');
+      P(!d.querySelector('.sheet'), 'sheet closes on success');
+      process.exit(0);
+    }, 250);
   }, 300);
 }, 900);
