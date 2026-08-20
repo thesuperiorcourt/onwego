@@ -28,7 +28,7 @@ Netlify → **Add new site → Import an existing project → GitHub** → pick 
 - Functions directory: `netlify/functions`
 - Build command: none needed
 
-Every push to `main` redeploys automatically. Rename the site under **Site configuration → Change site name**; note the URL, you'll need it in step 4.
+By default, every push to `main` redeploys automatically — if you've turned that off (Site configuration → Build & deploy → Stop builds, useful once you're pushing many small commits and want to batch deploys deliberately instead), trigger deploys yourself with `netlify deploy --prod` once the CLI is linked. Rename the site under **Site configuration → Change site name**; note the URL, you'll need it in step 4.
 
 ## 3. Set up Neon and turn on sync
 
@@ -45,7 +45,7 @@ Sync runs on Neon Postgres plus Neon's Managed Better Auth — there's no passph
 
 How it works: the app always writes locally first, so it's instant and works offline or signed out. A moment later it pushes to Postgres over `/api/sync`, authenticated with the session token from step 5 — never a password, never the device's own claim about who it is. On open, and whenever you return to the app, it pulls, and whichever side saved most recently wins.
 
-**Account deletion and error monitoring** are both built in but need their own optional env vars (`NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID`, and `SENTRY_DSN`) to reach full effect — see `PRODUCTION.md` for what they unlock and where to get each value.
+**Account deletion, error monitoring and row-level security** are all built in and verified live once their optional env vars are set (`NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID` for deletion, `SENTRY_DSN` for monitoring) — see `PRODUCTION.md` for what each unlocks and where to get the values, and `CHANGELOG.md` for how each was verified.
 
 ## 4. TestFlight
 
@@ -95,10 +95,10 @@ After any change to the app: `git push` updates the web version, and `npx cap sy
 
 ## Rules the app follows
 
-- Three ways to win a night: minimum (2 chapters, +10 XP), full clear (+20), boss mode (+3 past target, +30 and guaranteed loot).
-- Bait is attached to chapters, not dates — fall behind and the Ch. 89–93 bait still waits at Ch. 89–93.
-- **Redistribute** re-spreads what's unread across the days that remain. Nothing is ever overdue.
-- Milestones fire off your position: Ch. 68 unlocks a biome, Ch. 93 plants a legendary tree, each finished book opens new ground.
+- Three ways to win: minimum (+10 XP), full clear (+20), boss mode (past target, +30 and guaranteed loot) — in the shipped example, that's 2 chapters / the day's target / 3 past target.
+- Bait is attached to units, not dates — fall behind and it still waits at the same unit range (the shipped example: fall behind and the Ch. 89–93 bait still waits at Ch. 89–93).
+- **Redistribute** re-spreads what's left across the days that remain. Nothing is ever overdue.
+- Milestones fire off your position, not the calendar (the shipped example: Ch. 68 unlocks a biome, Ch. 93 plants a legendary tree, each finished book opens new ground).
 - Nothing wilts. Skipping a day removes nothing.
 
 ## Tasks — where the data lives
@@ -258,12 +258,12 @@ Built to WCAG 2.1 AA. What that means here:
 ### Checking it yourself
 
 ```bash
-npm install jsdom
+npm install
 node test/qa_sweep.cjs           # every screen and sheet, structural problems
 python3 test/a11y_contrast.py    # every colour pairing in every theme pack
 ```
 
-`test/` has nine more suites covering tasks, tracks, ripple behaviour, backups and the sync function. See `test/README.md`.
+`test/` has fourteen more suites covering tasks, tracks, ripple behaviour, missed days, backups, account deletion, error reporting and the sync function. See `test/README.md`.
 
 Two things no automated test can do, so do them on a real device: a pass with VoiceOver on, and a look at 200% text size.
 

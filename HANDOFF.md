@@ -93,7 +93,7 @@ Also still open, no fixed slot: the broader "undo rewards" problem — reversing
 2. **Local-first.** Every action saves to device storage immediately and works offline. Sync is how other devices find out, never a prerequisite. Signed out, the whole app must still work.
 3. **WCAG 2.1 AA.** Already met and tested. Any new UI keeps it: one `h1` per screen, headings that don't skip, named controls, `aria-hidden` on decorative emoji, `role="list"` on unbulleted lists, 44px targets, colour never the only signal, dialogs with focus trap and Escape.
 4. **Nothing punishes the user.** No red, no overdue, no streak reset on a missed day. Falling behind redistributes; it never scolds.
-5. **Run the tests before saying something works.** `test/` has thirteen suites, no framework.
+5. **Run the tests before saying something works.** `test/` has fifteen `.cjs` suites plus `a11y_contrast.py`, no framework — see `test/README.md`.
 6. **No AI or agent language anywhere in the project.** Code comments, UI copy, docs and commit messages read as a team's work. That AI was used gets disclosed honestly elsewhere; it doesn't belong in the product's voice. Address whoever picks up a task as a colleague — a developer or designer on this team — not as a tool.
 7. **`PARTS.md` updates in the same commit as the part it describes.** Every feature or functionality change — new, altered, or removed, BRAINSTORM work included — updates that part's row before the commit lands, not after. Cover what it does, where it lives, why it exists, when it changed, who asked for it (if that's not obvious), and how it works. See the taxonomy-before-features principle above: this is how that principle stays true instead of becoming a slogan.
 

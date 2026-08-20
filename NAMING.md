@@ -18,21 +18,25 @@ Counts are approximate and drift — grep before trusting them.
 
 | File | What's in it | Care needed |
 |---|---|---|
-| `www/index.html` | `Store.key = 'onwego.v1'`, legacy key list, `onwego.snaps`, `onwego.undo`, `onwego.probe`, `onwego.account`, `onwego.sync`, `window.ONWEGO_CONFIG`, `<title>`, apple web-app title, export filename, section comment banners | **Highest risk.** Storage keys are load-bearing: changing one orphans real user data |
+| `www/app/store.js` | `Store.key = 'onwego.v1'`, the legacy key list (`questline.v1`) | **Highest risk.** The device storage key is load-bearing: changing it orphans real user data |
+| `www/app/backups.js` | `LOCAL_SNAPS` (`onwego.snaps`), `LEGACY_SNAPS` (`questline.snaps`), `UNDO_KEY` (`onwego.undo`), the `onwego.probe` storage-health check | same risk as above — these are also load-bearing device keys |
+| `www/app/account.js` | `cfgKey` (`onwego.account`), reads of `window.ONWEGO_CONFIG`, a placeholder URL example | must match `config.js`'s global exactly |
+| `www/app/main.js` | reads of `window.ONWEGO_CONFIG`, the `__ONWEGO_TEST__` test-mode flag | low |
+| `www/config.js` | `window.ONWEGO_CONFIG` | must match every file that reads it |
+| `www/index.html` | `<title>`, apple web-app title meta tag | low — just the page shell now, no storage keys live here since the module split |
 | `netlify/functions/sync.mjs` | header comment, payload validation message | low |
-| `www/config.js` | `window.ONWEGO_CONFIG` | must match `index.html` exactly |
 | `package.json` | `name`, `description` | low |
 | `capacitor.config.json` | `appId`, `appName` | **appId must match App Store Connect** — cannot be changed after first submission |
 | `netlify.toml` | comment | none |
 | `db/schema.sql` | comment | none |
-| `README.md`, `HANDOFF.md`, `PARTS.md`, `BRAINSTORM.md`, `PUBLISH-FROM-IPHONE.md` | prose | low |
+| `README.md`, `HANDOFF.md`, `PARTS.md`, `CHANGELOG.md`, `BRAINSTORM.md`, `PUBLISH-FROM-IPHONE.md` | prose | low |
 | `test/*.cjs` | storage key names in assertions | update or tests fail misleadingly |
 
 ### The three that actually break things
 
-1. **Device storage keys** (`onwego.v1` and friends, in `index.html`). Rename these and every existing user's data becomes invisible — it's still on disk under the old key, just unread. **Always add the old key to the legacy fallback list rather than replacing it.** There's already a working example: the `questline` → `onwego` rename kept `questline.v1` as a fallback.
+1. **Device storage keys** (`onwego.v1` and friends, in `www/app/store.js` and `www/app/backups.js`). Rename these and every existing user's data becomes invisible — it's still on disk under the old key, just unread. **Always add the old key to the legacy fallback list rather than replacing it.** There's already a working example: the `questline` → `onwego` rename kept `questline.v1` as a fallback.
 
-2. **The `window.ONWEGO_CONFIG` global.** Set in `config.js`, read in `index.html`. If only one changes, the app silently loses its auth URL and looks like sign-in broke.
+2. **The `window.ONWEGO_CONFIG` global.** Set in `www/config.js`, read in `www/app/account.js` and `www/app/main.js`. If only one changes, the app silently loses its auth URL and looks like sign-in broke.
 
 3. **The bundle ID** in `capacitor.config.json`. Must match what's registered in App Store Connect, and it's effectively permanent once submitted. Pick the final one before the first TestFlight build if you can — and if the app name is still in flux, a neutral bundle ID (`com.yourname.owg`) ages better than a branded one.
 

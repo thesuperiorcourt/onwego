@@ -2,7 +2,7 @@
 
 A gap analysis for On We Go, written after reviewing the Joie roadmap and developer instructions. Joie is a different product with different values; this borrows its *structure* and its discipline, not its answers.
 
-Nothing here is urgent today. The order of work is still: sign-in works → engine bugs → QA → interface. This document exists so that none of it is a surprise later, and so the decisions that are hard to reverse get made deliberately rather than by accident.
+Nothing here is urgent today. See HANDOFF.md's "Order of work" for the current sequence. This document exists so that none of it is a surprise later, and so the decisions that are hard to reverse get made deliberately rather than by accident.
 
 ---
 
@@ -70,7 +70,7 @@ None of this exists yet. All of it is required for a public App Store release.
 | Data export | **exists** | Backups → download a copy |
 | **Data deletion** | **done** | Settings → Account → Delete account. Erases the cloud copy and the login itself, verified live — see "How to fix the five gaps" §1 |
 
-**The deletion gap is the one to fix soonest.** It's a legal requirement, it's an App Store review item, and it's also just correct: someone who signs up should be able to leave completely. It needs a Settings action, a function endpoint that deletes their rows, and a note in the privacy policy.
+Deletion is a legal requirement and an App Store review item — someone who signs up should be able to leave completely. It's built and verified live now; what's left here is a note in the privacy policy once one exists.
 
 ---
 
@@ -135,7 +135,7 @@ Sync belongs on the free side. An app that forgets your work unless you pay is n
 ## Operations
 
 - **Monitoring and alerts** — nothing exists. At minimum: know when a deploy fails and when the sync function starts erroring.
-- **Environment management** — currently three variables in Netlify. Document what each is for, and keep production and preview separate once there's real data.
+- **Environment management** — currently seven variables in Netlify (`DATABASE_URL`, `NEON_AUTH_URL`, `NEON_API_KEY`, `NEON_PROJECT_ID`, `NEON_BRANCH_ID`, `SENTRY_DSN`, `NODE_VERSION`). Document what each is for, and keep production and preview separate once there's real data.
 - **Backup verification** — backups exist; restoring from them has been tested locally but never from the cloud path. An untested restore is not a backup.
 - **Recovery procedures** — write down what to do when the database is unreachable, a bad deploy ships, or a user reports lost data.
 
@@ -144,7 +144,7 @@ Sync belongs on the free side. An app that forgets your work unless you pay is n
 ## Quality gaps not yet covered
 
 - **Responsive QA at small widths and large text.** Contrast and structure are verified; real-device testing at 320px and 200% Dynamic Type is not.
-- **Localization.** Every user-facing string is currently inline. Separating strings from logic is nearly free during the module split described in `HANDOFF.md`, and expensive afterwards. English-only at launch is fine; making it *impossible* to translate is not.
+- **Localization.** Every user-facing string is currently inline. The module split (see `HANDOFF.md`'s Layout section) is done, and strings weren't separated out from logic during it — that's still open, and cheaper now than after more UI ships on top of the current shape. English-only at launch is fine; making it *impossible* to translate is not.
 - **Performance with years of history.** Timeline renders every task in the campaign. At seventy that's fine; at two thousand it isn't. Needs virtualisation or paging eventually.
 - **Onboarding.** Still the largest product gap for anyone who isn't the owner.
 
@@ -211,7 +211,7 @@ Under a few hundred kilobytes, the document model is fine and simpler than the a
 
 ## Suggested sequence
 
-1. **Now:** finish sign-in, fix the engine bugs, QA the feature set.
-2. **Before TestFlight:** ~~account deletion~~ (built, needs three env vars to finish), ~~error monitoring~~ (built, needs `SENTRY_DSN` to reach Sentry specifically), arm row-level security, ~~self-host the fonts and SDK~~ (done).
-3. **Before public launch:** legal documents and URLs, business and support contacts, third-party inventory published in the privacy policy, entitlement matrix and paywall flags, onboarding, responsive and Dynamic Type QA.
+1. ~~Finish sign-in, fix the engine bugs, QA the feature set~~ — done, see `CHANGELOG.md`.
+2. ~~Before TestFlight: account deletion, error monitoring, row-level security, self-host the fonts and SDK~~ — all done and verified live, see `CHANGELOG.md`. TestFlight itself is still open — see HANDOFF.md's "Known open items", currently held until the launch-content-swap/information-architecture work is in a good spot.
+3. **Before public launch:** legal documents and URLs, business and support contacts, third-party inventory published in the privacy policy, entitlement matrix and paywall flags, onboarding (in progress — see HANDOFF.md's "Launch content swap"), responsive and Dynamic Type QA.
 4. **Decide deliberately, not by drift:** the data model, whether proof is stored, and the bundle identifier.

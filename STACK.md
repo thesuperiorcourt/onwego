@@ -9,7 +9,7 @@ What On We Go actually runs on, what each service is for, and what it costs. Rev
 | Service | Role | Cost while building | At launch |
 |---|---|---|---|
 | **GitHub** | Source control | Free | Free |
-| **Netlify** | Static hosting + serverless API + deploys | Free | Free, then usage-based |
+| **Netlify** | Static hosting + serverless API + deploys | Upgraded to Pro (2026-08-20) — a heavy day of active development (frequent deploys plus live-verification testing hitting the deployed API directly) burned through the 300-credit free-tier allowance in under a day | Pro while iterating this actively; revisit once the pace settles — see HANDOFF.md's deploy-batching note |
 | **Neon** | Postgres + Managed Better Auth | Free | Free tier likely holds; paid tier if it doesn't |
 | **Capacitor** | Wraps the web app as a native iOS app | Free, open source | Free |
 | **Apple Developer** | TestFlight + App Store | — | $99/year |
@@ -20,7 +20,7 @@ What On We Go actually runs on, what each service is for, and what it costs. Rev
 | **Domain** | — | ~$15/year | ~$15/year |
 | **Error monitoring** | Know when it breaks | Free tier (Sentry or similar) | Free tier |
 
-**Realistically: about a dollar a month plus the domain while building. Around $9/month equivalent once the Apple account is in play.** At launch, the same, until there are enough users to move Neon or Netlify off their free tiers — and by then there's revenue.
+**Realistically: about a dollar a month plus the domain while building, if usage stays light** — but a single day of heavy, deploy-and-live-test-heavy development was enough to exceed Netlify's free-tier credits (see the Netlify row above), so "while building" isn't automatically free once the pace picks up. Around $9/month equivalent once the Apple account is in play, plus whatever Netlify tier actually fits the real usage pattern. At launch, similar, until there are enough users to move Neon off its free tier too — and by then there's revenue.
 
 ---
 
@@ -42,11 +42,11 @@ Sign-in codes currently send through Neon's shared development sender. That's fi
 *Free tier covers thousands of emails a month; comfortable for a long time.*
 
 ### RevenueCat — when subscriptions get built, not before
-The right layer for this, and worth being clear about what it does and doesn't do. <cite index="140-1">It isn't a payment processor — it's an SDK that abstracts Apple's App Store, Google Play and web billing into one layer, handling server-side receipt validation, entitlements and subscription state, plus paywall tooling and analytics.</cite>
+The right layer for this, and worth being clear about what it does and doesn't do. It isn't a payment processor — it's an SDK that abstracts Apple's App Store, Google Play and web billing into one layer, handling server-side receipt validation, entitlements and subscription state, plus paywall tooling and analytics.
 
-It answers the question you asked directly: <cite index="145-1">it supports Stripe for web-based payments alongside Apple and Google, so mobile and web subscriptions are managed in one place.</cite> One entitlement check in the app, whichever way someone paid.
+It answers the question you asked directly: it supports Stripe for web-based payments alongside Apple and Google, so mobile and web subscriptions are managed in one place. One entitlement check in the app, whichever way someone paid.
 
-Cost: <cite index="148-1">free up to $2,500 in monthly tracked revenue, then 1% of tracked revenue — which sits on top of Apple's or Google's 15–30% commission.</cite> Apple's cut drops to 15% under their small business programme, which this qualifies for.
+Cost: free up to $2,500 in monthly tracked revenue, then 1% of tracked revenue — which sits on top of Apple's or Google's 15–30% commission. Apple's cut drops to 15% under their small business programme, which this qualifies for.
 
 *Don't wire it up early. It's plumbing for a decision that hasn't been made yet.*
 
