@@ -68,14 +68,8 @@ Progression should create different possible paths rather than one obvious upgra
 - Earlier choices can shape what becomes available later without permanently trapping the player.
 - Respeccing or changing direction should be possible enough that experimentation feels safe.
 
-### Structure metaphors worth stealing
+### Project management as gameplay
 Treat each new project like a business: staff, products, expansions, ingredients, production lines. Familiar job loops. Buy and sell loot, rewards and resources. Clear gear upgrades. Visible environmental progress.
-
-### Proof of work — the load-bearing idea
-Everything above collapses if rewards are free. **You have to actually do the thing.** Open the book and type the first sentence of the next chapter. Take the walk. Photograph the sent email. Screenshot the call you made.
-- Difficulty should scale by choice — some people want the honour system, some want the receipt.
-- Proof needs storage (photos, text snippets) and must be accounted for in backups and sync. This has real cost and privacy implications; decide early whether proof is stored or verified-then-discarded.
-- Proof is also the anti-cheat for any future social or competitive layer.
 
 ### Management as strategy
 The business metaphor should create real management decisions, not just business-themed rewards.
@@ -83,6 +77,12 @@ The business metaphor should create real management decisions, not just business
 - As progression deepens, the question should shift from *what task do I need to complete?* toward *what should I do with the resources and options I have?*
 - Staff and automation should gradually take over routine work while creating higher-level decisions.
 - New complexity should arrive coherently, after the player understands the systems it builds on.
+
+### Proof of work — the load-bearing idea
+Everything above collapses if rewards are free. **You have to actually do the thing.** Open the book and type the first sentence of the next chapter. Take the walk. Photograph the sent email. Screenshot the call you made.
+- Difficulty should scale by choice — some people want the honour system, some want the receipt.
+- Proof needs storage (photos, text snippets) and must be accounted for in backups and sync. This has real cost and privacy implications; decide early whether proof is stored or verified-then-discarded.
+- Proof is also the anti-cheat for any future social or competitive layer.
 
 ### Discovery creates momentum
 The player should never know absolutely everything waiting ahead.
@@ -106,7 +106,7 @@ Every session should deliver some payoff while exposing an appealing next step.
 - Design for *wanting to see what happens next*, not merely remembering that another task is due.
 
 ### Optional depth, for people who want it
-Backstories, characters, exploration, design and decoration — for narrative momentum and personality. Consequential choices. Mini-games. Strictly optional: the setup burden must stay near zero for people who just want to get through their week.
+Backstories, characters, exploration, design and decoration — for narrative momentum and personality. Consequential narrative choices. Mini-games. Strictly optional: the setup burden must stay near zero for people who just want to get through their week.
 
 ### Creativity without placement burden
 Customization should create ownership and personality without turning into a blank-canvas design problem.
