@@ -31,7 +31,7 @@ const P=(c,m)=>console.log((c?'PASS':'FAIL')+' — '+m);
     P(st.remaining===339,'remaining = '+st.remaining);
     // ranges relabelled
     const nxt=G('App.W').tasks.filter(t=>t.date>G('today()'))[0];
-    P(/Ch\. \d+/.test(nxt.range),'next task relabelled: '+nxt.range);
+    P(/chapter \d+/.test(nxt.range),'next task relabelled: '+nxt.range);
     // switch to pace anchor -> date moves instead
     d.querySelector('.drop [data-close]') && d.querySelector('.drop [data-close]').click();
     d.querySelector('[data-view=tasks]').click();

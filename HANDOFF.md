@@ -68,13 +68,23 @@ The generic-first test to apply to every change: *would this feature make sense 
 
 The owner's priority, in her words: **get the core app functional first, then go back and change the index.**
 
-1. ~~Make sign-in and sync provably work~~ — done, see `CHANGELOG.md`.
+1. ~~Make sign-in and sync provably work~~ — done, both Google and email-code, see `CHANGELOG.md`.
 2. ~~Fix what's broken in the engine~~ — `PARTS.md` defect K1 (missed days not visibly redistributing) fixed, see `CHANGELOG.md`.
-3. **QA the whole feature set against real use** — the method is at the bottom of `PARTS.md`. The question is never "does it render", it's "what's the why, and does it hold when the user misses a day." Still open, ongoing.
-4. **Then** the interface and product changes in `BRAINSTORM.md` and `VISION.md`.
-5. ~~Before TestFlight, the short list at the end of `PRODUCTION.md`~~ — account deletion and error monitoring are built but waiting on env vars (Netlify: `NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID`, `SENTRY_DSN`); row-level security is armed. See "Known open items".
+3. ~~Before TestFlight, the short list at the end of `PRODUCTION.md`~~ — account deletion, error monitoring and row-level security are all done and verified live. See `CHANGELOG.md`.
+4. **QA the whole feature set against real use** — the method is at the bottom of `PARTS.md`. The question is never "does it render", it's "what's the why, and does it hold when the user misses a day." Still open, ongoing.
+5. **Then** the interface and product changes in `BRAINSTORM.md` and `VISION.md`.
 
 Expect all of this to be iterative.
+
+### Agreed sequencing (2026-08-20) — stick to this unless something logically has to jump the queue
+
+1. **Launch content swap** — replace the Maas seed with generic starter content + real onboarding. Owner's own data is unaffected either way; see the "About the reading data" section above. In progress.
+2. ~~Vocabulary pass~~ and ~~email-code + Safari sign-in verification~~ — both done alongside the content swap, see `CHANGELOG.md`. (Safari specifically stayed open — see "State of play".)
+3. **Docs audit** — before touching `VISION.md`/`BRAINSTORM.md`, look over `NAMING.md`, `PARTS.md`, `PRODUCTION.md` and `README.md` for the same kind of staleness this file just had cleaned out of it, and catch anything from tonight's work that isn't reflected yet.
+4. **Build `InformationArchitecture.md`** — work through whatever the docs audit turns up, plus all of `VISION.md` and `BRAINSTORM.md` together, and land the result here. This is the big one: the Tasks/Timeline duplication, the Tracks/Tasks separation proposal (rename Tasks→Tracks, Worlds→Portfolios, Tracks as VISION's "project" concept), task-type visual differentiation, and Tracks' own field complexity (where categories come from, "total to finish"/"counted as" needing a project/task "type" first) all go here rather than getting decided piecemeal. Update this file (`HANDOFF.md`) once it lands.
+5. **Held until 3–4 are in a good-enough spot, not indefinitely**: Sign in with Apple (blocked on public App Store release anyway), theme pack re-colors (pure polish), TestFlight setup (do it sooner if the owner wants on-device testing before then — otherwise no urgency).
+
+Also still open, no fixed slot: the broader "undo rewards" problem — reversing a *logged result* is solved (`unlogTask()`), but reversing rewards already *spent* (currency put toward a shop item) is a real, harder economy question, flagged for `VISION.md`/`BRAINSTORM.md` rather than solved now.
 
 ## Non-negotiables
 
@@ -153,7 +163,7 @@ The three win buttons show their own consequence (`5.06/day left`, or a projecte
 
 **Verified live:** the full auth handshake and the RLS cutover — see `CHANGELOG.md` for what was checked and how.
 
-Still not exercised: the email-code sign-in path (only Google has been tried live), and Safari specifically (checked in Chromium). Worth a pass before a public launch, not blocking.
+Still not exercised: Safari specifically (checked in Chromium and confirmed working via email-code — see `CHANGELOG.md`). Blocked locally on an Xcode configuration issue that needs the owner's own `sudo` access (`xcode-select -s /Applications/Xcode.app/Contents/Developer`) to test via the iOS Simulator; testing in a real Safari browser directly would also close this. Worth a pass before a public launch, not blocking.
 
 ---
 

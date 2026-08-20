@@ -73,7 +73,7 @@ The data layer, exposed. Should answer: *what's in this project and let me chang
 | K7 | Task editor | `taskEditor()` — every field in `TASK_FIELDS`; only `title` is required to save | Everything editable; only title required | Tasks, tracks, streak | ok |
 | K8 | Task types | A task carries `target`/`streak`/others in `types[]`; `hasType()` gates behaviour — only `target` tasks move `unitsDone` | A task can be several things at once | Tracks, streak, repeats | unverified in real use |
 | K9 | Repeat rules | `spawnRepeat()` — after logging, clones the task to its next date per the configured repeat rule | Recurring work without re-entry | Tasks | unverified |
-| K10 | New-world flow | `SHEETS.newworld()` — name, unit, currency, theme, start/end, parts as a textarea | Start a project | Worlds, tasks, tracks, themes | **unclear and reading-flavoured — see BRAINSTORM** |
+| K10 | New-world flow | `SHEETS.newworld()` — name, unit, currency, theme, start/end, parts as a textarea | Start a project | Worlds, tasks, tracks, themes | generic-first violations fixed — the unit field no longer pre-fills "chapter" (was a real bug: `makeWorld()` hardcoded `first:'Ch. 1'`/`last:'Ch. '+units` on every new world's parts regardless of what unit the user typed, and `unitLabel()`'s fallback hardcoded "Ch." too, so a kitchen-remodel world would still show "Ch. 5" day labels; both now build the label from the world's own `unit`). Parts placeholder no longer book-specific. Whether "Worlds" itself is the right taxonomy — see BRAINSTORM's Tracks/Tasks separation proposal |
 
 ---
 

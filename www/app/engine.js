@@ -16,7 +16,7 @@ export const LEVELS = [
 ];
 
 export const PAYOUT = {
-  min:  { xp:10, coins:5,  label:'Minimum win', sub:'2 chapters. Counts.',       lootChance:0    },
+  min:  { xp:10, coins:5,  label:'Minimum win', sub:'A little. Still counts.',   lootChance:0    },
   full: { xp:20, coins:12, label:'Full clear',  sub:"Today's whole target",      lootChance:0.35 },
   boss: { xp:30, coins:20, label:'Boss mode',   sub:'You kept going',            lootChance:1    }
 };
@@ -37,7 +37,7 @@ export const DEFAULT_SHOP = [
   { g:'☕', n:'Fancy coffee',            c:25  },
   { g:'🎮', n:'Guilt-free gaming night', c:50  },
   { g:'🍬', n:'Silly little treat',      c:75  },
-  { g:'📚', n:'New book',                c:150 },
+  { g:'🎁', n:'Something new',           c:150 },
   { g:'🏆', n:'Campaign boss reward',    c:250 }
 ];
 /* --------------------------------- dates ---------------------------------- */
@@ -57,10 +57,9 @@ export function unitLabel(w, globalIdx) {
   for (const b of w.books) {
     if (n < b.units) {
       if (b.labels) return b.labels[n];
-      if (n === 0 && b.first && b.first !== 'Ch. 1') return b.first;
+      if (n === 0 && b.first) return b.first;
       if (n === b.units - 1 && b.last) return b.last;
-      const off = (b.first === 'Prologue') ? 0 : parseInt(String(b.first).replace(/\D/g,''), 10) || 1;
-      return 'Ch. ' + (b.first === 'Prologue' ? n : n + off);
+      return (w.unit || 'unit') + ' ' + (n + 1);
     }
     n -= b.units;
   }
@@ -134,7 +133,7 @@ export function makeWorld(spec) {
   const id = 'w' + Date.now().toString(36);
   const books = spec.parts.map((p, i) => ({
     id: 'p' + i, title: p.name, short: p.name.slice(0, 3).toUpperCase(),
-    realm: p.name, units: p.units, first: 'Ch. 1', last: 'Ch. ' + p.units, startNote: 'From the top'
+    realm: p.name, units: p.units
   }));
   const dates = [];
   for (let d = parseISO(spec.start); iso(d) <= spec.end; d.setDate(d.getDate() + 1)) dates.push(iso(d));

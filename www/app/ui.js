@@ -140,7 +140,7 @@ export const SHEETS = {
       <label class="f" for="nw_name"><span>Name</span></label>
       <input id="nw_name" placeholder="Stormlight, or Spanish, or the garage" style="margin-bottom:14px">
       <label class="f" for="nw_unit"><span>What are you counting?</span></label>
-      <input id="nw_unit" placeholder="chapter" value="chapter" style="margin-bottom:14px">
+      <input id="nw_unit" placeholder="chapter, mile, page, load of laundry…" style="margin-bottom:14px">
       <label class="f" for="nw_cur"><span>Currency name</span></label>
       <input id="nw_cur" placeholder="Coins" value="Coins" style="margin-bottom:14px">
       <label class="f" for="nw_theme"><span>Theme pack</span></label>
@@ -152,7 +152,7 @@ export const SHEETS = {
         <div style="flex:1"><label class="f" for="nw_end"><span>End</span></label><input type="date" id="nw_end"></div>
       </div>
       <label class="f" for="nw_parts"><span>Parts <span class="hint">— one per line, as name, count</span></span></label>
-      <textarea id="nw_parts" rows="4" placeholder="Book one, 42&#10;Book two, 38" style="margin-bottom:14px"></textarea>
+      <textarea id="nw_parts" rows="4" placeholder="Foundation, 12&#10;Framing, 20" style="margin-bottom:14px"></textarea>
       <button class="btn" id="nw_go">Create world</button>`;
   },
   themes() {
@@ -389,7 +389,7 @@ document.addEventListener('click', e => {
     const name = $('nw_name').value.trim(), start = $('nw_start').value, end = $('nw_end').value;
     if (!name || !start || !end || !parts.length) { setErr('Add a name, both dates, and at least one part.'); return; }
     if (end < start) { setErr('The end date has to come after the start date.'); return; }
-    const w = makeWorld({ name, unit:$('nw_unit').value.trim() || 'chapter', currency:$('nw_cur').value.trim() || 'Coins',
+    const w = makeWorld({ name, unit:$('nw_unit').value.trim() || 'unit', currency:$('nw_cur').value.trim() || 'Coins',
                           theme:$('nw_theme').value, start, end, parts });
     indexDays(w); linkMilestones(w); migrateTasks(w); migrateTracks(w);
     App.S.worlds.push(w); App.S.activeId = w.id; App.W = w;
