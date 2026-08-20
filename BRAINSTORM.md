@@ -135,6 +135,15 @@ What's still genuinely unsolved is the harder version: **rewards are cumulative 
 
 This is a project-management-and-game-both problem: VISION.md §11 (the core economy) and §11F–G (reward choices, "never create money with nothing to buy") don't yet address take-backs at all — they're written for the forward direction only. Worth treating as its own design pass once the economy is otherwise settled, not something to patch incrementally: decide whether undo should ever reach past the immediate log (probably not — "undo the log, live with what it produced" may be the right, simpler answer), and if it should, what "already spent" means for each reward type before writing the reversal logic.
 
+### Does everyone actually earn enough to spend it?
+
+A real, unanswered fairness question about the current economy, not yet a design: the reward shop's default prices (`DEFAULT_SHOP`, engine.js) and per-log payouts were tuned against the Maasverse campaign's pace — a task most nights, a boss-mode clear worth 30 XP / 20 coins, 69 days of near-daily logging. Two very different users don't obviously get the same deal out of that:
+
+- **The kitchen-remodel person** — a project with maybe a dozen total tasks across weeks or months, not a task most nights. If currency accrues per-log rather than per-session or per-day, do they ever accumulate enough to buy the more expensive shop items, or does the shop implicitly assume daily-cadence logging?
+- **The anytime/no-deadline task person** (VISION §2C's "anytime" type, PARTS K8) — no track, no pace, no deadline pressure at all. What produces XP and currency for them, and does progression mean anything without a track to move?
+
+Neither case is broken today — logging still pays out XP/coins regardless of cadence — but "does this feel like fair, meaningful progression" for a low-frequency or track-less user hasn't actually been checked against real use, only against the daily reading campaign. Worth a real look once the project/task type taxonomy is settled (see "Tracks are really Projects" below) — pricing and payout design probably needs to scale with a project's *own* cadence and size, not use one fixed schedule for every kind of project.
+
 ---
 
 ## 3. Project model
@@ -154,6 +163,8 @@ Currently the new-project flow assumes you're counting your way through a book. 
 - *Milestones* — nice, especially tied to unlocks. Optional.
 
 **Worth studying:** what Asana, Monday and Notion expose at project level — templates, phases, dependencies, custom fields, views, statuses, owners. Take what fits a single-player game; leave the enterprise ceremony.
+
+**CSV import/export, once the shape is settled — not before.** `PRODUCTION.md` already covers whole-state JSON export/import (backup, not bulk data entry). A CSV round trip is a different, genuinely useful thing once there's a stable project/task type to export: bulk-add or bulk-edit tasks in a spreadsheet instead of one at a time in the editor. The real design problem is relational fields, not the file format — a task's category or track is a reference (`belongs_to`), not a plain value. The workable pattern: export includes both the human-readable name *and* the internal id in separate columns; import matches on id when present, and falls back to a name-based lookup (with a dropdown/typeahead in the import UI for anything that doesn't match cleanly) when it's a hand-edited or freshly authored CSV with no ids yet. Worth having a fallback path for `belongs_to_many` fields (tags) too — comma-separated names in one cell is the usual convention. JSON stays the format for full-fidelity backup/restore; CSV is specifically for bulk editing in a spreadsheet, and the two don't need to be the same mechanism. Plain `.txt` isn't worth a separate path — nothing here is unstructured enough to need it.
 
 ### Tracks are really Projects, and the tab structure should say so
 
@@ -213,6 +224,18 @@ The app will likely be renamed again before launch. See NAMING.md for every plac
 - **TestFlight** matters early — not just to distribute, but to find out what the App Store side demands before it's expensive to discover.
 - Sign in with Apple isn't offered by the current auth provider; it becomes a requirement for public release alongside Google sign-in.
 - Native capabilities worth considering later: notifications, widgets, Shortcuts, Live Activities for a running sprint.
+
+### AI/LLM integration — genuinely open, not yet decided
+
+Real use cases exist: writing hook copy that motivates without spoiling (the "non-spoiler spoiler" idea), helping populate a new project's tasks from a rough description, and — the harder one — remembering something about what a user is interested in and using that later. None of these are built; none should be, before the questions below have real answers.
+
+**The core decision: whose API key, and which direction does data move?** Two shapes, and they're not equivalent:
+- *The app's own key* (a free tier, or a paid one the owner funds) — the owner pays, or the free tier runs out, possibly at the worst time (mid-launch, when usage just picked up). This is exactly a `COSTS.md` situation: a per-request cost that's invisible at zero users and real at any real number of them.
+- *Bring-your-own-key* (the user provides their own OpenAI/Anthropic/etc. key) — no cost to the owner, but real friction for a general user, and it shifts the security question onto safely storing someone else's API credential instead of avoiding it.
+
+**"Sends data out but doesn't pull data in"** (the framing this question was originally asked with) is a real, useful constraint to hold onto: using an LLM to *generate* a hook or a task list from a prompt is a one-way call — the user's rough description goes out, generated text comes back, nothing about the user is retained by the LLM provider beyond that single request (depending on the provider's own data-retention policy, which needs checking, not assumed). "Remembering the user's interests" is a fundamentally different, harder thing — that's the app choosing to store an inferred profile somewhere, which is a data-model, privacy-policy and storage-cost question regardless of which AI vendor is involved.
+
+**Which provider "won't run out"** isn't really the right question — every provider's free tier has a ceiling, and every paid tier bills per token. The actual question is which of the two shapes above is being built, and `COSTS.md`'s rule applies either way: before this ships, the owner sees the real cost shape (fixed vs. per-request vs. shifted to the user) and who's actually paying it, not after.
 
 ---
 

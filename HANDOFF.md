@@ -62,7 +62,18 @@ The generic-first test to apply to every change: *would this feature make sense 
 | `NAMING.md` | Every place the app name lives, and the checklist for renaming it safely |
 | `PRODUCTION.md` | What's missing before this can be a real product: legal, security, subscriptions, operations, the decisions that are expensive to reverse, and how to fix the five biggest gaps |
 | `STACK.md` | Every service, what it's for, what it costs, and what was deliberately left out |
+| `COSTS.md` | The money-and-legal non-negotiable (#8 below) — warn before building anything with a real or scaling cost |
+| `FAQ.md` | Questions a user (or the owner, standing in for one) would actually ask, organized by category — will eventually live in the app's own Settings |
 | `README.md` | What the app is, how to deploy it, how the systems work |
+| `PUBLISH-FROM-IPHONE.md` | The same setup as `README.md`, walked through entirely on a phone — no Mac needed until TestFlight |
+
+### Keeping the docs themselves from going stale
+
+Two speeds, not one fixed cadence — a full re-read of every doc every session doesn't scale as they grow (`VISION.md` alone is ~5,000 lines), and a fixed calendar interval doesn't match how bursty this project's work actually is.
+
+- **Lightweight, at the start of any new work phase** (picking back up after a gap, or before a new initiative): a quick grep sweep for known drift patterns — stale file paths (`www/index.html` claims that predate the module split, that kind of thing), dead dependency names, suite/file counts, "built but needs X" phrasing for things that are actually done. This is what caught tonight's drift in `NAMING.md`, `PRODUCTION.md`, `README.md` and `test/README.md` — cheap, and it works.
+- **Deeper, less often**: whenever a structural change ships (a rename, a module split, a big feature merge, a folded-together tab) — read the docs most coupled to exact file locations and counts (`HANDOFF.md`, `PARTS.md`, `NAMING.md`, `PRODUCTION.md`, `README.md`, `test/README.md`) fully, not just grep. The more narrative docs (`VISION.md`, `BRAINSTORM.md`, `STACK.md`, `COSTS.md`) drift less often since they're less tied to exact code locations, so they don't need the same frequency.
+- **Revisit this cadence itself** once there's a few cycles of evidence on whether it's catching real problems or just busywork — don't treat this split as permanent on faith.
 
 ## Order of work
 
@@ -96,6 +107,7 @@ Also still open, no fixed slot: the broader "undo rewards" problem — reversing
 5. **Run the tests before saying something works.** `test/` has fifteen `.cjs` suites plus `a11y_contrast.py`, no framework — see `test/README.md`.
 6. **No AI or agent language anywhere in the project.** Code comments, UI copy, docs and commit messages read as a team's work. That AI was used gets disclosed honestly elsewhere; it doesn't belong in the product's voice. Address whoever picks up a task as a colleague — a developer or designer on this team — not as a tool.
 7. **`PARTS.md` updates in the same commit as the part it describes.** Every feature or functionality change — new, altered, or removed, BRAINSTORM work included — updates that part's row before the commit lands, not after. Cover what it does, where it lives, why it exists, when it changed, who asked for it (if that's not obvious), and how it works. See the taxonomy-before-features principle above: this is how that principle stays true instead of becoming a slogan.
+8. **Warn before committing to a cost.** Money, a recurring or scaling bill, a legal obligation, or significant time/energy on something unproven — flag it, with what it costs now *and* at realistic future scale, before building it. See `COSTS.md`.
 
 ---
 

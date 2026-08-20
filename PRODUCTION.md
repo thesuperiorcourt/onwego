@@ -148,6 +148,30 @@ Sync belongs on the free side. An app that forgets your work unless you pay is n
 - **Performance with years of history.** Timeline renders every task in the campaign. At seventy that's fine; at two thousand it isn't. Needs virtualisation or paging eventually.
 - **Onboarding.** Still the largest product gap for anyone who isn't the owner.
 
+---
+
+## What an agency delivers that isn't here yet
+
+Answering directly: if a studio handed this off as "launch ready," here's what would be missing from the delivery, split the same way an agency would split it. Not all of this matters before TestFlight — see the priority note after each group.
+
+### Production / technical
+
+- **App Store listing assets.** Icon at every required size, screenshots, an optional preview video, keywords, category, age rating questionnaire, description and subtitle copy. None of this exists yet. *Needed before App Store submission, not before TestFlight.*
+- **Native-layer crash reporting.** Sentry currently only catches JS-level errors inside the WebView (`netlify/functions/error.mjs`, `www/app/main.js`). A native Capacitor-level failure — the WebView itself failing to load, a native plugin crashing — wouldn't be caught by that path. *Worth closing before TestFlight, since that's exactly the environment where it'd first matter.*
+- **A device/OS test matrix.** "Test on a real device" appears in this file and `README.md`'s accessibility section, but there's no actual list of which iOS versions and screen sizes get checked before a release ships. *Define before the first TestFlight build, even if the list is short.*
+- **A real screen-reader user, not just automated checks.** Every a11y claim in this project is verified by `test/a11y_contrast.py` and structural test suites — genuinely good coverage, but automated tooling can't catch everything a person using VoiceOver day-to-day would. *Worth doing once, before public launch; not urgent for TestFlight with known testers.*
+- **Push notification infrastructure.** Flagged as "worth considering later" in `BRAINSTORM.md` §7 but nothing is built — no APNs setup, no permission-request UX, no content strategy for what a notification would even say. *Genuinely later — nothing today depends on it.*
+- **Backup disaster-recovery targets.** This file already flags that cloud-path restore is untested; an agency would also write down a recovery-time and recovery-point objective for the *service* as a whole (how long is acceptable downtime, how much data loss is acceptable in the worst case), not just per-backup testing. *Before real users' data is on the line — i.e., before public launch, not before TestFlight with one user.*
+- **COPPA.** Not addressed anywhere. If there's any realistic chance of under-13 users, that's a separate legal track from GDPR/CCPA (already tracked in this file), with its own consent requirements. Worth a deliberate "no, this isn't aimed at children" decision if that's true, stated somewhere, rather than silence. *Decide before public launch.*
+
+### Content
+
+- **Legal document drafts.** This file lists Privacy Policy, ToS, etc. as "missing," but an agency would usually draft these early — even before attorney review — because writing them forces honest answers to the data-handling questions, same reasoning `COSTS.md` now states for the review-before-launch rule. *Draft early; review before launch.*
+- **A voice/tone reference beyond one paragraph.** `BRAINSTORM.md` §8 has the house style in brief ("deadpan, specific, never chirpy"). A short set of good-vs-bad copy examples would keep it consistent as more surfaces get written, especially with more than one person or session touching copy over time. *Cheap, worth doing soon.*
+- **User-visible release notes.** `CHANGELOG.md` is for whoever's building this, not for a user. Once there's more than one person on TestFlight, a short "what's new" a real user would read becomes worth having. *Not before TestFlight; worth it once there's more than one tester.*
+- **An in-app way to report a problem**, distinct from the automatic Sentry error capture — a user noticing something *feels* wrong (not a JS exception) currently has no way to say so from inside the app. *Worth having before wider TestFlight distribution.*
+
+Not repeating what's already tracked elsewhere in this file: analytics (already listed as a gap, no plan yet — worth noting the tension between "don't use journal content for analytics" and wanting to know if a feature is actually used), and onboarding (already called the biggest gap above).
 
 ---
 

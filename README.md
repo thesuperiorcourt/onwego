@@ -6,6 +6,8 @@ Anything with parts, amounts and a deadline fits: a course, a training block, a 
 
 **The build currently ships with an example campaign** — a 69-day Sarah J. Maas reading run ending 27 Oct 2026 — as seed content for testing against a real use case. It comes out before public launch, replaced by generic starter content. The engine knows nothing about books: everything is worlds, tasks, units and dates, with the labels supplied by whoever is using it.
 
+**Before adding anything with a real or scaling cost — money, a legal obligation, or significant time on something unproven — see `COSTS.md`.** It's a non-negotiable (`HANDOFF.md` #8), not a suggestion.
+
 ## 1. Push it to GitHub
 
 ```bash
