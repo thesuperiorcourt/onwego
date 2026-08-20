@@ -4,6 +4,14 @@ Resolved work, newest first. `HANDOFF.md` holds what's still open; this is where
 
 ---
 
+## 2026-08-20
+
+**Account deletion finished — `NEON_BRANCH_ID` corrected, verified live.** All three env vars (`NEON_API_KEY`, `NEON_PROJECT_ID`, `NEON_BRANCH_ID`) were present in Netlify, but presence didn't mean correct — the same lesson as error monitoring the day before. `NEON_BRANCH_ID` pointed at a branch with no Neon Auth integration attached, which Neon's real API caught immediately (`404 "Neon Auth integration not found for branch"`) once tested against a nonexistent user id, so nothing real was ever touched. Corrected to the branch Auth is actually on, then confirmed with a syntactically valid but nonexistent UUID: the real endpoint returned `404 "User not found"` — the only way to get that specific response, since it means the key authenticated, the project and branch resolved, and the integration is live. Data deletion itself was unaffected throughout; only login removal was blocked.
+
+**Also fixed a date-fragile test assertion** in `test/ripple_strain_test.cjs` (`'now needs 5.1 a day'` hardcoded against the day it was written; broke the next day since `perSlot` depends on `today()`) — now computes the expected number the same way the app does.
+
+---
+
 ## 2026-08-19
 
 **Error monitoring finished — `SENTRY_DSN` set, and a real bug it surfaced fixed.** Setting the env var alone wasn't enough: the hand-built Sentry envelope had no `event_id`, which Sentry's ingest API requires on both the envelope header and the event item. Without one, ingest returns 200 and silently drops the event — the function's own logs showed nothing wrong, and the client got its usual `{"ok":true}`, so this would have looked like working monitoring indefinitely without an actual test event. Caught by sending real test probes and checking Sentry's Issues view directly rather than trusting the 200 response. Fixed by generating a real `event_id` (`crypto.randomUUID()`) for both the envelope header and payload, and by logging a rejected (non-2xx) Sentry response instead of swallowing it silently, so a future failure like this is diagnosable from Netlify's logs alone. Confirmed end to end: a test event showed up in Sentry with full context (environment, exception, level).

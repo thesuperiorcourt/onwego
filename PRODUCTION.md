@@ -68,7 +68,7 @@ None of this exists yet. All of it is required for a public App Store release.
 | Support email | missing | App Store requires a support URL or address |
 | Privacy request contact | missing | Required by GDPR/CCPA |
 | Data export | **exists** | Backups → download a copy |
-| **Data deletion** | **built** | Settings → Account → Delete account. Erases the cloud copy always; erases the login itself once `NEON_API_KEY`/`NEON_PROJECT_ID`/`NEON_BRANCH_ID` are set — see "How to fix the five gaps" §1 |
+| **Data deletion** | **done** | Settings → Account → Delete account. Erases the cloud copy and the login itself, verified live — see "How to fix the five gaps" §1 |
 
 **The deletion gap is the one to fix soonest.** It's a legal requirement, it's an App Store review item, and it's also just correct: someone who signs up should be able to leave completely. It needs a Settings action, a function endpoint that deletes their rows, and a note in the privacy policy.
 
@@ -153,17 +153,17 @@ Sync belongs on the free side. An app that forgets your work unless you pay is n
 
 ## How to fix the five gaps
 
-Concrete enough to hand to whoever picks up the work. None of these is built yet — this document and the others are the only things that changed in the repo so far.
+Concrete enough to hand to whoever picks up the work. Status per gap noted in each heading — see `CHANGELOG.md` for when and how each was verified.
 
-### 1. Account deletion *(built)*
+### 1. Account deletion *(done, 2026-08-20)*
 
 **Server:** `DELETE /api/sync` in `netlify/functions/sync.mjs` erases `app_snapshot` then `app_state` for the verified user, then calls `deleteAuthUser()`, which removes the login itself via Neon's project API (`DELETE .../auth/users/{id}`, a Neon API key, project id and branch id — not Better Auth's own client-side self-delete, which needs an email-verification round trip this app doesn't wire up). Data is always erased; the login-removal step degrades honestly if unconfigured, reporting `account:false` with a reason instead of pretending success.
 
-**Still needed to finish this live:** all three env vars are set (`NEON_API_KEY`, `NEON_PROJECT_ID`, `NEON_BRANCH_ID`) and confirmed reaching the deployed function. But `NEON_BRANCH_ID` points at the wrong branch — calling the real Neon endpoint against it (with a user id that can't exist, so nothing real was touched) returned `404 "Neon Auth integration not found for branch"`. The API key itself authenticates fine; it's specifically the branch id that needs to be the one Neon Auth is actually attached to. Fix in Neon Console: find which branch has the Auth integration and set `NEON_BRANCH_ID` to that branch's id. Data deletion is unaffected either way — it doesn't touch Neon's Auth API at all, only the login-removal step is blocked.
+**Verified live:** all three env vars (`NEON_API_KEY`, `NEON_PROJECT_ID`, `NEON_BRANCH_ID`) reach the deployed function and are correctly configured. Caught and fixed a real misconfiguration along the way — `NEON_BRANCH_ID` initially pointed at a branch with no Neon Auth integration attached, returning `404 "Neon Auth integration not found for branch"`; corrected to the branch Auth is actually on. Confirmed end to end with a syntactically valid but nonexistent UUID (so nothing real was ever touched): the real Neon endpoint returned `404 "User not found"`, proving the key authenticates, the project and branch resolve, and the integration is live — the only way that specific response occurs.
 
 **Client:** Settings → Account, below sign-out. Two-tap `#ac_delete` (same arm-then-confirm pattern as task and track deletion), with `#ac_export` offered first. Copy is explicit that an offline device is untouched.
 
-**Test:** `test/sync_server_test.cjs` — two-account isolation (delete one, the other's rows survive), the honest "not configured" path, and a stubbed `__onwegoAuthDelete` proving the right Neon endpoint and API key get used once configured. `test/account_test.cjs` covers the client-side two-tap flow. Not yet verified against the real Neon API with a real user id — deliberately, since testing delete against a live account is destructive; do that with a throwaway account once the branch id is corrected.
+**Test:** `test/sync_server_test.cjs` — two-account isolation (delete one, the other's rows survive), the honest "not configured" path, and a stubbed `__onwegoAuthDelete` proving the right Neon endpoint and API key get used once configured. `test/account_test.cjs` covers the client-side two-tap flow. Deletion against a real signed-in account (as opposed to the nonexistent-id endpoint check above) is still deliberately unexercised, since that's destructive — do that with a throwaway account if it's ever worth confirming further.
 
 ### 2. Error monitoring *(done, 2026-08-19)*
 
