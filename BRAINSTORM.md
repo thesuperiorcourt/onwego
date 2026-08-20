@@ -1,5 +1,7 @@
 # BRAINSTORM
 
+**Read `VISION.md` first.** It's the canonical product vision (v3) — a far more complete, worked-out picture of the PM layer, the game layer, and how they connect than anything below. Where this file and VISION.md disagree, VISION.md wins; treat entries here as either not yet folded into it, or as narrower notes that still apply within it.
+
 Ideas, direction and open questions. Not a task list — PARTS.md and HANDOFF.md hold the work. This is where the thinking lives so it doesn't get lost between sessions.
 
 Sections are by **category**, not by tab, because most of these cut across screens. Each idea keeps enough detail to be actionable later; nothing here is decided until it moves into HANDOFF.

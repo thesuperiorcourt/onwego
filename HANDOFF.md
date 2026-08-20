@@ -2,6 +2,8 @@
 
 Everything a fresh session needs to keep building this. Written for whoever picks up the work in the local clone.
 
+**Read `VISION.md` before anything else.** It's the product vision (v3) — a real project-management layer whose real work powers a deep management game, not a task list with XP bolted on. Everything in the current prototype can change to serve it; §40–41 spell out exactly what to keep and what to replace. `BRAINSTORM.md` points to it too, but the settled decisions and open items below should be read in its light, not independently of it.
+
 ## Settled decisions
 
 Decided; don't relitigate without a reason.
