@@ -43,30 +43,6 @@ Real-world effort should turn into things that turn into other things. Avoid red
 * Resources should have purposes beyond accumulation: crafting, trading, upgrading, staffing, unlocking, combining or investing.
 * Allow production chains to grow in complexity as new resources, recipes, staff, equipment and automation become available.
 * Let earlier manual transformations eventually become streamlined or automated, opening room for higher-level decisions.
-* Progress should visibly alter the state of the world: businesses grow, environments change, collections fill, staff appear, equipment improves and new spaces open.
-* The player should be able to look at the current game state and see what their real-world effort has become.
-
-### Depth to aim at
-Many upgrades (think in the hundreds, not the dozens). Equipment or loadout combinations. Secrets. Jackpots. Deckbuilding-adjacent strategy where choices interact. New mechanics between areas so the game changes as you go, rather than the same loop with bigger numbers.
-
-### Structure metaphors worth stealing
-Treat each new project like a business: staff, products, expansions, ingredients, production lines. Familiar job loops. Buy and sell loot, rewards and resources. Clear gear upgrades. Visible environmental progress.
-
-### Proof of work — the load-bearing idea
-Everything above collapses if rewards are free. **You have to actually do the thing.** Open the book and type the first sentence of the next chapter. Take the walk. Photograph the sent email. Screenshot the call you made.
-
-- Difficulty should scale by choice — some people want the honour system, some want the receipt.
-- Proof needs storage (photos, text snippets) and must be accounted for in backups and sync. This has real cost and privacy implications; decide early whether proof is stored or verified-then-discarded.
-- Proof is also the anti-cheat for any future social or competitive layer.
-
-### Optional depth, for people who want it
-Backstories, characters, exploration, design and decoration — for narrative momentum and personality. Consequential choices. Mini-games. Strictly optional: the setup burden must stay near zero for people who just want to get through their week.
-
-### Design constraints for all of the above
-- No friction between opening the app and playing.
-- No dead time.
-- The reward layer must introduce itself. Four unexplained currencies is worse than one explained one.
-- Nothing punishes. Difficulty is opt-in; failure is never humiliating.
 
 ### Expansion over inflation
 Progress should unlock **new capabilities, not just bigger numbers**. New mechanics, jobs, resources, areas, characters, equipment, recipes and strategic options should keep appearing throughout the experience.
@@ -82,12 +58,24 @@ Depth should come from systems interacting with one another, not from piling on 
 - Something earned in one part of the game should often create possibilities somewhere else.
 - The more the player progresses, the more interesting the relationships between systems should become.
 
+### Depth to aim at
+Many upgrades (think in the hundreds, not the dozens). Equipment or loadout combinations. Secrets. Jackpots. Combinatorial strategy where resources, equipment, cards, staff or other systems interact. New mechanics between areas so the game changes as you go, rather than the same loop with bigger numbers.
+
 ### Meaningful choices
 Progression should create different possible paths rather than one obvious upgrade ladder.
 - Choices can unlock different tools, jobs, strategies, staff, equipment, mechanics or future upgrades.
 - Equipment and loadouts should create combinations and tradeoffs, not simply higher stats.
 - Earlier choices can shape what becomes available later without permanently trapping the player.
 - Respeccing or changing direction should be possible enough that experimentation feels safe.
+
+### Structure metaphors worth stealing
+Treat each new project like a business: staff, products, expansions, ingredients, production lines. Familiar job loops. Buy and sell loot, rewards and resources. Clear gear upgrades. Visible environmental progress.
+
+### Proof of work — the load-bearing idea
+Everything above collapses if rewards are free. **You have to actually do the thing.** Open the book and type the first sentence of the next chapter. Take the walk. Photograph the sent email. Screenshot the call you made.
+- Difficulty should scale by choice — some people want the honour system, some want the receipt.
+- Proof needs storage (photos, text snippets) and must be accounted for in backups and sync. This has real cost and privacy implications; decide early whether proof is stored or verified-then-discarded.
+- Proof is also the anti-cheat for any future social or competitive layer.
 
 ### Management as strategy
 The business metaphor should create real management decisions, not just business-themed rewards.
@@ -105,8 +93,8 @@ The player should never know absolutely everything waiting ahead.
 
 ### Visible transformation
 Work should leave a persistent, visible mark on the game world.
-- Businesses grow. Environments change. Collections fill. Staff appear. Equipment improves. New spaces open.
-- A player should be able to look at something and immediately see evidence of what their real-world effort has built.
+- Progress should visibly alter the state of the world: businesses grow, environments change, collections fill, staff appear, equipment improves and new spaces open.
+- The player should be able to look at the current game state and immediately see what their real-world effort has built.
 - Favor transformation over abstract level numbers whenever possible.
 - Environmental progress can provide motivation even when the underlying productivity goal is repetitive.
 
@@ -117,6 +105,9 @@ Every session should deliver some payoff while exposing an appealing next step.
 - The player should have a clear reason to reopen the app without relying on punishment, guilt or streak anxiety.
 - Design for *wanting to see what happens next*, not merely remembering that another task is due.
 
+### Optional depth, for people who want it
+Backstories, characters, exploration, design and decoration — for narrative momentum and personality. Consequential choices. Mini-games. Strictly optional: the setup burden must stay near zero for people who just want to get through their week.
+
 ### Creativity without placement burden
 Customization should create ownership and personality without turning into a blank-canvas design problem.
 - Favor presets, themes, snapping, auto-layout and easily reversible choices.
@@ -124,6 +115,12 @@ Customization should create ownership and personality without turning into a bla
 - Functional progression should not depend on making a space look good.
 - Detailed decorating can exist for people who love it, but optimal gameplay should never require it.
 - Give players strong defaults so customization starts from *change this if you want* rather than *build everything from nothing*.
+
+### Design constraints for all of the above
+- No friction between opening the app and playing.
+- No dead time.
+- The reward layer must introduce itself. Four unexplained currencies is worse than one explained one.
+- Nothing punishes. Difficulty is opt-in; failure is never humiliating.
 
 ---
 
